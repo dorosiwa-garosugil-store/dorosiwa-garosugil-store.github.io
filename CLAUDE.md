@@ -1,6 +1,6 @@
 # DOROSIWA 스토어 허브 (가로수길점 직원용 사이트)
 
-GitHub Pages로 서비스되는 정적 사이트. 사장님이 말로 요청하면 Claude가 이 저장소를 직접 수정해 push한다.
+GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garosugil-store.github.io 사장님이 말로 요청하면 Claude가 이 저장소를 직접 수정해 push한다.
 
 ## 파일
 - index.html : 화면 전체 (수정 시 폰 화면 390px 기준으로 확인)
