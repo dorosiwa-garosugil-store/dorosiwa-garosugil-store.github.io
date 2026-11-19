@@ -109,6 +109,20 @@ nav .on{color:var(--ink)}
 .tile.off{opacity:.45}
 .tile:not(.off):active{transform:scale(.98)}
 .foot{text-align:center;color:var(--mut);font-size:11px;margin:20px 0 6px}
+
+/* 노트북·PC 화면: 넓게 써서 표를 한눈에 */
+@media (min-width:900px){
+ .wrap{max-width:1180px;padding-left:24px;padding-right:24px}
+ nav .in,.sheet .in{max-width:1180px}
+ #saveBar{max-width:1132px!important}
+ .hub{grid-template-columns:repeat(4,1fr)}
+ .tbl{max-height:calc(100vh - 300px)}
+ .tbl table{font-size:12px}
+ .tbl .chip{font-size:11.5px;min-width:44px}
+ .strip{margin:0;padding-left:0;padding-right:0}
+ .tbl table{min-width:100%}
+ .sheet .in{max-width:560px;border-radius:20px;margin-bottom:24px}
+}
 </style>
 </head>
 <body>
