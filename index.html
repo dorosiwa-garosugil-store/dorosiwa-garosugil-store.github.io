@@ -281,7 +281,14 @@ async function fetchAdminBlob() {
 }
 async function tokenOk(tok) {
   const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}`, {headers:{Authorization:'Bearer ' + tok, Accept:'application/vnd.github+json'}});
-  if (!r.ok) return false; const j = await r.json(); return !!(j.permissions && j.permissions.push);
+  if (!r.ok) return false; const j = await r.json(); if (!(j.permissions && j.permissions.push)) return false;
+  const e = r.headers.get('github-authentication-token-expiration'); return {exp:e ? e.slice(0, 10) : ''};
+}
+async function loadAdminExp() { try { const r = await fetch('admin.json?t=' + Date.now(), {cache:'no-store'}); if (r.ok) { const j = await r.json(); S.adminExp = j.expires || ''; render(); } } catch {} }
+function expInfo() {
+  if (!S.adminExp) return null;
+  const days = Math.ceil((new Date(S.adminExp + 'T00:00:00+09:00') - Date.now()) / 864e5);
+  return {days, label:S.adminExp.replace(/-/g, '.')};
 }
 async function putAdminBlob(blob, tok) {
   const h = {Authorization:'Bearer ' + tok, Accept:'application/vnd.github+json', 'Content-Type':'application/json'};
@@ -290,7 +297,7 @@ async function putAdminBlob(blob, tok) {
   const r = await fetch(ADMIN_URL, {method:'PUT', headers:h, body:JSON.stringify({message:'관리자 비밀번호 설정', content:b64enc(JSON.stringify(blob) + '\n'), branch:GH.branch, ...(sha ? {sha} : {})})});
   if (!r.ok) throw Error('저장 실패 (' + r.status + ')');
 }
-function setAdmin(tok) { ls.set('ghToken', tok); S.canEdit = true; }
+function setAdmin(tok) { ls.set('ghToken', tok); S.canEdit = true; loadAdminExp(); }
 const pwField = (id, ph) => `<input type="password" id="${id}" placeholder="${ph}" style="margin-top:10px" autocomplete="new-password">`;
 const errBox = '<div id="aErr" style="color:var(--dan);font-size:12px;min-height:18px;margin-top:8px"></div>';
 async function adminLoginSheet() {
@@ -315,7 +322,8 @@ async function adminLoginSheet() {
 function adminSetupSheet() {
   sheet(`<h2>관리자 처음 설정</h2><div class="mut" style="line-height:1.6">깃허브에서 만든 열쇠(github_pat_…)와 앞으로 쓸 관리자 비밀번호를 정해 주세요. 열쇠는 이 비밀번호로 잠가서 보관돼요. 이후에는 어느 기기에서든 비밀번호만 넣으면 돼요.</div>
     <input type="text" id="aTok" placeholder="github_pat_로 시작하는 열쇠" style="margin-top:12px" autocomplete="off" autocapitalize="off" spellcheck="false">
-    ${pwField('aPw1', '새 관리자 비밀번호 (10자 이상)')}${pwField('aPw2', '비밀번호 한 번 더')}${errBox}
+    ${pwField('aPw1', '새 관리자 비밀번호 (10자 이상)')}${pwField('aPw2', '비밀번호 한 번 더')}
+    <label class="f">열쇠 만료일 (GitHub 열쇠 화면의 Expires on 날짜 · 만료 없음이면 비워두기)</label><input type="date" id="aExp" style="width:100%;border:1px solid var(--edge);border-radius:11px;padding:10px 12px;font-size:16px;background:var(--card)">${errBox}
     <div class="row"><button class="btn grow" id="aNo">취소</button><button class="btn pri grow" id="aGo">설정 완료</button></div>`);
   $('aNo').onclick = closeSheet;
   $('aGo').onclick = async () => {
@@ -325,8 +333,10 @@ function adminSetupSheet() {
     if (p1 !== p2) return void ($('aErr').textContent = '비밀번호 두 칸이 서로 달라요.');
     $('aGo').disabled = true; $('aGo').textContent = '설정 중…'; $('aErr').textContent = '';
     try {
-      if (!(await tokenOk(tok))) throw Error('열쇠가 맞지 않거나 수정 권한이 없어요. Contents를 Read and write로 했는지 확인해 주세요.');
-      await putAdminBlob(await sealToken(tok, p1), tok);
+      const ok = await tokenOk(tok);
+      if (!ok) throw Error('열쇠가 맞지 않거나 수정 권한이 없어요. Contents를 Read and write로 했는지 확인해 주세요.');
+      const blob = await sealToken(tok, p1); blob.expires = ok.exp || $('aExp').value || '';
+      await putAdminBlob(blob, tok); S.adminExp = blob.expires;
       setAdmin(tok); closeSheet(); toast('관리자 설정 완료 · 로그인됐어요'); loadData();
     } catch (e) { $('aErr').textContent = e.message === 'Failed to fetch' ? '인터넷 연결을 확인해 주세요.' : e.message; $('aGo').disabled = false; $('aGo').textContent = '설정 완료'; }
   };
@@ -340,7 +350,7 @@ function adminPwChangeSheet() {
     if (p1.length < 10) return void ($('aErr').textContent = '10자 이상으로 해주세요.');
     if (p1 !== p2) return void ($('aErr').textContent = '두 칸이 서로 달라요.');
     $('aGo').disabled = true;
-    try { const tok = ls.get('ghToken', ''); await putAdminBlob(await sealToken(tok, p1), tok); closeSheet(); toast('관리자 비밀번호를 바꿨어요'); }
+    try { const tok = ls.get('ghToken', ''); const blob = await sealToken(tok, p1); blob.expires = S.adminExp || ''; await putAdminBlob(blob, tok); closeSheet(); toast('관리자 비밀번호를 바꿨어요'); }
     catch (e) { $('aErr').textContent = e.message; $('aGo').disabled = false; }
   };
 }
@@ -586,7 +596,8 @@ function vSet() {
   const c = C(), adm = admin();
   let h = `<div class="card"><h3>내 정보</h3><div class="li"><div class="grow"><div class="nm">내 이름</div><div class="rl">홈·내 스케줄에 사용 (이 기기에만 저장)</div></div><button class="pill ${S.me ? 'on' : ''}" data-act="pickMe">${esc(S.me || '선택')}</button></div></div>`;
   h += `<div class="card"><h3>관리자 모드 ${adm ? '<span class="chip" style="--h:150;--s:60%">로그인됨</span>' : ''}</h3>`;
-  if (adm) h += `<div class="mut" style="margin-bottom:10px">근무표·조닝·공지를 수정할 수 있어요. 로그아웃하기 전까지 이 기기에서 유지돼요.</div>
+  const ex2 = adm && expInfo();
+  if (adm) h += `<div class="mut" style="margin-bottom:10px">근무표·조닝·공지를 수정할 수 있어요. 로그아웃하기 전까지 이 기기에서 유지돼요.${ex2 ? `<br>관리자 열쇠 만료일: <b style="color:${ex2.days <= 14 ? 'var(--dan)' : 'inherit'}">${ex2.label}</b> <button class="link" data-act="expHelp">갱신 방법</button>` : ''}</div>
     <div class="row"><button class="btn grow" data-act="adminPw">비밀번호 변경</button><button class="btn grow dan" data-act="adminOut">관리자 로그아웃</button></div>`;
   else h += `<div class="mut" style="margin-bottom:10px">관리자 비밀번호로 로그인하면 근무표·조닝·공지를 직접 수정할 수 있어요.</div><button class="btn pri" style="width:100%" data-act="adminIn">관리자 로그인</button>`;
   h += `</div>`;
@@ -625,6 +636,8 @@ function render() {
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === S.tab));
   let bars = '';
   if (adm) bars += `<div class="adminbar">관리자 모드 · 표의 칸을 눌러 수정해요<button data-act="go" data-v="set">설정</button></div>`;
+  const ex = adm && expInfo();
+  if (ex && ex.days <= 14) bars += `<div class="warn" style="display:flex;align-items:center;gap:8px;font-weight:650">${ex.days > 0 ? `⚠ 관리자 열쇠가 ${ex.days}일 뒤(${ex.label}) 만료돼요` : `⚠ 관리자 열쇠가 만료됐어요 (${ex.label})`}<button class="link" style="margin-left:auto;color:inherit" data-act="expHelp">방법 보기</button></div>`;
   if (S.slow) bars += `<div class="note">연결이 느려요. ${S.ready ? '마지막으로 받은 내용을 보여주고 있어요.' : ''} 잠시 후 새로고침을 눌러주세요.</div>`;
   $('bars').innerHTML = bars;
   if (!S.ready && !D.config) { $('view').innerHTML = `<div class="card empty">${S.offline ? '로그인이 필요해요.' : '불러오는 중…'}</div>`; return; }
@@ -666,6 +679,7 @@ document.addEventListener('click', async e => {
     case 'nEdit': noticeSheet(D.notices.find(n => n.id === v)); return;
     case 'saveSet': saveSet(); return;
     case 'adminIn': adminLoginSheet(); return;
+    case 'expHelp': sheet(`<h2>관리자 열쇠 갱신하기</h2><div style="font-size:13px;line-height:1.75;margin-top:8px">1. 노트북에서 <b>github.com/settings/personal-access-tokens</b> 열기<br>2. <b>스토어허브</b> 누르기 → <b>Regenerate token</b><br>3. 기간을 <b>No expiration</b>(없으면 가장 긴 기간)으로 고르고 다시 <b>Regenerate token</b><br>4. 나온 <b>github_pat_…</b> 바로 복사<br>5. 여기 <b>설정 → 관리자 로그아웃</b><br>6. <b>관리자 로그인 → 처음 설정 다시 하기</b> → 새 열쇠 붙여넣기, 비밀번호(기존 것 그대로 가능) 두 번, 만료일 입력 → 설정 완료<br>7. 폰은 관리자 로그아웃 후 비밀번호로 다시 로그인</div><button class="btn" style="width:100%;margin-top:16px" id="eClose">닫기</button>`); $('eClose').onclick = closeSheet; return;
     case 'adminOut': adminLogout(); return;
     case 'adminPw': adminPwChangeSheet(); return;
     case 'saveAll': saveAll(); return;
@@ -684,10 +698,10 @@ async function sha(t) { const b = await crypto.subtle.digest('SHA-256', new Text
 function unlocked() { const u = ls.get('unlock', null); return u && u.h === PASS_HASH && u.until > Date.now(); }
 async function tryUnlock() {
   if ((await sha($('gpw').value.trim())) !== PASS_HASH) { $('gerr').textContent = '비밀번호가 맞지 않아요.'; return; }
-  ls.set('unlock', {h:PASS_HASH, until:Date.now() + 30 * 864e5}); $('gate').style.display = 'none'; render(); loadData();
+  ls.set('unlock', {h:PASS_HASH, until:Date.now() + 30 * 864e5}); $('gate').style.display = 'none'; render(); loadData(); if (S.canEdit) loadAdminExp();
 }
 $('gok').onclick = tryUnlock; $('gpw').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
-if (unlocked()) { render(); loadData(); } else { $('gate').style.display = 'flex'; }
+if (unlocked()) { render(); loadData(); if (S.canEdit) loadAdminExp(); } else { $('gate').style.display = 'flex'; }
 </script>
 </body>
 </html>
