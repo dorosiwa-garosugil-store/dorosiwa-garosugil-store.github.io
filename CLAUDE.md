@@ -16,3 +16,8 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 ## 비밀번호
 - index.html 의 PASS_HASH = SHA-256(매장 공용 비밀번호). 화면 잠금일 뿐 진짜 보안은 아님 (저장소가 공개).
 - 원가·출시 전 제품 등 민감 정보는 올리지 않는다.
+
+## 관리자 모드 (사이트 안에서 직접 수정)
+- 관리자는 안희진 매니저(사장님). 사이트 하단 '관리자' → GitHub fine-grained 토큰(이 저장소 Contents: Read and write) 붙여넣기 → 그 폰 localStorage에만 저장.
+- 관리자 모드에서 표 칸 수정 → 하단 '저장' 누르면 GitHub API로 data.json을 커밋("사이트에서 수정 (날짜)"). 직원 화면은 Pages 반영 후 1~2분.
+- Claude가 data.json을 고치기 전에는 항상 최신을 pull 할 것 (사장님이 사이트에서 저장했을 수 있음).
