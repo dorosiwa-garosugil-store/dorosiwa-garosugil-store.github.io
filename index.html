@@ -100,6 +100,13 @@ nav .on{color:var(--ink)}
 .toast{position:fixed;left:50%;bottom:calc(76px + var(--sb));transform:translate(-50%,16px);background:var(--acc);color:var(--rev);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;z-index:60;opacity:0;transition:.2s;pointer-events:none;max-width:88vw;text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .toast.err{background:var(--dan);color:#fff}
+.hub{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.tile{background:var(--card);border:1px solid var(--edge);border-radius:16px;padding:16px 14px;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:112px}
+.tile svg{width:24px;height:24px;margin-bottom:4px}
+.tile b{font-size:15px}
+.tile small{font-size:12px;color:var(--mut)}
+.tile.off{opacity:.45}
+.tile:not(.off):active{transform:scale(.98)}
 .foot{text-align:center;color:var(--mut);font-size:11px;margin:20px 0 6px}
 </style>
 </head>
@@ -125,7 +132,7 @@ nav .on{color:var(--ink)}
  <div class="foot" id="foot"></div>
 </div>
 <nav><div class="in">
- <button data-tab="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>오늘</button>
+ <button data-tab="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>홈</button>
  <button data-tab="month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>먼슬리</button>
  <button data-tab="daily"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>데일리</button>
  <button data-tab="notice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 10v4a1 1 0 0 0 1 1h2l6 4V5L7 9H5a1 1 0 0 0-1 1z"/><path d="M17 8.5a5 5 0 0 1 0 7"/></svg>공지</button>
@@ -158,8 +165,8 @@ const DEF = {store:'가로수길점', hours:{open:11, close:20}, staff:[], posit
 const D = ls.get('cache', {config:null, months:{}, daily:{}, notices:[]});
 const S = {
   tab:'today', me:ls.get('me', ''), canEdit:false, db:null, ready:false, synced:false, offline:false,
-  month:T.date.slice(0, 7), mView:ls.get('mView', 'day'), mDate:T.date,
-  dDate:T.date, dView:ls.get('dView', 'hour'), dHour:null, edit:null
+  month:T.date.slice(0, 7), mView:ls.get('mView2', 'table'), mDate:T.date,
+  dDate:T.date, dView:ls.get('dView2', 'table'), dHour:null, edit:null
 };
 const C = () => Object.assign({}, DEF, D.config || {});
 const admin = () => false;
@@ -240,28 +247,44 @@ const needMe = () => `<div class="card"><div class="row"><div class="grow"><b>�
 const legend = () => `<div class="row" style="flex-wrap:wrap;gap:5px;margin-top:10px">${C().positions.map(p => posChip(p.name)).join('')}</div>`;
 
 /* ───────── 오늘 ───────── */
+const ICON = {
+  month:'<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>',
+  daily:'<rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 9h18M3 15h18M9 3v18"/>',
+  notice:'<path d="M4 10v4a1 1 0 0 0 1 1h2l6 4V5L7 9H5a1 1 0 0 0-1 1z"/><path d="M17 8.5a5 5 0 0 1 0 7"/>',
+  check:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  todo:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/>',
+  product:'<path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/>',
+  guide:'<path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4M8.5 12h7M8.5 16h5"/>',
+  vmd:'<path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/>'
+};
+const ico = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
 function vToday() {
   const d = dayInfo(T.date), dl = pubDaily(T.date);
-  const label = new Date(T.date + 'T12:00:00').toLocaleDateString('ko-KR', {month:'long', day:'numeric', weekday:'long'});
-  let h = `<div class="card"><div class="mut">${label}</div><div class="big" style="margin:2px 0 10px">오늘 출근 ${d.on.length}명</div>`;
-  h += d.on.length ? `<div class="names">${d.on.map(x => `<span class="${x.name === S.me ? 'me' : ''}">${esc(x.name)} <small>${esc(x.v)}</small></span>`).join('')}</div>` : '<div class="mut">등록된 근무가 없어요.</div>';
-  if (d.off.length) h += `<div class="mut" style="margin-top:10px">휴무 · ${d.off.map(x => esc(x.name)).join(', ')}</div>`;
-  h += '</div>';
-  if (!S.me) h += needMe();
-  else {
+  const label = new Date(T.date + 'T12:00:00').toLocaleDateString('ko-KR', {month:'long', day:'numeric', weekday:'short'});
+  // 오늘 요약 (한 장)
+  let me = '';
+  if (S.me) {
     const mine = d.on.find(x => x.name === S.me), offv = d.off.find(x => x.name === S.me);
-    h += `<div class="card"><h3>${esc(S.me)}님 오늘 <button class="link" data-act="myMonth">내 스케줄 ›</button></h3>`;
-    if (!mine) h += `<div class="row">${shiftChip(offv ? offv.v : '휴')}<span class="mut">오늘은 출근일이 아니에요</span></div>`;
-    else {
-      h += `<div class="row">${shiftChip(mine.v)}<span class="mut">근무</span></div>`;
-      if (dl) h += `<div class="strip" style="margin-top:8px">${HOURS().filter(x => works(mine, x)).map(x => `<div style="flex:0 0 auto;text-align:center;padding:3px;border-radius:9px;${x === T.hour ? 'outline:2px solid var(--ink)' : ''}"><div class="mut" style="font-size:10px">${x}시</div>${posChip(posAt(dl, S.me, x) || '미배정')}</div>`).join('')}</div>`;
-      else h += `<div class="mut" style="margin-top:8px">오늘 데일리 조닝은 아직 공개 전이에요.</div>`;
-    }
-    h += '</div>';
+    if (!mine) me = `${shiftChip(offv ? offv.v : '휴')}<span class="mut">오늘 휴무</span>`;
+    else { const p = dl && works(mine, T.hour) ? posAt(dl, S.me, T.hour) : null; me = `${shiftChip(mine.v)}${p ? posChip(p) + '<span class="mut">지금</span>' : ''}`; }
   }
-  if (dl) { const hr = curHour(); h += `<div class="card"><h3>${hr === T.hour ? '지금' : hr + '시'} 배치 · ${hr}:00~${hr + 1}:00 <button class="link" data-act="go" data-v="daily">전체 ›</button></h3>${hourGroups(dl, d, hr)}</div>`; }
-  const ns = sortedNotices().slice(0, 2);
-  if (ns.length) h += `<div class="card"><h3>공지 <button class="link" data-act="go" data-v="notice">전체 ›</button></h3>${ns.map(n => `<div style="padding:4px 0" data-act="go" data-v="notice"><b>${n.pinned ? '📌 ' : ''}${esc(n.title)}</b><div class="mut">${esc(n.date || '')}</div></div>`).join('')}</div>`;
+  let h = `<div class="card sum"><div class="row"><div class="grow"><div class="mut">${label}</div><div style="font-size:17px;font-weight:750;margin-top:2px">출근 ${d.on.length}명</div></div>
+    ${S.me ? `<div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${me}</div>` : '<button class="pill on" data-act="pickMe">내 이름 선택</button>'}</div></div>`;
+  // 업무 메뉴
+  const nCount = D.notices.length;
+  const tiles = [
+    ['month', '먼슬리', '월간 근무 스케줄', 'go:month'],
+    ['daily', '데일리 조닝', dl ? '오늘 조닝 확정' : '시간별 배치', 'go:daily'],
+    ['notice', '공지사항', nCount ? `공지 ${nCount}건` : '새 공지 확인', 'go:notice'],
+    ['guide', '응대·조닝 가이드', '매장 운영 기준', 'guide'],
+    ['check', '체크리스트', '추후 오픈', ''],
+    ['todo', '해야 할 일', '추후 오픈', ''],
+    ['product', '판매 제품·설명', '추후 오픈', ''],
+    ['vmd', 'VMD', '추후 오픈', '']
+  ];
+  h += `<div class="hub">${tiles.map(([k, t, sub, act]) => { const [a, v] = act.split(':'); return `<button class="tile ${act ? '' : 'off'}" ${act ? `data-act="${a}" ${v ? `data-v="${v}"` : ''}` : 'disabled'}>${ico(k)}<b>${t}</b><small>${sub}</small></button>`; }).join('')}</div>`;
+  const pin = sortedNotices()[0];
+  if (pin) h += `<button class="card row" style="width:100%;text-align:left" data-act="go" data-v="notice"><span class="grow"><span class="mut">공지</span><br><b>${pin.pinned ? '📌 ' : ''}${esc(pin.title)}</b></span><span class="mut">›</span></button>`;
   return h;
 }
 
@@ -270,7 +293,7 @@ function vMonth() {
   const ks = monthKeys(); if (!ks.includes(S.month)) S.month = T.date.slice(0, 7);
   const days = monthDays(S.month), [y, m] = S.month.split('-'), i = ks.indexOf(S.month), adm = admin();
   let h = `<div class="row" style="margin:6px 0"><button class="ib" data-act="mMove" data-v="-1" ${i <= 0 ? 'disabled style="opacity:.3"' : ''}>‹</button><div class="grow" style="text-align:center"><div class="big" style="font-size:19px">${y}. ${m}</div></div><button class="ib" data-act="mMove" data-v="1" ${i >= ks.length - 1 ? 'disabled style="opacity:.3"' : ''}>›</button></div>`;
-  h += `<div class="seg">${[['day','날짜별'],['mine','내 스케줄'],['table','전체 표']].map(([k, l]) => `<button data-act="mView" data-v="${k}" class="${S.mView === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  h += `<div class="seg">${[['table','전체 표'],['day','날짜별'],['mine','내 스케줄']].map(([k, l]) => `<button data-act="mView" data-v="${k}" class="${S.mView === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   if (S.mView === 'day') {
     if (!days.some(x => x.date === S.mDate)) S.mDate = (days.find(x => x.date === T.date) || days.find(x => x.on.length) || days[0]).date;
     const d = days.find(x => x.date === S.mDate);
@@ -351,7 +374,7 @@ function vDaily() {
   const editing = adm && S.edit && S.edit.date === S.dDate;
   const raw = D.daily[S.dDate], dl = editing ? {assign:S.edit.assign} : adm ? raw : pubDaily(S.dDate);
   let h = strip(days, S.dDate, 'dDate');
-  const badge = editing ? '<span class="chip" style="--h:38;--s:85%">편집 중</span>' : raw && raw.published ? '<span class="chip" style="--h:150;--s:60%">공개됨</span>' : raw && adm ? '<span class="chip" style="--h:38;--s:85%">임시 저장</span>' : '<span class="chip g">미등록</span>';
+  const badge = editing ? '<span class="chip" style="--h:38;--s:85%">편집 중</span>' : raw && raw.published ? '<span class="chip" style="--h:150;--s:60%">확정</span>' : raw && adm ? '<span class="chip" style="--h:38;--s:85%">임시 저장</span>' : '<span class="chip g">미등록</span>';
   h += `<div class="card" style="padding:12px 14px"><div class="row"><b class="grow">${+key.slice(5)}/${d.day} (${d.wd}) · 출근 ${d.on.length}명</b>${badge}</div></div>`;
   if (adm) {
     h += `<div class="card"><h3>관리자 · 조닝</h3>`;
@@ -361,7 +384,7 @@ function vDaily() {
   }
   if (!dl) return h + `<div class="card empty">이 날짜의 데일리 조닝이 아직 공개되지 않았어요.</div>` + legend();
   const view = editing ? 'table' : S.dView;
-  if (!editing) h += `<div class="seg">${[['hour','시간대별'],['mine','내 포지션'],['table','전체 표']].map(([k, l]) => `<button data-act="dView" data-v="${k}" class="${view === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  if (!editing) h += `<div class="seg">${[['table','전체 표'],['hour','시간대별'],['mine','내 포지션']].map(([k, l]) => `<button data-act="dView" data-v="${k}" class="${view === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   if (view === 'hour') {
     if (S.dHour == null || !HOURS().includes(S.dHour)) S.dHour = S.dDate === T.date ? curHour() : HOURS()[0];
     h += `<div class="strip">${HOURS().map(x => `<button data-act="dHour" data-v="${x}" class="${x === S.dHour ? 'on' : ''}"><b>${x}</b><small>~${x + 1}시</small></button>`).join('')}</div><div class="card">${hourGroups(dl, d, S.dHour)}</div>`;
@@ -492,15 +515,16 @@ document.addEventListener('click', async e => {
   const a = e.target.closest('[data-act]'); if (!a) return; const v = a.dataset.v;
   switch (a.dataset.act) {
     case 'pickMe': pickMe(); return;
+    case 'guide': sheet(`<h2>응대·조닝 가이드</h2><div class="guide" style="margin-top:10px">${esc(C().guide || '등록된 가이드가 없어요.')}</div><button class="btn" style="width:100%;margin-top:16px" id="gClose">닫기</button>`); $('gClose').onclick = closeSheet; return;
     case 'go': S.tab = v; scrollTo(0, 0); break;
     case 'myMonth': S.tab = 'month'; S.mView = 'mine'; scrollTo(0, 0); break;
     case 'mMove': { const ks = monthKeys(); S.month = ks[ks.indexOf(S.month) + +v] || S.month; break; }
-    case 'mView': S.mView = v; ls.set('mView', v); break;
+    case 'mView': S.mView = v; ls.set('mView2', v); break;
     case 'mDate': S.mDate = v; break;
     case 'cell': cellSheet(+a.dataset.i, +v); return;
     case 'staff': staffSheet(); return;
     case 'dDate': if (S.edit && !(await ask('편집 중인 조닝을 저장하지 않고 이동할까요?', '이동', true))) return; S.edit = null; S.dDate = v; S.dHour = null; break;
-    case 'dView': S.dView = v; ls.set('dView', v); break;
+    case 'dView': S.dView = v; ls.set('dView2', v); break;
     case 'dHour': S.dHour = +v; break;
     case 'edStart': edStart(); return;
     case 'edClose': if (await ask('편집을 닫을까요? 저장하지 않은 내용은 사라져요.', '닫기', true)) S.edit = null; break;
