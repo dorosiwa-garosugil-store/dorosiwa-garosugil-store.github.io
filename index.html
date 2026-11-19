@@ -518,7 +518,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && un
 
 
 /* ───────── 매장 공용 비밀번호 (한 번 입력하면 이 휴대폰에서 30일 유지) ───────── */
-const PASS_HASH = 'a2c7450f16ee375a8075593072523ad4f2c60ab32e887c47ce2310e793eb30b3';
+const PASS_HASH = '370940114feab1e9f493aecadeadbf281aed333cdafd78a5fda64854f6642ebd';
 async function sha(t) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
 function unlocked() { const u = ls.get('unlock', null); return u && u.h === PASS_HASH && u.until > Date.now(); }
 async function tryUnlock() {
