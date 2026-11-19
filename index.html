@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>DOROSIWA 가로수길점 · 스토어 허브</title>
+<style>
+:root{--bg:#f4f4f5;--card:#fff;--ink:#16171a;--mut:#7a7d85;--edge:#e6e6e9;--soft:#f1f1f3;--acc:#16171a;--rev:#fff;--dan:#c0283a;--ok:#1f7a45;--cl:92%;--cd:28%;--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#0d0f12;--card:#17191d;--ink:#f3f4f6;--mut:#9a9ea8;--edge:#2c2f35;--soft:#22252b;--acc:#f3f4f6;--rev:#111317;--dan:#ff8d99;--ok:#8fe0ad;--cl:24%;--cd:84%;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+.wrap{max-width:640px;margin:0 auto;padding:0 14px calc(84px + var(--sb))}
+header{padding:calc(var(--st) + 14px) 2px 6px;display:flex;align-items:center;gap:8px}
+header .t{flex:1;min-width:0}
+.eb{font-size:10px;letter-spacing:1.6px;color:var(--mut);font-weight:700}
+h1{margin:2px 0 0;font-size:22px;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{height:36px;padding:0 12px;border-radius:18px;background:var(--card);border:1px solid var(--edge);font-size:12.5px;font-weight:650;white-space:nowrap}
+.pill.on{background:var(--acc);color:var(--rev);border-color:var(--acc)}
+.ib{width:36px;height:36px;border-radius:18px;background:var(--card);border:1px solid var(--edge);display:grid;place-items:center;flex:0 0 36px}
+.ib svg{width:17px;height:17px}
+.spin svg{animation:sp .8s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.adminbar{background:var(--acc);color:var(--rev);border-radius:12px;padding:8px 12px;font-size:12px;font-weight:650;display:flex;align-items:center;gap:8px;margin:6px 0}
+.adminbar button{margin-left:auto;color:inherit;opacity:.75;font-size:12px;font-weight:650}
+.note{background:color-mix(in srgb,#e0a100 16%,transparent);color:inherit;border-radius:10px;padding:8px 12px;font-size:12px;margin:6px 0}
+.card{background:var(--card);border:1px solid var(--edge);border-radius:16px;padding:14px;margin:10px 0}
+.card h3{margin:0 0 8px;font-size:13px;color:var(--mut);font-weight:650;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.big{font-size:22px;font-weight:750;letter-spacing:-.5px}
+.mut{color:var(--mut);font-size:12px}
+.row{display:flex;align-items:center;gap:8px}
+.grow{flex:1;min-width:0}
+.link{color:var(--mut);font-size:12px;font-weight:600}
+.empty{text-align:center;color:var(--mut);padding:24px 8px;font-size:13px;line-height:1.6}
+.btn{height:42px;padding:0 14px;border-radius:11px;border:1px solid var(--edge);background:var(--card);font-size:13px;font-weight:650;white-space:nowrap}
+.btn.pri{background:var(--acc);color:var(--rev);border-color:var(--acc)}
+.btn.sm{height:32px;padding:0 10px;font-size:12px;border-radius:9px}
+.btn.dan{color:var(--dan)}
+.btn:disabled{opacity:.4}
+input[type=text],input[type=number],textarea,select.f{width:100%;border:1px solid var(--edge);background:var(--card);border-radius:11px;padding:10px 12px;font-size:16px}
+textarea{resize:vertical;min-height:100px;line-height:1.55}
+label.f{display:block;font-size:12px;color:var(--mut);margin:12px 0 5px;font-weight:600}
+.seg{display:flex;background:var(--soft);border-radius:11px;padding:3px;margin:10px 0}
+.seg button{flex:1;padding:8px 0;border-radius:9px;font-size:12.5px;font-weight:650;color:var(--mut)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px #0000001a}
+.chip{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:7px;font-size:12px;font-weight:650;white-space:nowrap;background:hsl(var(--h,0) var(--s,0%) var(--cl));color:hsl(var(--h,0) calc(var(--s,0%)*.8) var(--cd))}
+.chip.g{background:var(--soft);color:var(--mut)}
+.strip{display:flex;gap:6px;overflow-x:auto;padding:4px 14px 8px;margin:0 -14px;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.strip button{flex:0 0 auto;min-width:46px;padding:7px 4px;border-radius:12px;background:var(--card);border:1px solid var(--edge);text-align:center}
+.strip b{display:block;font-size:16px}
+.strip small{display:block;font-size:10px;color:var(--mut)}
+.strip .on{background:var(--acc);color:var(--rev);border-color:var(--acc)}
+.strip .on small{color:inherit;opacity:.75}
+.strip .today:not(.on){border-color:var(--ink)}
+.sun b{color:#d23}.sat b{color:#36c}.on b{color:inherit!important}
+.li{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--edge)}
+.li:last-child{border-bottom:0}
+.li .nm{font-weight:650}.li .rl{font-size:11px;color:var(--mut)}
+.li.me{background:var(--soft);border-radius:10px;padding:10px 8px;border-bottom:0}
+.names{display:flex;flex-wrap:wrap;gap:6px}
+.names span{background:var(--soft);padding:5px 9px;border-radius:8px;font-size:13px;font-weight:600}
+.names span small{opacity:.6;font-weight:500}
+.names span.me{background:var(--acc);color:var(--rev)}
+.grp{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--edge)}
+.grp:last-child{border-bottom:0}
+.grp .gh{width:86px;flex:0 0 86px}
+.tbl{overflow:auto;border:1px solid var(--edge);border-radius:13px;background:var(--card);max-height:70vh}
+.tbl table{border-collapse:separate;border-spacing:0;font-size:11px;white-space:nowrap}
+.tbl th,.tbl td{padding:4px 3px;text-align:center;border-bottom:1px solid var(--edge);border-right:1px solid var(--edge);height:34px}
+.tbl thead th{position:sticky;top:0;background:var(--soft);z-index:2;line-height:1.15}
+.tbl th small,.tbl td small{display:block;font-size:9.5px;color:var(--mut);font-weight:500}
+.tbl th:first-child,.tbl td:first-child{position:sticky;left:0;background:var(--card);z-index:1;text-align:left;padding:4px 7px;min-width:66px}
+.tbl thead th:first-child{z-index:3;background:var(--soft)}
+.tbl .chip{padding:3px 4px;font-size:10.5px;border-radius:5px;min-width:38px}
+.tbl .tc{background:color-mix(in srgb,var(--ink) 7%,transparent)}
+.tbl tr.tot td{background:var(--soft);font-weight:700}
+.tbl tr.me td:first-child{font-weight:800}
+.tbl td.tap{cursor:pointer}
+.tbl select{border:0;border-radius:6px;padding:5px 2px;font-size:11px;font-weight:650;min-width:74px;-webkit-appearance:none;appearance:none;text-align:center;background:hsl(var(--h,0) var(--s,0%) var(--cl));color:hsl(var(--h,0) calc(var(--s,0%)*.8) var(--cd))}
+.notice .tt{font-size:15px;font-weight:700}
+.notice .bd{white-space:pre-wrap;line-height:1.65;margin-top:8px;overflow-wrap:anywhere}
+.guide{white-space:pre-wrap;line-height:1.7;font-size:13px;color:var(--mut)}
+.warn{background:color-mix(in srgb,var(--dan) 12%,transparent);color:var(--dan);padding:7px 10px;border-radius:9px;font-size:12px;margin:4px 0}
+.okm{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok);padding:7px 10px;border-radius:9px;font-size:12px;margin:4px 0}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--edge);padding-bottom:var(--sb)}
+nav .in{max-width:640px;margin:0 auto;display:flex}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 7px;font-size:10.5px;color:var(--mut);font-weight:600}
+nav svg{width:22px;height:22px}
+nav .on{color:var(--ink)}
+.scrim{position:fixed;inset:0;background:#0006;z-index:50;display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;display:none;justify-content:center}
+.open{display:flex!important}
+.sheet .in{background:var(--card);width:100%;max-width:640px;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + var(--sb));max-height:86vh;overflow:auto}
+.sheet h2{margin:0 0 4px;font-size:17px}
+.pick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.pick button{padding:12px 4px;border-radius:11px;background:var(--soft);font-weight:650}
+.pick button.sel{outline:2.5px solid var(--ink);outline-offset:1px}
+.toast{position:fixed;left:50%;bottom:calc(76px + var(--sb));transform:translate(-50%,16px);background:var(--acc);color:var(--rev);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;z-index:60;opacity:0;transition:.2s;pointer-events:none;max-width:88vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.err{background:var(--dan);color:#fff}
+.foot{text-align:center;color:var(--mut);font-size:11px;margin:20px 0 6px}
+</style>
+</head>
+<body>
+<div id="gate" style="display:none;position:fixed;inset:0;z-index:100;background:var(--bg);align-items:center;justify-content:center;padding:24px">
+ <div style="width:min(360px,100%)">
+  <div style="width:56px;height:56px;border-radius:16px;background:var(--acc);color:var(--rev);display:grid;place-items:center;font-weight:800;font-size:22px;margin-bottom:16px">D</div>
+  <div class="eb">DOROSIWA · STORE HUB</div><h1 style="margin:4px 0 6px">가로수길점</h1>
+  <div class="mut">매장 공용 비밀번호를 입력하세요.</div>
+  <input type="password" id="gpw" placeholder="비밀번호" style="margin-top:16px" autocomplete="current-password">
+  <button class="btn pri" id="gok" style="width:100%;height:48px;margin-top:10px;font-size:15px">들어가기</button>
+  <div id="gerr" style="color:var(--dan);font-size:12px;min-height:18px;margin-top:8px"></div>
+ </div>
+</div>
+<div class="wrap">
+ <header>
+  <div class="t"><div class="eb">DOROSIWA · STORE HUB</div><h1 id="ttl">가로수길점</h1></div>
+  <button class="pill" id="meBtn">내 이름</button>
+  <button class="ib" id="refBtn" aria-label="새로고침"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button>
+ </header>
+ <div id="bars"></div>
+ <main id="view"><div class="card empty">불러오는 중…</div></main>
+ <div class="foot" id="foot"></div>
+</div>
+<nav><div class="in">
+ <button data-tab="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>오늘</button>
+ <button data-tab="month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>먼슬리</button>
+ <button data-tab="daily"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>데일리</button>
+ <button data-tab="notice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 10v4a1 1 0 0 0 1 1h2l6 4V5L7 9H5a1 1 0 0 0-1 1z"/><path d="M17 8.5a5 5 0 0 1 0 7"/></svg>공지</button>
+ <button data-tab="set" id="setTab" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>설정</button>
+</div></nav>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* DOROSIWA STORE HUB
+   데이터 위치 (페이지 데이터베이스):
+   hub/config          매장 이름·영업시간·직원 목록·포지션·근무시간 선택지·휴무 종류·운영 가이드
+   months/YYYY-MM      { staff: { 이름: { 날짜: '11~20' | '휴' ... } } }
+   daily/YYYY-MM-DD    { published: true/false, assign: { 이름: [영업 시작 시각부터 1시간 단위 포지션, 근무 외 null] } }
+   notices/<id>        { title, body, pinned, date }
+   링크 끝에 #admin 을 붙이면 관리자 화면 (편집 권한이 있는 계정에서만 동작) */
+const $ = id => document.getElementById(id);
+const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ls = { get(k, d) { try { const v = localStorage.getItem('dsh_' + k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem('dsh_' + k, JSON.stringify(v)); } catch {} } };
+const WD = ['일','월','화','수','목','금','토'], pad = n => String(n).padStart(2, '0');
+const clone = o => JSON.parse(JSON.stringify(o));
+function now() { const p = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', hourCycle:'h23'}).formatToParts(new Date()); const g = t => p.find(x => x.type === t).value; return {date:`${g('year')}-${g('month')}-${g('day')}`, hour:+g('hour') % 24}; }
+const shift = v => { const m = String(v || '').trim().match(/^(\d{1,2})(?::(\d{2}))?\s*[~\-–]\s*(\d{1,2})(?::(\d{2}))?$/); if (!m) return null; const s = +m[1] + (+(m[2] || 0)) / 60, e = +m[3] + (+(m[4] || 0)) / 60; return s < e ? {s, e} : null; };
+const normShift = v => String(v || '').trim().replace(/\s+/g, '').replace(/[–-]/g, '~');
+
+/* ───────── 상태 ───────── */
+let T = now();
+const DEF = {store:'가로수길점', hours:{open:11, close:20}, staff:[], positions:[], shiftPresets:[], absences:['휴','요청휴무','연차'], guide:''};
+const D = ls.get('cache', {config:null, months:{}, daily:{}, notices:[]});
+const S = {
+  tab:'today', me:ls.get('me', ''), canEdit:false, db:null, ready:false, synced:false, offline:false,
+  month:T.date.slice(0, 7), mView:ls.get('mView', 'day'), mDate:T.date,
+  dDate:T.date, dView:ls.get('dView', 'hour'), dHour:null, edit:null
+};
+const C = () => Object.assign({}, DEF, D.config || {});
+const admin = () => false;
+const HOURS = () => { const h = C().hours; return Array.from({length:Math.max(0, h.close - h.open)}, (_, i) => h.open + i); };
+
+/* ───────── 색 ───────── */
+const HUES = [212, 150, 330, 38, 265, 188, 20, 95, 300, 170, 0, 240];
+function shiftChip(v, short) {
+  v = String(v || '').trim();
+  if (!v) return `<span class="chip g">${short ? '·' : '-'}</span>`;
+  let h = 0, s = 0, txt = v;
+  if (shift(v)) { const pr = C().shiftPresets; let i = pr.indexOf(normShift(v)); if (i < 0) { let x = 0; for (const c of v) x = (x * 31 + c.charCodeAt(0)) >>> 0; i = x; } h = HUES[i % HUES.length]; s = 70; }
+  else if (v === '요청휴무') { h = 38; s = 85; if (short) txt = '요휴'; }
+  else if (v !== '휴') { h = 275; s = 55; if (short) txt = v.slice(0, 2); }
+  return `<span class="chip" style="--h:${h};--s:${s}%">${esc(txt)}</span>`;
+}
+function posStyle(p) { const d = C().positions.find(x => x.name === p); return d ? `--h:${d.hue};--s:${d.gray ? 0 : 72}%` : ''; }
+function posChip(p) { if (!p) return '<span class="chip g">·</span>'; if (p === '미배정') return '<span class="chip g">미배정</span>'; return `<span class="chip" style="${posStyle(p) || '--s:0%'}">${esc(p)}</span>`; }
+
+/* ───────── 데이터 계산 ───────── */
+const monthKeys = () => { const ks = new Set(Object.keys(D.months)); ks.add(T.date.slice(0, 7)); if (admin()) { const [y, m] = T.date.split('-').map(Number); const n = new Date(y, m, 1); ks.add(`${n.getFullYear()}-${pad(n.getMonth() + 1)}`); } return [...ks].sort(); };
+function monthDays(key) {
+  const [y, m] = key.split('-').map(Number), n = new Date(y, m, 0).getDate(), md = D.months[key] || {};
+  return Array.from({length:n}, (_, i) => {
+    const day = i + 1, date = `${key}-${pad(day)}`;
+    const all = C().staff.map(st => ({...st, v:String((md[st.name] || {})[day] || '')})).map(x => ({...x, sh:shift(x.v)}));
+    return {date, day, wd:WD[new Date(y, m - 1, day).getDay()], on:all.filter(x => x.sh).sort((a, b) => a.sh.s - b.sh.s || a.sh.e - b.sh.e), off:all.filter(x => x.v && !x.sh)};
+  });
+}
+const dayInfo = date => monthDays(date.slice(0, 7)).find(x => x.date === date);
+const pubDaily = date => { const d = D.daily[date]; return d && d.published ? d : null; };
+const posAt = (dl, name, hour) => dl ? ((dl.assign || {})[name] || [])[hour - C().hours.open] || null : null;
+const works = (st, hr) => st.sh && st.sh.s < hr + 1 && st.sh.e > hr;
+const curHour = () => { const hs = HOURS(); return T.hour < hs[0] ? hs[0] : T.hour > hs[hs.length - 1] ? hs[hs.length - 1] : T.hour; };
+
+/* ───────── 데이터 연결 ───────── */
+let cacheT;
+function saveCache() { clearTimeout(cacheT); cacheT = setTimeout(() => ls.set('cache', D), 400); }
+function onData() { S.ready = true; saveCache(); render(); }
+async function loadData(manual) {
+  if (manual) $('refBtn').classList.add('spin');
+  try {
+    const r = await fetch('data.json?t=' + Date.now(), {cache:'no-store'});
+    if (!r.ok) throw Error(r.status);
+    const j = await r.json();
+    D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || [];
+    S.synced = true; S.slow = false; T = now(); onData();
+    if (manual) toast('최신 내용이에요');
+  } catch (e) { S.slow = true; render(); if (manual) toast('불러오기 실패 · 인터넷 연결을 확인해 주세요', true); }
+  finally { $('refBtn').classList.remove('spin'); }
+}
+const refresh = () => loadData(true);
+let wq = Promise.resolve();
+function write(fn, okMsg) { wq = wq.then(fn).then(() => okMsg && toast(okMsg)).catch(e => toast(e && e.code === 'invalid_argument' ? '수정 권한이 없어요' : '저장 실패 · 다시 시도해 주세요', true)); return wq; }
+
+/* ───────── UI 공통 ───────── */
+let tt;
+function toast(m, err) { const t = $('toast'); t.textContent = m; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(tt); tt = setTimeout(() => t.className = 'toast', err ? 3500 : 1800); }
+let onClose = null;
+function sheet(html, close) { $('sheetIn').innerHTML = html; $('sheet').classList.add('open'); $('scrim').classList.add('open'); onClose = close || null; }
+function closeSheet() { $('sheet').classList.remove('open'); $('scrim').classList.remove('open'); const f = onClose; onClose = null; f && f(); }
+$('scrim').onclick = closeSheet;
+function ask(text, ok, danger) {
+  return new Promise(r => { let d = false;
+    sheet(`<h2>${esc(text)}</h2><div class="row" style="margin-top:16px"><button class="btn grow" id="aN">취소</button><button class="btn pri grow" id="aY" style="${danger ? 'background:var(--dan);border-color:var(--dan);color:#fff' : ''}">${esc(ok)}</button></div>`, () => { if (!d) r(false); });
+    $('aN').onclick = closeSheet; $('aY').onclick = () => { d = true; closeSheet(); r(true); }; });
+}
+function strip(days, sel, act) {
+  return `<div class="strip">${days.map(x => `<button data-act="${act}" data-v="${x.date}" class="${x.date === sel ? 'on' : ''} ${x.date === T.date ? 'today' : ''} ${x.wd === '일' ? 'sun' : x.wd === '토' ? 'sat' : ''}"><small>${x.wd}</small><b>${x.day}</b><small>${x.on.length}명</small></button>`).join('')}</div>`;
+}
+function hourGroups(dl, d, hour) {
+  const by = {};
+  d.on.forEach(st => { if (works(st, hour)) { const p = posAt(dl, st.name, hour) || '미배정'; (by[p] = by[p] || []).push(st.name); } });
+  const order = C().positions.map(p => p.name).concat('미배정');
+  return Object.keys(by).sort((a, b) => (order.indexOf(a) + 99) % 99 - (order.indexOf(b) + 99) % 99).map(p => `<div class="grp"><div class="gh">${posChip(p)}<div class="mut" style="font-size:10.5px;margin-top:3px">${by[p].length}명</div></div><div class="names" style="flex:1">${by[p].map(n => `<span class="${n === S.me ? 'me' : ''}">${esc(n)}</span>`).join('')}</div></div>`).join('') || '<div class="empty">이 시간 근무자 없음</div>';
+}
+const needMe = () => `<div class="card"><div class="row"><div class="grow"><b>내 이름을 선택하세요</b><div class="mut">내 근무와 포지션을 바로 보여드려요.</div></div><button class="pill on" data-act="pickMe">선택</button></div></div>`;
+const legend = () => `<div class="row" style="flex-wrap:wrap;gap:5px;margin-top:10px">${C().positions.map(p => posChip(p.name)).join('')}</div>`;
+
+/* ───────── 오늘 ───────── */
+function vToday() {
+  const d = dayInfo(T.date), dl = pubDaily(T.date);
+  const label = new Date(T.date + 'T12:00:00').toLocaleDateString('ko-KR', {month:'long', day:'numeric', weekday:'long'});
+  let h = `<div class="card"><div class="mut">${label}</div><div class="big" style="margin:2px 0 10px">오늘 출근 ${d.on.length}명</div>`;
+  h += d.on.length ? `<div class="names">${d.on.map(x => `<span class="${x.name === S.me ? 'me' : ''}">${esc(x.name)} <small>${esc(x.v)}</small></span>`).join('')}</div>` : '<div class="mut">등록된 근무가 없어요.</div>';
+  if (d.off.length) h += `<div class="mut" style="margin-top:10px">휴무 · ${d.off.map(x => esc(x.name)).join(', ')}</div>`;
+  h += '</div>';
+  if (!S.me) h += needMe();
+  else {
+    const mine = d.on.find(x => x.name === S.me), offv = d.off.find(x => x.name === S.me);
+    h += `<div class="card"><h3>${esc(S.me)}님 오늘 <button class="link" data-act="myMonth">내 스케줄 ›</button></h3>`;
+    if (!mine) h += `<div class="row">${shiftChip(offv ? offv.v : '휴')}<span class="mut">오늘은 출근일이 아니에요</span></div>`;
+    else {
+      h += `<div class="row">${shiftChip(mine.v)}<span class="mut">근무</span></div>`;
+      if (dl) h += `<div class="strip" style="margin-top:8px">${HOURS().filter(x => works(mine, x)).map(x => `<div style="flex:0 0 auto;text-align:center;padding:3px;border-radius:9px;${x === T.hour ? 'outline:2px solid var(--ink)' : ''}"><div class="mut" style="font-size:10px">${x}시</div>${posChip(posAt(dl, S.me, x) || '미배정')}</div>`).join('')}</div>`;
+      else h += `<div class="mut" style="margin-top:8px">오늘 데일리 조닝은 아직 공개 전이에요.</div>`;
+    }
+    h += '</div>';
+  }
+  if (dl) { const hr = curHour(); h += `<div class="card"><h3>${hr === T.hour ? '지금' : hr + '시'} 배치 · ${hr}:00~${hr + 1}:00 <button class="link" data-act="go" data-v="daily">전체 ›</button></h3>${hourGroups(dl, d, hr)}</div>`; }
+  const ns = sortedNotices().slice(0, 2);
+  if (ns.length) h += `<div class="card"><h3>공지 <button class="link" data-act="go" data-v="notice">전체 ›</button></h3>${ns.map(n => `<div style="padding:4px 0" data-act="go" data-v="notice"><b>${n.pinned ? '📌 ' : ''}${esc(n.title)}</b><div class="mut">${esc(n.date || '')}</div></div>`).join('')}</div>`;
+  return h;
+}
+
+/* ───────── 먼슬리 ───────── */
+function vMonth() {
+  const ks = monthKeys(); if (!ks.includes(S.month)) S.month = T.date.slice(0, 7);
+  const days = monthDays(S.month), [y, m] = S.month.split('-'), i = ks.indexOf(S.month), adm = admin();
+  let h = `<div class="row" style="margin:6px 0"><button class="ib" data-act="mMove" data-v="-1" ${i <= 0 ? 'disabled style="opacity:.3"' : ''}>‹</button><div class="grow" style="text-align:center"><div class="big" style="font-size:19px">${y}. ${m}</div></div><button class="ib" data-act="mMove" data-v="1" ${i >= ks.length - 1 ? 'disabled style="opacity:.3"' : ''}>›</button></div>`;
+  h += `<div class="seg">${[['day','날짜별'],['mine','내 스케줄'],['table','전체 표']].map(([k, l]) => `<button data-act="mView" data-v="${k}" class="${S.mView === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  if (S.mView === 'day') {
+    if (!days.some(x => x.date === S.mDate)) S.mDate = (days.find(x => x.date === T.date) || days.find(x => x.on.length) || days[0]).date;
+    const d = days.find(x => x.date === S.mDate);
+    h += strip(days, S.mDate, 'mDate');
+    h += `<div class="card"><h3>${d.day}일 (${d.wd}) · 출근 ${d.on.length}명</h3>${d.on.map(x => `<div class="li ${x.name === S.me ? 'me' : ''}"><div class="grow"><div class="nm">${esc(x.name)}</div><div class="rl">${esc(x.role)}</div></div>${shiftChip(x.v)}</div>`).join('') || '<div class="empty">출근자 없음</div>'}</div>`;
+    if (d.off.length) h += `<div class="card"><h3>휴무</h3><div class="names">${d.off.map(x => `<span>${esc(x.name)} <small>${esc(x.v)}</small></span>`).join('')}</div></div>`;
+    if (adm) h += `<div class="mut" style="text-align:center">근무 수정은 <b>전체 표</b>에서 칸을 눌러주세요.</div>`;
+  } else if (S.mView === 'mine') {
+    if (!S.me) h += needMe();
+    else {
+      const md = (D.months[S.month] || {})[S.me] || {}, n = days.filter(x => shift(md[x.day])).length;
+      h += `<div class="card"><h3>${esc(S.me)} · 근무 ${n}일 <button class="link" data-act="pickMe">변경</button></h3>${days.map(x => `<div class="li ${x.date === T.date ? 'me' : ''}"><div style="width:60px" class="${x.wd === '일' ? 'sun' : x.wd === '토' ? 'sat' : ''}"><b>${x.day}</b> <span class="mut">${x.wd}</span></div><div class="grow"></div>${shiftChip(md[x.day])}</div>`).join('')}</div>`;
+    }
+  } else {
+    const md = D.months[S.month] || {};
+    h += `<div class="tbl" id="mtbl"><table><thead><tr><th>직원</th>${days.map(x => `<th class="${x.date === T.date ? 'tc' : ''}">${x.day}<small>${x.wd}</small></th>`).join('')}</tr></thead><tbody>`;
+    h += C().staff.map((st, si) => `<tr class="${st.name === S.me ? 'me' : ''}"><td ${adm ? 'class="tap" data-act="staff"' : ''}>${esc(st.name)}<small>${esc(st.role)}</small></td>${days.map(x => `<td class="${x.date === T.date ? 'tc' : ''} ${adm ? 'tap' : ''}" ${adm ? `data-act="cell" data-i="${si}" data-v="${x.day}"` : ''}>${shiftChip((md[st.name] || {})[x.day], true)}</td>`).join('')}</tr>`).join('');
+    h += `<tr class="tot"><td>출근</td>${days.map(x => `<td>${x.on.length}</td>`).join('')}</tr></tbody></table></div>`;
+    h += `<div class="row" style="flex-wrap:wrap;gap:5px;margin-top:10px">${C().shiftPresets.map(v => shiftChip(v)).join('')}${shiftChip('휴')}${shiftChip('요청휴무')}</div>`;
+    if (adm) h += `<div class="row" style="margin-top:12px"><button class="btn grow" data-act="staff">직원 추가·수정</button></div><div class="mut" style="margin-top:8px">칸을 누르면 바로 저장되고 직원 화면에도 바로 반영돼요.</div>`;
+  }
+  return h;
+}
+function cellSheet(si, day) {
+  const st = C().staff[si], key = S.month, md = D.months[key] || {}, cur = String((md[st.name] || {})[day] || '');
+  const [y, m] = key.split('-').map(Number), wd = WD[new Date(y, m - 1, day).getDay()], n = new Date(y, m, 0).getDate();
+  const opts = [...C().shiftPresets, ...C().absences];
+  sheet(`<h2>${esc(st.name)} · ${m}/${day}(${wd})</h2><div class="mut">현재: ${cur ? esc(cur) : '비어 있음'}</div>
+   <div class="pick">${opts.map(v => { const sty = (shiftChip(v).match(/style="([^"]*)"/) || [, '--s:0%'])[1]; return `<button data-pick="${esc(v)}" class="${v === cur ? 'sel' : ''}" style="${sty};background:hsl(var(--h,0) var(--s,0%) var(--cl));color:hsl(var(--h,0) calc(var(--s,0%)*.8) var(--cd))">${esc(v)}</button>`; }).join('')}<button data-pick="" class="${cur ? '' : 'sel'}">비우기</button></div>
+   <label class="f">직접 입력 (예: 12~20)</label><div class="row"><input type="text" id="cv" placeholder="12~20 또는 휴무명" value="${opts.includes(cur) ? '' : esc(cur)}"><button class="btn pri" id="cvOk">적용</button></div>
+   <label class="row" style="margin-top:14px;gap:8px;font-size:13px"><input type="checkbox" id="nx" style="width:20px;height:20px" ${ls.get('nx', false) ? 'checked' : ''}> 적용 후 다음 날로 이동</label>`);
+  const apply = v => {
+    v = shift(v) ? normShift(v) : String(v).trim();
+    if (v.length > 20) { toast('20자 이내로 입력하세요', true); return; }
+    const all = clone(D.months[key] || {}); const row = all[st.name] = all[st.name] || {};
+    if (v) row[day] = v; else delete row[day];
+    D.months[key] = all; render();
+    write(() => S.db.doc('months/' + key).set({staff:all}), `${st.name} ${m}/${day} 저장됨`);
+    const next = $('nx').checked; ls.set('nx', next);
+    if (next && day < n) cellSheet(si, day + 1); else closeSheet();
+  };
+  $('sheetIn').querySelectorAll('[data-pick]').forEach(b => b.onclick = () => apply(b.dataset.pick));
+  $('cvOk').onclick = () => apply($('cv').value);
+}
+function staffSheet() {
+  const list = clone(C().staff).map(s => ({...s, __src:s.name}));
+  const draw = () => sheet(`<h2>직원 관리</h2><div class="mut">이름을 바꾸면 모든 달의 근무표와 조닝에도 함께 바뀌어요.</div>
+   ${list.map((s, i) => `<div class="row" style="margin-top:10px"><input type="text" data-n="${i}" value="${esc(s.name)}" placeholder="이름" style="flex:1.3"><input type="text" data-r="${i}" value="${esc(s.role)}" placeholder="직급" style="flex:1"><button class="btn sm dan" data-del="${i}">삭제</button></div>`).join('')}
+   <div class="row" style="margin-top:14px"><button class="btn grow" id="sAdd">+ 직원 추가</button><button class="btn pri grow" id="sSave">저장</button></div>`);
+  draw();
+  const body = $('sheetIn');
+  body.oninput = e => { const d = e.target.dataset; if (d.n != null) list[+d.n].name = e.target.value; if (d.r != null) list[+d.r].role = e.target.value; };
+  body.onclick = e => {
+    const del = e.target.closest('[data-del]'); if (del) { list.splice(+del.dataset.del, 1); draw(); return; }
+    if (e.target.id === 'sAdd') { list.push({name:'', role:'', _new:true}); draw(); const ins = $('sheetIn').querySelectorAll('[data-n]'); ins[ins.length - 1].focus(); }
+    if (e.target.id === 'sSave') saveStaff(list);
+  };
+}
+async function saveStaff(list) {
+  const names = list.map(s => s.name.trim());
+  if (names.some(n => !n)) { toast('이름이 빈 칸이 있어요', true); return; }
+  if (new Set(names).size !== names.length) { toast('같은 이름이 있어요', true); return; }
+  const ren = {};
+  list.forEach(l => { if (l.__src && l.__src !== l.name.trim()) ren[l.__src] = l.name.trim(); });
+  const staff = list.map(s => ({name:s.name.trim(), role:s.role.trim()}));
+  closeSheet();
+  await write(() => S.db.doc('hub/config').set({...C(), staff}));
+  for (const [from, to] of Object.entries(ren)) {
+    for (const [k, md] of Object.entries(D.months)) if (md[from]) { const all = clone(md); all[to] = all[from]; delete all[from]; await write(() => S.db.doc('months/' + k).set({staff:all})); }
+    for (const [k, dl] of Object.entries(D.daily)) if (dl.assign && dl.assign[from]) { const nd = clone(dl); nd.assign[to] = nd.assign[from]; delete nd.assign[from]; await write(() => S.db.doc('daily/' + k).set(nd)); }
+  }
+  toast('직원 목록 저장됨');
+}
+
+/* ───────── 데일리 ───────── */
+function vDaily() {
+  const key = S.dDate.slice(0, 7), days = monthDays(key), d = days.find(x => x.date === S.dDate), adm = admin();
+  const editing = adm && S.edit && S.edit.date === S.dDate;
+  const raw = D.daily[S.dDate], dl = editing ? {assign:S.edit.assign} : adm ? raw : pubDaily(S.dDate);
+  let h = strip(days, S.dDate, 'dDate');
+  const badge = editing ? '<span class="chip" style="--h:38;--s:85%">편집 중</span>' : raw && raw.published ? '<span class="chip" style="--h:150;--s:60%">공개됨</span>' : raw && adm ? '<span class="chip" style="--h:38;--s:85%">임시 저장</span>' : '<span class="chip g">미등록</span>';
+  h += `<div class="card" style="padding:12px 14px"><div class="row"><b class="grow">${+key.slice(5)}/${d.day} (${d.wd}) · 출근 ${d.on.length}명</b>${badge}</div></div>`;
+  if (adm) {
+    h += `<div class="card"><h3>관리자 · 조닝</h3>`;
+    if (!editing) h += `<button class="btn pri" style="width:100%" data-act="edStart">${raw ? '조닝 수정하기' : '조닝 작성하기'}</button>`;
+    else h += `<div class="row"><button class="btn grow" data-act="edClose">닫기</button><button class="btn grow" data-act="edSave" data-v="0">임시 저장</button><button class="btn pri grow" data-act="edSave" data-v="1">공개</button></div><div id="warns" style="margin-top:8px">${warnHtml(d)}</div>`;
+    h += `</div>`;
+  }
+  if (!dl) return h + `<div class="card empty">이 날짜의 데일리 조닝이 아직 공개되지 않았어요.</div>` + legend();
+  const view = editing ? 'table' : S.dView;
+  if (!editing) h += `<div class="seg">${[['hour','시간대별'],['mine','내 포지션'],['table','전체 표']].map(([k, l]) => `<button data-act="dView" data-v="${k}" class="${view === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  if (view === 'hour') {
+    if (S.dHour == null || !HOURS().includes(S.dHour)) S.dHour = S.dDate === T.date ? curHour() : HOURS()[0];
+    h += `<div class="strip">${HOURS().map(x => `<button data-act="dHour" data-v="${x}" class="${x === S.dHour ? 'on' : ''}"><b>${x}</b><small>~${x + 1}시</small></button>`).join('')}</div><div class="card">${hourGroups(dl, d, S.dHour)}</div>`;
+  } else if (view === 'mine') {
+    const mine = d.on.find(x => x.name === S.me);
+    if (!S.me) h += needMe();
+    else if (!mine) h += `<div class="card empty">${esc(S.me)}님은 이 날 근무가 아니에요.</div>`;
+    else h += `<div class="card"><h3>${esc(S.me)} · ${esc(mine.v)}</h3>${HOURS().filter(x => works(mine, x)).map(x => `<div class="li ${S.dDate === T.date && x === T.hour ? 'me' : ''}"><div style="width:96px"><b>${x}:00</b><span class="mut"> ~${x + 1}:00</span></div><div class="grow"></div>${posChip(posAt(dl, S.me, x) || '미배정')}</div>`).join('')}</div>`;
+  } else {
+    const opts = ['미배정', ...C().positions.map(p => p.name)];
+    h += `<div class="tbl" id="dtbl"><table><thead><tr><th>시간</th>${d.on.map(x => `<th>${esc(x.name)}<small>${esc(x.v)}</small></th>`).join('')}</tr></thead><tbody>${HOURS().map((hr, hi) => `<tr><td><b>${hr}</b><small>~${hr + 1}시</small></td>${d.on.map(x => {
+      if (!works(x, hr)) return '<td><span class="chip g">·</span></td>';
+      const p = posAt(dl, x.name, hr) || '미배정';
+      return editing ? `<td><select data-ed="${esc(x.name)}" data-hi="${hi}" style="${posStyle(p)}">${opts.map(o => `<option ${o === p ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></td>` : `<td>${posChip(p)}</td>`;
+    }).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }
+  return h + legend();
+}
+function warnHtml(d) {
+  if (!S.edit) return '';
+  const w = [], P = C().positions.map(p => p.name);
+  HOURS().forEach((hr, hi) => {
+    const v = d.on.filter(x => works(x, hr)).map(x => (S.edit.assign[x.name] || [])[hi] || '미배정');
+    const f1 = v.filter(x => x.startsWith('1F')).length, f2 = v.filter(x => x.startsWith('2F')).length;
+    if (P.some(p => p.startsWith('1F')) && v.length && f1 < 1) w.push(`${hr}시 · 1층 인원 없음`);
+    if (P.some(p => p.startsWith('2F')) && v.length && f2 < 1) w.push(`${hr}시 · 2층 인원 없음`);
+    if (P.includes('2F 캐셔') && f2 > 0 && !v.includes('2F 캐셔')) w.push(`${hr}시 · 2층 캐셔 없음`);
+    const un = v.filter(x => x === '미배정').length; if (un) w.push(`${hr}시 · 미배정 ${un}명`);
+  });
+  if (P.includes('휴게')) d.on.forEach(x => { if (x.sh.e - x.sh.s >= 6) { const br = (S.edit.assign[x.name] || []).filter(p => p === '휴게').length; if (br !== 1) w.push(`${x.name} · 휴게 ${br}시간 (기준 1시간)`); } });
+  return w.length ? `<details ${w.length <= 3 ? 'open' : ''}><summary class="warn" style="cursor:pointer;list-style:none">⚠ 확인 필요 ${w.length}건</summary>${w.map(x => `<div class="warn">${esc(x)}</div>`).join('')}</details>` : '<div class="okm">배치 경고 없음</div>';
+}
+function edStart() {
+  const d = dayInfo(S.dDate), raw = D.daily[S.dDate], hs = HOURS(), P = C().positions.map(p => p.name), assign = {};
+  d.on.forEach(x => { const old = (raw && raw.assign && raw.assign[x.name]) || []; assign[x.name] = hs.map((hr, hi) => works(x, hr) ? (P.includes(old[hi]) ? old[hi] : '미배정') : null); });
+  S.edit = {date:S.dDate, assign}; S.dView = 'table'; render();
+}
+async function edSave(pub) {
+  if (pub && !(await ask('이 조닝을 직원에게 공개할까요?', '공개'))) return;
+  const date = S.edit.date, body = {published:pub, assign:clone(S.edit.assign), updated:new Date().toISOString()};
+  D.daily[date] = body; if (pub) S.edit = null; render();
+  write(() => S.db.doc('daily/' + date).set(body), pub ? '공개 완료 · 직원 화면에 반영됐어요' : '임시 저장됨');
+}
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.ed != null && S.edit) { S.edit.assign[t.dataset.ed][+t.dataset.hi] = t.value; t.setAttribute('style', posStyle(t.value)); const w = $('warns'); if (w) w.innerHTML = warnHtml(dayInfo(S.dDate)); }
+});
+
+/* ───────── 공지 ───────── */
+const sortedNotices = () => [...D.notices].sort((a, b) => (+!!b.pinned) - (+!!a.pinned) || String(b.date || '').localeCompare(String(a.date || '')));
+function vNotice() {
+  let h = admin() ? `<button class="btn pri" style="width:100%;margin:6px 0" data-act="nNew">+ 공지 작성</button>` : '';
+  const list = sortedNotices();
+  h += list.length ? list.map(n => `<div class="card notice"><div class="row" style="align-items:flex-start"><div class="grow"><div class="tt">${n.pinned ? '📌 ' : ''}${esc(n.title)}</div><div class="mut">${esc(n.date || '')}</div></div>${admin() ? `<button class="btn sm" data-act="nEdit" data-v="${esc(n.id)}">수정</button>` : ''}</div><div class="bd">${esc(n.body)}</div></div>`).join('') : '<div class="card empty">등록된 공지가 없어요.</div>';
+  if (C().guide) h += `<div class="card"><h3>매장 운영 가이드</h3><div class="guide">${esc(C().guide)}</div></div>`;
+  return h;
+}
+function noticeSheet(n) {
+  sheet(`<h2>${n ? '공지 수정' : '공지 작성'}</h2><label class="f">제목</label><input type="text" id="nt" maxlength="100" value="${esc(n ? n.title : '')}"><label class="f">내용</label><textarea id="nb" maxlength="2000" style="min-height:170px">${esc(n ? n.body : '')}</textarea>
+   <label class="row" style="margin:12px 0;gap:8px;font-size:13px"><input type="checkbox" id="np" ${n && n.pinned ? 'checked' : ''} style="width:20px;height:20px"> 상단 고정</label>
+   <div class="row">${n ? '<button class="btn dan" id="nd">삭제</button>' : ''}<button class="btn grow" id="nc">취소</button><button class="btn pri grow" id="ns">${n ? '수정 저장' : '등록'}</button></div>`);
+  $('nc').onclick = closeSheet;
+  $('ns').onclick = () => {
+    const title = $('nt').value.trim(), body = $('nb').value.trim(); if (!title || !body) { toast('제목과 내용을 입력하세요', true); return; }
+    const id = n ? n.id : 'n' + Date.now(), doc = {title, body, pinned:$('np').checked, date:n ? n.date : T.date};
+    closeSheet(); write(() => S.db.doc('notices/' + id).set(doc), '공지 저장됨');
+  };
+  if (n) $('nd').onclick = async () => { if (await ask(`「${n.title}」 공지를 삭제할까요?`, '삭제', true)) write(() => S.db.doc('notices/' + n.id).delete(), '삭제됨'); };
+}
+
+/* ───────── 설정 (관리자) ───────── */
+function vSet() {
+  const c = C();
+  return `<div class="card"><h3>매장 설정</h3><div class="mut">저장하면 모든 직원 화면에 바로 반영돼요.</div>
+   <label class="f">매장 이름</label><input type="text" id="sN" value="${esc(c.store)}">
+   <label class="f">조닝 시간</label><div class="row"><input type="number" id="sO" min="0" max="23" value="${c.hours.open}"><span>~</span><input type="number" id="sC" min="1" max="24" value="${c.hours.close}"><span class="mut">시</span></div>
+   <label class="f">포지션 (한 줄에 하나 · 1F/2F로 시작하면 층 경고에 포함)</label><textarea id="sP">${esc(c.positions.map(p => p.name).join('\n'))}</textarea>
+   <label class="f">근무시간 선택지 (한 줄에 하나)</label><textarea id="sS">${esc(c.shiftPresets.join('\n'))}</textarea>
+   <label class="f">휴무 종류 (한 줄에 하나)</label><textarea id="sA" style="min-height:80px">${esc(c.absences.join('\n'))}</textarea>
+   <label class="f">매장 운영 가이드</label><textarea id="sG" style="min-height:140px">${esc(c.guide)}</textarea>
+   <button class="btn pri" style="width:100%;margin-top:14px" data-act="saveSet">설정 저장</button></div>
+   <div class="card"><h3>링크</h3><div class="mut" style="line-height:1.7">직원용: 이 페이지 주소 그대로<br>관리자용: 주소 끝에 <b>#admin</b></div></div>`;
+}
+function saveSet() {
+  const lines = id => $(id).value.split('\n').map(x => x.trim()).filter(Boolean);
+  const o = +$('sO').value, cl = +$('sC').value;
+  if (!(o >= 0 && cl <= 24 && cl > o)) { toast('조닝 시간을 확인하세요', true); return; }
+  const old = C().positions, pos = [...new Set(lines('sP'))].map((name, i) => old.find(p => p.name === name) || {name, hue:name === '휴게' ? 0 : HUES[i % HUES.length], gray:name === '휴게'});
+  const presets = lines('sS').map(normShift);
+  if (presets.some(p => !shift(p))) { toast('근무시간은 11~20 형식으로 입력하세요', true); return; }
+  const cfg = {...C(), store:$('sN').value.trim() || '매장', hours:{open:o, close:cl}, positions:pos, shiftPresets:presets, absences:lines('sA'), guide:$('sG').value.trim()};
+  D.config = cfg; render(); write(() => S.db.doc('hub/config').set(cfg), '설정 저장됨');
+}
+
+/* ───────── 렌더 ───────── */
+function pickMe() {
+  sheet(`<h2>내 이름 선택</h2><div class="mut">이 휴대폰에만 기억돼요.</div><div class="pick">${C().staff.map(s => `<button data-me="${esc(s.name)}" class="${s.name === S.me ? 'sel' : ''}">${esc(s.name)}</button>`).join('')}</div>${S.me ? '<button class="btn" style="width:100%" data-me="">선택 해제</button>' : ''}`);
+}
+function render() {
+  const adm = admin();
+  $('ttl').textContent = C().store;
+  $('meBtn').textContent = S.me || '내 이름'; $('meBtn').classList.toggle('on', !!S.me);
+  $('setTab').style.display = adm ? '' : 'none';
+  if (!adm && S.tab === 'set') S.tab = 'today';
+  if (!adm) S.edit = null;
+  document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === S.tab));
+  let bars = '';
+  if (adm) bars += `<div class="adminbar">관리자 모드 · 수정하면 바로 저장돼요<button data-act="toStaff">직원 화면 보기</button></div>`;
+  else if (S.canEdit) bars += `<div class="adminbar" style="background:var(--soft);color:var(--ink)">직원 화면으로 보는 중<button data-act="toAdmin">관리자 모드</button></div>`;
+  if (S.slow) bars += `<div class="note">연결이 느려요. ${S.ready ? '마지막으로 받은 내용을 보여주고 있어요.' : ''} 잠시 후 새로고침을 눌러주세요.</div>`;
+  $('bars').innerHTML = bars;
+  if (!S.ready && !D.config) { $('view').innerHTML = `<div class="card empty">${S.offline ? '로그인이 필요해요.' : '불러오는 중…'}</div>`; return; }
+  const tbl = $('mtbl') || $('dtbl'), keep = tbl ? [tbl.id, tbl.scrollLeft, tbl.scrollTop] : null;
+  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet})[S.tab]();
+  $('foot').textContent = D.updated ? '마지막 업데이트 ' + D.updated : '';
+  document.querySelectorAll('.strip').forEach(s => { const o = s.querySelector('.on'); if (o) s.scrollLeft = o.offsetLeft - s.clientWidth / 2 + o.clientWidth / 2; });
+  const nt = $('mtbl') || $('dtbl');
+  if (nt && keep && keep[0] === nt.id) { nt.scrollLeft = keep[1]; nt.scrollTop = keep[2]; }
+  else if (nt && nt.id === 'mtbl') { const c = nt.querySelector('th.tc'); if (c) nt.scrollLeft = c.offsetLeft - nt.querySelector('th').offsetWidth; }
+}
+$('meBtn').onclick = pickMe;
+$('refBtn').onclick = refresh;
+addEventListener('hashchange', render);
+document.addEventListener('click', async e => {
+  const me = e.target.closest('[data-me]');
+  if (me) { S.me = me.dataset.me; ls.set('me', S.me); closeSheet(); render(); return; }
+  const tb = e.target.closest('[data-tab]'); if (tb) { S.tab = tb.dataset.tab; scrollTo(0, 0); render(); return; }
+  const a = e.target.closest('[data-act]'); if (!a) return; const v = a.dataset.v;
+  switch (a.dataset.act) {
+    case 'pickMe': pickMe(); return;
+    case 'go': S.tab = v; scrollTo(0, 0); break;
+    case 'myMonth': S.tab = 'month'; S.mView = 'mine'; scrollTo(0, 0); break;
+    case 'mMove': { const ks = monthKeys(); S.month = ks[ks.indexOf(S.month) + +v] || S.month; break; }
+    case 'mView': S.mView = v; ls.set('mView', v); break;
+    case 'mDate': S.mDate = v; break;
+    case 'cell': cellSheet(+a.dataset.i, +v); return;
+    case 'staff': staffSheet(); return;
+    case 'dDate': if (S.edit && !(await ask('편집 중인 조닝을 저장하지 않고 이동할까요?', '이동', true))) return; S.edit = null; S.dDate = v; S.dHour = null; break;
+    case 'dView': S.dView = v; ls.set('dView', v); break;
+    case 'dHour': S.dHour = +v; break;
+    case 'edStart': edStart(); return;
+    case 'edClose': if (await ask('편집을 닫을까요? 저장하지 않은 내용은 사라져요.', '닫기', true)) S.edit = null; break;
+    case 'edSave': edSave(v === '1'); return;
+    case 'nNew': noticeSheet(null); return;
+    case 'nEdit': noticeSheet(D.notices.find(n => n.id === v)); return;
+    case 'saveSet': saveSet(); return;
+    case 'toAdmin': location.hash = 'admin'; return;
+    case 'toStaff': history.replaceState(null, '', location.pathname + location.search); break;
+  }
+  render();
+});
+let lastLoad = Date.now();
+document.addEventListener('visibilitychange', () => { if (!document.hidden && unlocked()) { T = now(); render(); if (Date.now() - lastLoad > 60000) { lastLoad = Date.now(); loadData(); } } });
+
+
+/* ───────── 매장 공용 비밀번호 (한 번 입력하면 이 휴대폰에서 30일 유지) ───────── */
+const PASS_HASH = 'a2c7450f16ee375a8075593072523ad4f2c60ab32e887c47ce2310e793eb30b3';
+async function sha(t) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+function unlocked() { const u = ls.get('unlock', null); return u && u.h === PASS_HASH && u.until > Date.now(); }
+async function tryUnlock() {
+  if ((await sha($('gpw').value.trim())) !== PASS_HASH) { $('gerr').textContent = '비밀번호가 맞지 않아요.'; return; }
+  ls.set('unlock', {h:PASS_HASH, until:Date.now() + 30 * 864e5}); $('gate').style.display = 'none'; render(); loadData();
+}
+$('gok').onclick = tryUnlock; $('gpw').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+if (unlocked()) { render(); loadData(); } else { $('gate').style.display = 'flex'; }
+</script>
+</body>
+</html>
