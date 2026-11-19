@@ -75,6 +75,7 @@ label.f{display:block;font-size:12px;color:var(--mut);margin:12px 0 5px;font-wei
 .tbl thead th:first-child{z-index:3;background:var(--soft)}
 .tbl .chip{padding:3px 4px;font-size:10.5px;border-radius:5px;min-width:38px}
 .tbl .tc{background:color-mix(in srgb,var(--ink) 7%,transparent)}
+.tbl th.wsun,.tbl th.wsun small{color:#d23}.tbl th.wsat,.tbl th.wsat small{color:#36c}
 .tbl tr.tot td{background:var(--soft);font-weight:700}
 .tbl tr.me td:first-child{font-weight:800}
 .tbl td.tap{cursor:pointer}
@@ -309,7 +310,7 @@ function vMonth() {
     }
   } else {
     const md = D.months[S.month] || {};
-    h += `<div class="tbl" id="mtbl"><table><thead><tr><th>직원</th>${days.map(x => `<th class="${x.date === T.date ? 'tc' : ''}">${x.day}<small>${x.wd}</small></th>`).join('')}</tr></thead><tbody>`;
+    h += `<div class="tbl" id="mtbl"><table><thead><tr><th>직원</th>${days.map(x => `<th class="${x.date === T.date ? 'tc' : ''} ${x.wd === '일' ? 'wsun' : x.wd === '토' ? 'wsat' : ''}">${x.day}<small>${x.wd}</small></th>`).join('')}</tr></thead><tbody>`;
     h += C().staff.map((st, si) => `<tr class="${st.name === S.me ? 'me' : ''}"><td ${adm ? 'class="tap" data-act="staff"' : ''}>${esc(st.name)}<small>${esc(st.role)}</small></td>${days.map(x => `<td class="${x.date === T.date ? 'tc' : ''} ${adm ? 'tap' : ''}" ${adm ? `data-act="cell" data-i="${si}" data-v="${x.day}"` : ''}>${shiftChip((md[st.name] || {})[x.day], true)}</td>`).join('')}</tr>`).join('');
     h += `<tr class="tot"><td>출근</td>${days.map(x => `<td>${x.on.length}</td>`).join('')}</tr></tbody></table></div>`;
     h += `<div class="row" style="flex-wrap:wrap;gap:5px;margin-top:10px">${C().shiftPresets.map(v => shiftChip(v)).join('')}${shiftChip('휴')}${shiftChip('요청휴무')}</div>`;
@@ -503,7 +504,7 @@ function render() {
   document.querySelectorAll('.strip').forEach(s => { const o = s.querySelector('.on'); if (o) s.scrollLeft = o.offsetLeft - s.clientWidth / 2 + o.clientWidth / 2; });
   const nt = $('mtbl') || $('dtbl');
   if (nt && keep && keep[0] === nt.id) { nt.scrollLeft = keep[1]; nt.scrollTop = keep[2]; }
-  else if (nt && nt.id === 'mtbl') { const c = nt.querySelector('th.tc'); if (c) nt.scrollLeft = c.offsetLeft - nt.querySelector('th').offsetWidth; }
+  else if (nt && nt.id === 'mtbl') { const c = nt.querySelector('th.tc'); if (c) nt.scrollLeft += c.getBoundingClientRect().left - nt.querySelector('th').getBoundingClientRect().right; }
 }
 $('meBtn').onclick = pickMe;
 $('refBtn').onclick = refresh;
