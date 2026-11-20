@@ -268,7 +268,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-9';
+const APP_VER = '2026.11.21-10';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -668,7 +668,8 @@ const ckUrl = () => C().checkUrl || '';
 const ckItems = part => { const c = (C().checklist || {})[part] || {}; return Object.entries(c); };
 const ckAll = part => ckItems(part).flatMap(([, l]) => l);
 function ckDone(part) { const all = ckAll(part); return [all.filter(i => CK.checks[i.id]).length, all.length]; }
-function ckSummary() { if (!ckUrl()) return '오픈 · 마감'; if (!CK.loaded || CK.date !== T.date) { ckLoad(); return '오픈 · 마감'; } const [a, b] = ckDone('open'), [c, e] = ckDone('close'); return `오픈 ${a}/${b} · 마감 ${c}/${e}`; }
+function ckLocal() { if (CK.date !== T.date || !CK.loaded) { CK.date = T.date; CK.checks = ls.get('ck_' + T.date, {}); CK.loaded = true; } }
+function ckSummary() { if (!ckUrl()) { ckLocal(); const [a, b] = ckDone('open'), [c, e] = ckDone('close'); return `오픈 ${a}/${b} · 마감 ${c}/${e}`; } if (!CK.loaded || CK.date !== T.date) { ckLoad(); return '오픈 · 마감'; } const [a, b] = ckDone('open'), [c, e] = ckDone('close'); return `오픈 ${a}/${b} · 마감 ${c}/${e}`; }
 async function ckLoad(quiet) {
   if (!ckUrl() || CK.loading) return; CK.loading = true;
   try { const r = await fetch(ckUrl() + '?date=' + T.date + '&t=' + Date.now()); const j = await r.json(); if (!j.ok) throw Error(j.error); if (!Object.keys(CK.busy).length) { CK.checks = j.checks || {}; } CK.date = j.date; CK.loaded = true; CK.err = ''; CK.at = Date.now(); }
@@ -678,6 +679,7 @@ async function ckLoad(quiet) {
 async function ckToggle(id) {
   if (!S.me) { toast('먼저 오른쪽 위에서 내 이름을 선택해 주세요', true); pickMe(); return; }
   const cur = CK.checks[id], on = !cur;
+  if (!ckUrl()) { if (on) CK.checks[id] = {by:S.me, at:new Date().toISOString()}; else delete CK.checks[id]; ls.set('ck_' + T.date, CK.checks); render(); return; }
   if (cur && cur.by && cur.by !== S.me && !(await ask(`${cur.by}님이 체크한 항목이에요. 체크를 해제할까요?`, '해제', true))) return;
   CK.busy[id] = 1; if (on) CK.checks[id] = {by:S.me, at:new Date().toISOString()}; else delete CK.checks[id]; render();
   try { const r = await fetch(ckUrl(), {method:'POST', body:JSON.stringify({date:T.date, id, checked:on, by:S.me})}); const j = await r.json(); if (!j.ok) throw Error(j.error); delete CK.busy[id]; CK.checks = j.checks || {}; }
@@ -687,20 +689,21 @@ async function ckToggle(id) {
 function ckPoll() { clearInterval(CK.timer); CK.timer = setInterval(() => { if (S.tab === 'check' && !document.hidden) ckLoad(true); }, 15000); }
 function vCheck() {
   if (CK.date !== T.date) { CK.loaded = false; CK.checks = {}; }
+  if (!ckUrl()) ckLocal();
   if (ckUrl() && (!CK.loaded || Date.now() - (CK.at || 0) > 5000)) ckLoad(); ckPoll();
   if (!S.ckPart) S.ckPart = T.hour < 15 ? 'open' : 'close';
   const part = S.ckPart, label = new Date(T.date + 'T12:00:00').toLocaleDateString('ko-KR', {month:'long', day:'numeric', weekday:'short'});
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">체크리스트</b><span class="mut">${label}</span></div>`;
-  if (!ckUrl()) h += `<div class="note">체크 저장 서버를 연결하는 중이에요. 연결되면 체크할 수 있어요.</div>`;
+  if (!ckUrl()) h += `<div class="note">임시 모드예요. 지금은 <b>이 폰에서만</b> 체크가 저장되고 다른 직원 폰에는 보이지 않아요. 곧 모두에게 공유되도록 바뀌어요.</div>`;
   else if (CK.err) h += `<div class="warn">${esc(CK.err)}</div>`;
   h += `<div class="seg">${[['open', '오픈'], ['close', '마감']].map(([k, l]) => { const [a, b] = ckDone(k); return `<button data-act="ckPart" data-v="${k}" class="${part === k ? 'on' : ''}">${l} ${CK.loaded ? `<span style="opacity:.6">${a}/${b}</span>` : ''}</button>`; }).join('')}</div>`;
   if (!S.me) h += `<div class="note">체크하려면 오른쪽 위 <b>내 이름</b>을 먼저 선택해 주세요.</div>`;
   for (const [floor, items] of ckItems(part)) {
     const done = items.filter(i => CK.checks[i.id]).length;
     h += `<div class="card" style="padding:6px 14px"><h3 style="margin:8px 0 4px">${esc(floor === '1F' ? '1층' : floor === '2F' ? '2층' : floor)} <span class="mut">${done}/${items.length}</span></h3>${items.map(i => { const c = CK.checks[i.id], t = c && c.at ? new Date(c.at).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false}) : '';
-      return `<button class="li" style="width:100%;text-align:left" data-act="ck" data-v="${esc(i.id)}" ${ckUrl() ? '' : 'disabled'}><span class="ckbox ${c ? 'on' : ''}">${c ? '✓' : ''}</span><div class="grow"><div class="nm" style="${c ? 'color:var(--mut);text-decoration:line-through' : ''}">${esc(i.text)}</div>${c ? `<div class="rl" style="color:var(--ok);font-weight:650">${esc(c.by || '')} · ${t}</div>` : ''}</div></button>`; }).join('')}</div>`;
+      return `<button class="li" style="width:100%;text-align:left" data-act="ck" data-v="${esc(i.id)}"><span class="ckbox ${c ? 'on' : ''}">${c ? '✓' : ''}</span><div class="grow"><div class="nm" style="${c ? 'color:var(--mut);text-decoration:line-through' : ''}">${esc(i.text)}</div>${c ? `<div class="rl" style="color:var(--ok);font-weight:650">${esc(c.by || '')} · ${t}</div>` : ''}</div></button>`; }).join('')}</div>`;
   }
-  h += `<div class="mut" style="text-align:center;margin-top:6px">체크하면 모든 직원 폰에 바로 보여요 · 매일 새로 시작해요</div>`;
+  h += `<div class="mut" style="text-align:center;margin-top:6px">${ckUrl() ? '체크하면 모든 직원 폰에 바로 보여요 · ' : ''}매일 새로 시작해요</div>`;
   return h;
 }
 function vManual() {
