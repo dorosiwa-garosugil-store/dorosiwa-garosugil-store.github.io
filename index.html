@@ -81,7 +81,7 @@ label.f{display:block;font-size:12px;color:var(--mut);margin:12px 0 5px;font-wei
 .tbl{--sw:38px}@media (min-width:900px){.tbl{--sw:48px}}
 .tbl thead .sr{z-index:3;background:var(--soft);font-weight:700}
 .tbl tr.tot .sr{background:var(--soft)}
-.tbl .sr0{right:calc(var(--sw) * 3);box-shadow:-2px 0 0 var(--edge)}.tbl .sr1{right:calc(var(--sw) * 2)}.tbl .sr2{right:var(--sw)}.tbl .sr3{right:0}
+.tbl .sr0{right:calc(var(--sw) * 3);box-shadow:-2px 0 0 var(--edge)}.tbl .srl{box-shadow:-2px 0 0 var(--edge)}.tbl .sr1{right:calc(var(--sw) * 2)}.tbl .sr2{right:var(--sw)}.tbl .sr3{right:0}
 .tbl tr.tot td{background:var(--soft);font-weight:700}
 .tbl tr.me td:first-child{font-weight:800}
 .tbl td.tap{cursor:pointer}
@@ -259,7 +259,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-3';
+const APP_VER = '2026.11.21-4';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -482,9 +482,9 @@ function vMonth() {
     }
   } else {
     const md = D.months[S.month] || {};
-    h += `<div class="tbl" id="mtbl"><table><thead><tr><th>직원</th>${days.map(x => `<th class="${x.date === T.date ? 'tc' : ''} ${x.wd === '일' || x.hol ? 'wsun' : x.wd === '토' ? 'wsat' : ''}" ${x.hol ? `title="${esc(x.hol)}"` : ''}>${x.day}<small>${x.hol ? '공휴' : x.wd}</small></th>`).join('')}${adm ? STAT_HEAD : ''}</tr></thead><tbody>`;
-    h += C().staff.map((st, si) => `<tr class="${st.name === S.me ? 'me' : ''}"><td ${adm ? 'class="tap" data-act="staff"' : ''}>${esc(st.name)}<small>${esc(st.role)}</small></td>${days.map(x => `<td class="${x.date === T.date ? 'tc' : ''} ${adm ? 'tap' : ''}" ${adm ? `data-act="cell" data-i="${si}" data-v="${x.day}"` : ''}>${shiftChip((md[st.name] || {})[x.day], true)}</td>`).join('')}${adm ? statCells(md[st.name] || {}, days) : ''}</tr>`).join('');
-    h += `<tr class="tot"><td>출근</td>${days.map(x => `<td>${x.on.length}</td>`).join('')}${adm ? '<td class="sr sr0"></td><td class="sr sr1"></td><td class="sr sr2"></td><td class="sr sr3"></td>' : ''}</tr></tbody></table></div>`;
+    h += `<div class="tbl" id="mtbl"><table><thead><tr><th>직원</th>${days.map(x => `<th class="${x.date === T.date ? 'tc' : ''} ${x.wd === '일' || x.hol ? 'wsun' : x.wd === '토' ? 'wsat' : ''}" ${x.hol ? `title="${esc(x.hol)}"` : ''}>${x.day}<small>${x.hol ? '공휴' : x.wd}</small></th>`).join('')}${adm ? STAT_HEAD : STAT_HEAD_S}</tr></thead><tbody>`;
+    h += C().staff.map((st, si) => `<tr class="${st.name === S.me ? 'me' : ''}"><td ${adm ? 'class="tap" data-act="staff"' : ''}>${esc(st.name)}<small>${esc(st.role)}</small></td>${days.map(x => `<td class="${x.date === T.date ? 'tc' : ''} ${adm ? 'tap' : ''}" ${adm ? `data-act="cell" data-i="${si}" data-v="${x.day}"` : ''}>${shiftChip((md[st.name] || {})[x.day], true)}</td>`).join('')}${adm ? statCells(md[st.name] || {}, days) : statCells(md[st.name] || {}, days, true)}</tr>`).join('');
+    h += `<tr class="tot"><td>출근</td>${days.map(x => `<td>${x.on.length}</td>`).join('')}${adm ? '<td class="sr sr0"></td><td class="sr sr1"></td><td class="sr sr2"></td><td class="sr sr3"></td>' : '<td class="sr sr2"></td><td class="sr sr3"></td>'}</tr></tbody></table></div>`;
     if (adm) { const rq = needOff(days); h += `<div class="mut" style="margin-top:8px">이번 달 필요 휴무 <b>${rq.total}일</b> = 주말 ${rq.weekend}일 + 평일 빨간날 ${rq.hol}일${rq.names.length ? ` (${rq.names.map(esc).join(', ')})` : ''} · 휴무는 ${C().restTypes.map(esc).join('·')}만 셉니다 (연차 등은 기타)</div>`; }
     h += `<div class="row" style="flex-wrap:wrap;gap:5px;margin-top:10px">${C().shiftPresets.map(v => shiftChip(v)).join('')}${shiftChip('휴')}${shiftChip('요청휴무')}</div>`;
     if (adm) h += `<div class="row" style="margin-top:12px"><button class="btn grow" data-act="staff">직원 추가·수정</button></div><div class="mut" style="margin-top:8px">칸을 눌러 고친 뒤 아래 <b>저장</b>을 누르면 직원 화면에 반영돼요.</div>`;
@@ -492,16 +492,18 @@ function vMonth() {
   return h;
 }
 /* 관리자용: 직원별 근무·휴무 집계와 필요 휴무 (주말 + 평일 공휴일) */
+const STAT_HEAD_S = '<th class="sr sr2 srl">근무</th><th class="sr sr3">휴무</th>';
 const STAT_HEAD = '<th class="sr sr0">근무</th><th class="sr sr1">휴무</th><th class="sr sr2">필요</th><th class="sr sr3">차이</th>';
 function needOff(days) {
   const weekend = days.filter(x => x.wd === '토' || x.wd === '일').length;
   const hd = days.filter(x => x.hol && x.wd !== '토' && x.wd !== '일');
   return {weekend, hol:hd.length, total:weekend + hd.length, names:hd.map(x => `${x.day}일 ${x.hol}`)};
 }
-function statCells(row, days) {
+function statCells(row, days, simple) {
   const rest = C().restTypes || ['휴', '요청휴무', '대휴'];
   let work = 0, off = 0, etc = 0, blank = 0;
   days.forEach(x => { const v = String(row[x.day] || '').trim(); if (!v) blank++; else if (shift(v)) work++; else if (rest.includes(v)) off++; else etc++; });
+  if (simple) return `<td class="sr sr2 srl"><b>${work}</b></td><td class="sr sr3"><b>${off}</b></td>`;
   const need = needOff(days).total, diff = off - need;
   const dc = diff === 0 ? '<b style="color:var(--ok)">✓</b>' : diff < 0 ? `<b style="color:var(--dan)">${diff}</b>` : `<b style="color:#c77700">+${diff}</b>`;
   return `<td class="sr sr0"><b>${work}</b>${blank ? `<small>빈${blank}</small>` : ''}</td><td class="sr sr1"><b>${off}</b>${etc ? `<small>기타${etc}</small>` : ''}</td><td class="sr sr2">${need}</td><td class="sr sr3">${dc}</td>`;
