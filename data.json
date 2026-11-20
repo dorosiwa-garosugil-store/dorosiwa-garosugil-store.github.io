@@ -178,6 +178,42 @@
       {
        "id": "o1-beam",
        "text": "빔 프로젝터 켜기"
+      },
+      {
+       "id": "o1-pos",
+       "text": "POS 시재 확인 및 켜기"
+      },
+      {
+       "id": "o1-music",
+       "text": "음악 켜기"
+      },
+      {
+       "id": "o1-hvac",
+       "text": "냉·난방기 켜기",
+       "note": "실내 온도 보고 조절"
+      },
+      {
+       "head": "청소"
+      },
+      {
+       "id": "o1-cl-mirror",
+       "text": "거울 얼룩 닦기"
+      },
+      {
+       "id": "o1-cl-floor",
+       "text": "바닥 밀대 밀기"
+      },
+      {
+       "id": "o1-cl-drawer",
+       "text": "서랍장 먼지 제거"
+      },
+      {
+       "id": "o1-cl-mannequin",
+       "text": "마네킹 먼지 털기"
+      },
+      {
+       "id": "o1-cl-dp",
+       "text": "DP 상품 먼지 제거"
       }
      ]
     },
@@ -187,44 +223,37 @@
       {
        "id": "o2-pos",
        "text": "POS 시재 확인 및 켜기"
-      }
-     ]
-    },
-    {
-     "title": "공통",
-     "items": [
+      },
       {
-       "id": "o-music",
+       "id": "o2-music",
        "text": "음악 켜기"
       },
       {
-       "id": "o-hvac",
+       "id": "o2-hvac",
        "text": "냉·난방기 켜기",
        "note": "실내 온도 보고 조절"
-      }
-     ]
-    },
-    {
-     "title": "청소",
-     "items": [
+      },
       {
-       "id": "o-cl-mirror",
+       "head": "청소"
+      },
+      {
+       "id": "o2-cl-mirror",
        "text": "거울 얼룩 닦기"
       },
       {
-       "id": "o-cl-floor",
+       "id": "o2-cl-floor",
        "text": "바닥 밀대 밀기"
       },
       {
-       "id": "o-cl-drawer",
+       "id": "o2-cl-drawer",
        "text": "서랍장 먼지 제거"
       },
       {
-       "id": "o-cl-mannequin",
+       "id": "o2-cl-mannequin",
        "text": "마네킹 먼지 털기"
       },
       {
-       "id": "o-cl-dp",
+       "id": "o2-cl-dp",
        "text": "DP 상품 먼지 제거"
       }
      ]
@@ -790,5 +819,5 @@
   }
  },
  "notices": [],
- "appVersion": "2026.11.21-11"
+ "appVersion": "2026.11.21-12"
 }

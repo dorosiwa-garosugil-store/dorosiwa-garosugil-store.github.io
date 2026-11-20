@@ -268,7 +268,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-11';
+const APP_VER = '2026.11.21-12';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -667,7 +667,7 @@ const CK = {date:null, checks:{}, loaded:false, busy:{}, err:'', timer:null};
 const ckUrl = () => C().checkUrl || '';
 const ckItems = part => { const c = (C().checklist || {})[part] || []; return Array.isArray(c) ? c.map(g => [g.title, g.items || []]) : Object.entries(c).map(([k, v]) => [k === '1F' ? '1층' : k === '2F' ? '2층' : k, v]); };
 const ckText = id => { for (const part of ['open', 'close']) for (const [, l] of ckItems(part)) { const i = l.find(x => x.id === id); if (i) return i.text; } return ''; };
-const ckAll = part => ckItems(part).flatMap(([, l]) => l);
+const ckAll = part => ckItems(part).flatMap(([, l]) => l.filter(i => i.id));
 function ckDone(part) { const all = ckAll(part); return [all.filter(i => CK.checks[i.id]).length, all.length]; }
 function ckLocal() { if (CK.date !== T.date || !CK.loaded) { CK.date = T.date; CK.checks = ls.get('ck_' + T.date, {}); CK.loaded = true; } }
 function ckSummary() { if (!ckUrl()) { ckLocal(); const [a, b] = ckDone('open'), [c, e] = ckDone('close'); return `오픈 ${a}/${b} · 마감 ${c}/${e}`; } if (!CK.loaded || CK.date !== T.date) { ckLoad(); return '오픈 · 마감'; } const [a, b] = ckDone('open'), [c, e] = ckDone('close'); return `오픈 ${a}/${b} · 마감 ${c}/${e}`; }
@@ -701,8 +701,8 @@ function vCheck() {
   h += `<div class="seg">${[['open', '오픈'], ['close', '마감']].map(([k, l]) => { const [a, b] = ckDone(k); return `<button data-act="ckPart" data-v="${k}" class="${part === k ? 'on' : ''}">${l} ${CK.loaded ? `<span style="opacity:.6">${a}/${b}</span>` : ''}</button>`; }).join('')}</div>`;
   if (!S.me) h += `<div class="note">체크하려면 오른쪽 위 <b>내 이름</b>을 먼저 선택해 주세요.</div>`;
   for (const [floor, items] of ckItems(part)) {
-    const done = items.filter(i => CK.checks[i.id]).length;
-    h += `<div class="card" style="padding:6px 14px"><h3 style="margin:8px 0 4px">${esc(floor)} <span class="mut">${done}/${items.length}</span></h3>${items.map(i => { const c = CK.checks[i.id], t = c && c.at ? new Date(c.at).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false}) : '';
+    const real = items.filter(i => i.id), done = real.filter(i => CK.checks[i.id]).length;
+    h += `<div class="card" style="padding:6px 14px"><h3 style="margin:8px 0 4px">${esc(floor)} <span class="mut">${done}/${real.length}</span></h3>${items.map(i => { if (i.head) return `<div style="font-size:12px;font-weight:750;color:var(--mut);margin:12px 0 2px;padding-top:8px;border-top:1px dashed var(--edge)">${esc(i.head)}</div>`; const c = CK.checks[i.id], t = c && c.at ? new Date(c.at).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false}) : '';
       return `<button class="li" style="width:100%;text-align:left" data-act="ck" data-v="${esc(i.id)}"><span class="ckbox ${c ? 'on' : ''}">${c ? '✓' : ''}</span><div class="grow"><div class="nm" style="${c ? 'color:var(--mut);text-decoration:line-through' : ''}">${esc(i.text)}</div>${i.note && !c ? `<div class="rl">${esc(i.note)}</div>` : ''}${c ? `<div class="rl" style="color:var(--ok);font-weight:650">${esc(c.by || '')} · ${t}</div>` : ''}</div></button>`; }).join('')}</div>`;
   }
   h += `<div class="mut" style="text-align:center;margin-top:6px">${ckUrl() ? '체크하면 모든 직원 폰에 바로 보여요 · ' : ''}매일 새로 시작해요</div>`;
@@ -736,7 +736,7 @@ function vCkHist() {
       h += `<div style="padding:0 14px 12px">`;
       for (const [part, pl] of [['open', '오픈'], ['close', '마감']]) {
         h += `<div style="font-weight:750;margin:8px 0 2px">${pl}</div>`;
-        for (const [g, items] of ckItems(part)) for (const i of items) { const c = rec[i.id];
+        for (const [g, items] of ckItems(part)) for (const i of items.filter(x => x.id)) { const c = rec[i.id];
           h += `<div class="row" style="padding:5px 0;border-bottom:1px solid var(--edge);font-size:13px"><span class="mut" style="width:44px;flex:0 0 44px">${esc(g)}</span><span class="grow">${esc(i.text)}</span>${c ? `<b style="color:var(--ok)">${esc(c.by || '')} ${tm(c.at)}</b>` : '<b style="color:var(--dan)">미완료</b>'}</div>`; }
       }
       const known = new Set(['open', 'close'].flatMap(p => ckAll(p).map(i => i.id))), extra = Object.entries(rec).filter(([id]) => !known.has(id));
