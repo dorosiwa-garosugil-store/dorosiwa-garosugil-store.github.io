@@ -208,6 +208,7 @@ const S = {
   month:T.date.slice(0, 7), mView:ls.get('mView2', 'table'), mDate:T.date,
   dDate:T.date, dView:ls.get('dView2', 'table'), dHour:null, edit:null
 };
+(() => { try { const v = JSON.parse(sessionStorage.getItem('dsh_view') || 'null'); if (v) { Object.assign(S, v); sessionStorage.removeItem('dsh_view'); } } catch {} })();
 const C = () => Object.assign({}, DEF, D.config || {});
 const admin = () => S.canEdit;
 const HOURS = () => { const h = C().hours; return Array.from({length:Math.max(0, h.close - h.open)}, (_, i) => h.open + i); };
@@ -258,7 +259,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-2';
+const APP_VER = '2026.11.21-3';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -268,6 +269,7 @@ async function loadData(manual) {
     if (S.canEdit) { try { const g = await ghGet(); j = g.data; S.sha = g.sha; } catch (e) { if (e.auth) toast('관리자 열쇠가 맞지 않아요. 관리자 메뉴에서 다시 등록해 주세요.', true); } }
     if (!j) { const r = await fetch('data.json?t=' + Date.now(), {cache:'no-store'}); if (!r.ok) throw Error(r.status); j = await r.json(); }
     applyData(j); S.dirty = 0; S.edit = null;
+    try { if (sessionStorage.getItem('dsh_refreshed')) { sessionStorage.removeItem('dsh_refreshed'); setTimeout(() => toast('최신 내용으로 새로고침했어요'), 50); } } catch {}
     // 화면 파일이 새로 바뀌었으면 자동으로 새 화면 불러오기 (폰 캐시 때문에 옛 화면이 남는 것 방지)
     if (j.appVersion && j.appVersion !== APP_VER) { let k = ''; try { k = sessionStorage.getItem('dsh_upd'); } catch {} if (k !== j.appVersion) { try { sessionStorage.setItem('dsh_upd', j.appVersion); } catch {} location.replace(location.pathname + '?v=' + encodeURIComponent(j.appVersion)); return; } }
     S.synced = true; S.slow = false; T = now(); onData();
@@ -275,7 +277,13 @@ async function loadData(manual) {
   } catch (e) { S.slow = true; render(); if (manual) toast('불러오기 실패 · 인터넷 연결을 확인해 주세요', true); }
   finally { $('refBtn').classList.remove('spin'); }
 }
-const refresh = () => loadData(true);
+/* 새로고침 버튼: 화면 파일까지 통째로 새로 받아서, 내용·디자인 수정이 전부 바로 반영되게 */
+async function refresh() {
+  if (S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로고침할까요?', '버리고 새로고침', true))) return;
+  try { sessionStorage.setItem('dsh_view', JSON.stringify({tab:S.tab, month:S.month, dDate:S.dDate, mDate:S.mDate})); sessionStorage.setItem('dsh_refreshed', '1'); } catch {}
+  $('refBtn').classList.add('spin');
+  location.replace(location.pathname + '?r=' + Date.now());
+}
 function markDirty(msg) { S.dirty++; saveCache(); render(); if (msg) toast(msg); }
 function write(_, msg) { markDirty(msg ? msg.replace(/ ?저장됨$/, '') + ' · 아래 저장을 눌러 주세요' : ''); return Promise.resolve(); }
 async function saveAll() {
