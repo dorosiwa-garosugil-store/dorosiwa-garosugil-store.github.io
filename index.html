@@ -266,7 +266,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-7';
+const APP_VER = '2026.11.21-8';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -660,6 +660,13 @@ function vNotice() {
   return h;
 }
 const manReady = m => (m.images && m.images.length) || (m.body && m.body.trim());
+function vManual() {
+  const list = C().manuals || [];
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px">업무 매뉴얼</b></div>`;
+  h += list.map(m => { const ok = manReady(m), n = (m.images || []).length;
+    return `<button class="card row" style="width:100%;text-align:left;${ok ? '' : 'opacity:.45'}" ${ok ? `data-act="manOpen" data-v="${esc(m.id)}"` : 'disabled'}><div class="grow"><div class="tt" style="font-size:15px;font-weight:700">${esc(m.title)}</div><div class="mut" style="margin-top:3px">${ok ? esc(m.desc || '') + (n ? ` · ${n}장` : '') : '준비 중'}</div></div><span class="mut" style="font-size:18px">${ok ? '›' : ''}</span></button>`; }).join('') || '<div class="card empty">등록된 매뉴얼이 없어요.</div>';
+  return h;
+}
 function manualSheet() {
   const list = C().manuals || [];
   sheet(`<h2>업무 매뉴얼</h2><div class="mut">필요한 항목을 눌러 확인하세요.</div>
@@ -744,7 +751,7 @@ function render() {
   $('bars').innerHTML = bars;
   if (!S.ready && !D.config) { $('view').innerHTML = `<div class="card empty">${S.offline ? '로그인이 필요해요.' : '불러오는 중…'}</div>`; return; }
   const tbl = $('mtbl') || $('dtbl'), keep = tbl ? [tbl.id, tbl.scrollLeft, tbl.scrollTop] : null;
-  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet})[S.tab]();
+  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual})[S.tab]();
   $('foot').innerHTML = (D.updated ? '마지막 업데이트 ' + esc(D.updated) : '');
   $('saveBar').style.display = adm && S.dirty ? 'flex' : 'none';
   $('saveBar').innerHTML = `<span class="grow">저장 안 된 변경 ${S.dirty}건</span><button class="btn sm" data-act="discardAll" style="background:transparent;color:inherit;border-color:#fff6">되돌리기</button><button class="btn sm" data-act="saveAll" style="background:var(--rev);color:var(--acc);border:0" ${S.saving ? 'disabled' : ''}>${S.saving ? '저장 중…' : '저장'}</button>`;
@@ -763,8 +770,8 @@ document.addEventListener('click', async e => {
   const a = e.target.closest('[data-act]'); if (!a) return; const v = a.dataset.v;
   switch (a.dataset.act) {
     case 'pickMe': pickMe(); return;
-    case 'guide': manualSheet(); return;
-    case 'manOpen': { const m = (C().manuals || []).find(x => x.id === v); if (m) { closeSheet(); viewer(m); } return; }
+    case 'guide': S.tab = 'manual'; scrollTo(0, 0); break;
+    case 'manOpen': { const m = (C().manuals || []).find(x => x.id === v); if (m) viewer(m); return; }
     case 'go': S.tab = v; scrollTo(0, 0); break;
     case 'myMonth': S.tab = 'month'; S.mView = 'mine'; scrollTo(0, 0); break;
     case 'mMove': { const ks = monthKeys(); S.month = ks[ks.indexOf(S.month) + +v] || S.month; break; }
