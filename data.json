@@ -1,5 +1,5 @@
 {
- "updated": "2026.11.19",
+ "updated": "2026.11.21",
  "config": {
   "store": "가로수길점",
   "hours": {
@@ -649,5 +649,40 @@
    }
   }
  },
- "notices": []
+ "notices": [
+  {
+   "id": "manual-store",
+   "title": "본사 지침 · 스토어 메뉴얼",
+   "body": "도로시와 스토어 팀 메뉴얼입니다.\n조직과 업무 흐름 · 근무 규정 · 매장 기본 · 고객 응대 · 근무 수칙이 정리되어 있어요.\n아래 '자료 보기'를 눌러 확인해 주세요.",
+   "pinned": true,
+   "date": "2026-11-21",
+   "images": [
+    "manual/01.jpg",
+    "manual/02.jpg",
+    "manual/03.jpg",
+    "manual/04.jpg",
+    "manual/05.jpg",
+    "manual/06.jpg",
+    "manual/07.jpg",
+    "manual/08.jpg",
+    "manual/09.jpg",
+    "manual/10.jpg",
+    "manual/11.jpg",
+    "manual/12.jpg",
+    "manual/13.jpg",
+    "manual/14.jpg",
+    "manual/15.jpg",
+    "manual/16.jpg",
+    "manual/17.jpg",
+    "manual/18.jpg",
+    "manual/19.jpg",
+    "manual/20.jpg",
+    "manual/21.jpg",
+    "manual/22.jpg",
+    "manual/23.jpg",
+    "manual/24.jpg",
+    "manual/25.jpg"
+   ]
+  }
+ ]
 }

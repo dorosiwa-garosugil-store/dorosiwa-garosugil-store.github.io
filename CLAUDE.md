@@ -6,12 +6,15 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - index.html : 화면 전체 (수정 시 폰 화면 390px 기준으로 확인)
 - data.json  : 매장 데이터. 근무표·조닝·공지 변경은 대부분 이 파일만 고친다. 고친 뒤 "updated"를 오늘 날짜(YYYY.MM.DD)로 바꾼다.
 - robots.txt : 검색엔진 차단
+- manual/ : 본사 스토어 메뉴얼 25장 (공지 첨부 사진)
+- admin.json : 관리자 열쇠(암호화) — 손대지 말 것
 
 ## data.json 구조
 - config: store, hours{open,close}, staff[{name,role}], positions[{name,hue,gray?}], shiftPresets[], absences[], guide
 - months["YYYY-MM"][직원이름][날짜] = "11~20" | "휴" | "요청휴무" | "연차" ...
 - daily["YYYY-MM-DD"] = { published: true, assign: { 직원이름: [open시부터 1시간 단위 포지션, 근무 외는 null] } }
-- notices = [{ id, title, body, pinned, date: "YYYY-MM-DD" }]
+- notices = [{ id, title, body, pinned, date: "YYYY-MM-DD", images?: ["manual/01.jpg", ...] }] (images = 자료 보기 뷰어로 보여줄 사진, 저장소에 파일로 올림)
+- 공지 읽음 표시는 각 기기 localStorage(dsh_readNotices)에 공지 id로 저장 → 새 공지는 새 id로 만들어야 빨간 점이 뜸
 
 ## 비밀번호
 - index.html 의 PASS_HASH = SHA-256(매장 공용 비밀번호). 화면 잠금일 뿐 진짜 보안은 아님 (저장소가 공개).
