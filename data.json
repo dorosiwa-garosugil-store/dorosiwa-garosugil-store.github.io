@@ -171,50 +171,93 @@
    }
   ],
   "checklist": {
-   "open": {
-    "1F": [
-     {
-      "id": "o1-beam",
-      "text": "빔 프로젝터 켜기"
-     },
-     {
-      "id": "o1-light",
-      "text": "조명 · 음악 켜기 (예시)"
-     }
-    ],
-    "2F": [
-     {
-      "id": "o2-cash",
-      "text": "캐셔 시재 확인 (오픈)"
-     },
-     {
-      "id": "o2-fit",
-      "text": "피팅룸 정리 상태 확인 (예시)"
-     }
-    ]
-   },
-   "close": {
-    "1F": [
-     {
-      "id": "c1-beam",
-      "text": "빔 프로젝터 끄기"
-     },
-     {
-      "id": "c1-light",
-      "text": "조명 · 음악 끄기 (예시)"
-     }
-    ],
-    "2F": [
-     {
-      "id": "c2-hvac",
-      "text": "냉난방기(에어컨 · 히터) 끄기"
-     },
-     {
-      "id": "c2-cash",
-      "text": "캐셔 시재 마감 (예시)"
-     }
-    ]
-   }
+   "open": [
+    {
+     "title": "1층",
+     "items": [
+      {
+       "id": "o1-beam",
+       "text": "빔 프로젝터 켜기"
+      }
+     ]
+    },
+    {
+     "title": "2층",
+     "items": [
+      {
+       "id": "o2-pos",
+       "text": "POS 시재 확인 및 켜기"
+      }
+     ]
+    },
+    {
+     "title": "공통",
+     "items": [
+      {
+       "id": "o-music",
+       "text": "음악 켜기"
+      },
+      {
+       "id": "o-hvac",
+       "text": "냉·난방기 켜기",
+       "note": "실내 온도 보고 조절"
+      }
+     ]
+    },
+    {
+     "title": "청소",
+     "items": [
+      {
+       "id": "o-cl-mirror",
+       "text": "거울 얼룩 닦기"
+      },
+      {
+       "id": "o-cl-floor",
+       "text": "바닥 밀대 밀기"
+      },
+      {
+       "id": "o-cl-drawer",
+       "text": "서랍장 먼지 제거"
+      },
+      {
+       "id": "o-cl-mannequin",
+       "text": "마네킹 먼지 털기"
+      },
+      {
+       "id": "o-cl-dp",
+       "text": "DP 상품 먼지 제거"
+      }
+     ]
+    }
+   ],
+   "close": [
+    {
+     "title": "1층",
+     "items": [
+      {
+       "id": "c1-beam",
+       "text": "빔 프로젝터 끄기"
+      },
+      {
+       "id": "c1-light",
+       "text": "조명 · 음악 끄기 (예시)"
+      }
+     ]
+    },
+    {
+     "title": "2층",
+     "items": [
+      {
+       "id": "c2-hvac",
+       "text": "냉난방기(에어컨 · 히터) 끄기"
+      },
+      {
+       "id": "c2-cash",
+       "text": "캐셔 시재 마감 (예시)"
+      }
+     ]
+    }
+   ]
   },
   "checkUrl": ""
  },
@@ -747,5 +790,5 @@
   }
  },
  "notices": [],
- "appVersion": "2026.11.21-10"
+ "appVersion": "2026.11.21-11"
 }

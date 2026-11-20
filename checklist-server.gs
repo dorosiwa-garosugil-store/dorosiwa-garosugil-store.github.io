@@ -1,11 +1,14 @@
 /* 도로시와 스토어 허브 · 체크리스트 저장 서버
    이 코드를 새 Apps Script 프로젝트에 붙여넣고 "웹 앱"으로 배포하면 끝입니다. (고칠 곳 없음)
-   - 날짜별로 누가 어떤 항목을 체크했는지만 저장합니다. (최근 60일만 보관)
+   - 날짜별로 누가 어떤 항목을 언제 체크했는지 저장합니다. (최근 60일 보관, 관리자 '체크 기록'에서 확인)
 */
 const P = PropertiesService.getScriptProperties();
 
 function doGet(e) {
-  try { return out_(read_(e && e.parameter && e.parameter.date)); }
+  try {
+    if (e && e.parameter && e.parameter.history) return out_(history_());
+    return out_(read_(e && e.parameter && e.parameter.date));
+  }
   catch (err) { return out_({ok: false, error: String(err.message || err)}); }
 }
 
@@ -18,7 +21,7 @@ function doPost(e) {
     const id = String(b.id || '');
     if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) throw Error('항목 오류');
     const d = JSON.parse(P.getProperty(key) || '{}');
-    if (b.checked) d[id] = {by: String(b.by || '').slice(0, 20), at: new Date().toISOString()};
+    if (b.checked) d[id] = {by: String(b.by || '').slice(0, 20), at: new Date().toISOString(), t: String(b.t || '').slice(0, 60)};
     else delete d[id];
     P.setProperty(key, JSON.stringify(d));
     cleanup_();
@@ -31,6 +34,11 @@ function doPost(e) {
 }
 
 function read_(date) { date = date_(date); return {ok: true, date: date, checks: JSON.parse(P.getProperty('CK_' + date) || '{}')}; }
+function history_() {
+  const days = {};
+  P.getKeys().forEach(function (k) { if (k.indexOf('CK_') === 0) days[k.slice(3)] = JSON.parse(P.getProperty(k) || '{}'); });
+  return {ok: true, days: days};
+}
 function date_(s) { s = String(s || ''); if (!/^20\d\d-\d\d-\d\d$/.test(s)) throw Error('날짜 오류'); return s; }
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function cleanup_() {

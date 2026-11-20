@@ -11,7 +11,7 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - checklist-server.gs : 체크리스트 저장 서버(Google Apps Script) 원본. 사장님 구글 계정에 웹앱으로 배포, 주소는 data.json config.checkUrl
 
 ## data.json 구조
-- config: store, hours{open,close}, staff[{name,role}], positions[{name,hue,gray?}], shiftPresets[], absences[], guide(데일리 탭 맨 아래 '조닝 운영 참고'), manuals[{id,title,desc,body?,images[]}](홈 '업무 매뉴얼' 타일 → 목록 → 뷰어. body/images 비면 '준비 중'. 현재: hq 본사 지침, cashier 캐셔·결제 방법, refund 교환·환불), holidays{날짜:이름}, restTypes[], checklist{open|close:{'1F'|'2F':[{id,text}]}} (id는 영문·숫자·-만, 바꾸면 그날 체크 기록과 연결이 끊김), checkUrl
+- config: store, hours{open,close}, staff[{name,role}], positions[{name,hue,gray?}], shiftPresets[], absences[], guide(데일리 탭 맨 아래 '조닝 운영 참고'), manuals[{id,title,desc,body?,images[]}](홈 '업무 매뉴얼' 타일 → 목록 → 뷰어. body/images 비면 '준비 중'. 현재: hq 본사 지침, cashier 캐셔·결제 방법, refund 교환·환불), holidays{날짜:이름}, restTypes[], checklist{open|close:[{title:'1층'|'2층'|'공통'|'청소'…, items:[{id,text,note?}]}]} (id는 영문·숫자·-만, 바꾸면 기존 기록과 연결이 끊김 — 기록에는 항목 이름 t도 함께 저장됨). 관리자: 체크리스트 화면 '체크 기록 보기'에서 날짜별 누가·언제 확인 (서버 60일 보관), checkUrl
 - months["YYYY-MM"][직원이름][날짜] = "11~20" | "휴" | "요청휴무" | "연차" ...
 - daily["YYYY-MM-DD"] = { published: true, assign: { 직원이름: [open시부터 1시간 단위 포지션, 근무 외는 null] } }
 - notices = [{ id, title, body, pinned, date: "YYYY-MM-DD", images?: ["manual/01.jpg", ...] }] (images = 자료 보기 뷰어로 보여줄 사진, 저장소에 파일로 올림)

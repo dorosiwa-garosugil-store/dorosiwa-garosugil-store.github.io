@@ -268,7 +268,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-10';
+const APP_VER = '2026.11.21-11';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -665,7 +665,8 @@ const manReady = m => (m.images && m.images.length) || (m.body && m.body.trim())
 /* ───────── 체크리스트 (오픈/마감 · 1층/2층 · 체크한 사람 공유) ───────── */
 const CK = {date:null, checks:{}, loaded:false, busy:{}, err:'', timer:null};
 const ckUrl = () => C().checkUrl || '';
-const ckItems = part => { const c = (C().checklist || {})[part] || {}; return Object.entries(c); };
+const ckItems = part => { const c = (C().checklist || {})[part] || []; return Array.isArray(c) ? c.map(g => [g.title, g.items || []]) : Object.entries(c).map(([k, v]) => [k === '1F' ? '1층' : k === '2F' ? '2층' : k, v]); };
+const ckText = id => { for (const part of ['open', 'close']) for (const [, l] of ckItems(part)) { const i = l.find(x => x.id === id); if (i) return i.text; } return ''; };
 const ckAll = part => ckItems(part).flatMap(([, l]) => l);
 function ckDone(part) { const all = ckAll(part); return [all.filter(i => CK.checks[i.id]).length, all.length]; }
 function ckLocal() { if (CK.date !== T.date || !CK.loaded) { CK.date = T.date; CK.checks = ls.get('ck_' + T.date, {}); CK.loaded = true; } }
@@ -679,10 +680,10 @@ async function ckLoad(quiet) {
 async function ckToggle(id) {
   if (!S.me) { toast('먼저 오른쪽 위에서 내 이름을 선택해 주세요', true); pickMe(); return; }
   const cur = CK.checks[id], on = !cur;
-  if (!ckUrl()) { if (on) CK.checks[id] = {by:S.me, at:new Date().toISOString()}; else delete CK.checks[id]; ls.set('ck_' + T.date, CK.checks); render(); return; }
+  if (!ckUrl()) { if (on) CK.checks[id] = {by:S.me, at:new Date().toISOString(), t:ckText(id)}; else delete CK.checks[id]; ls.set('ck_' + T.date, CK.checks); render(); return; }
   if (cur && cur.by && cur.by !== S.me && !(await ask(`${cur.by}님이 체크한 항목이에요. 체크를 해제할까요?`, '해제', true))) return;
   CK.busy[id] = 1; if (on) CK.checks[id] = {by:S.me, at:new Date().toISOString()}; else delete CK.checks[id]; render();
-  try { const r = await fetch(ckUrl(), {method:'POST', body:JSON.stringify({date:T.date, id, checked:on, by:S.me})}); const j = await r.json(); if (!j.ok) throw Error(j.error); delete CK.busy[id]; CK.checks = j.checks || {}; }
+  try { const r = await fetch(ckUrl(), {method:'POST', body:JSON.stringify({date:T.date, id, checked:on, by:S.me, t:ckText(id)})}); const j = await r.json(); if (!j.ok) throw Error(j.error); delete CK.busy[id]; CK.checks = j.checks || {}; }
   catch (e) { delete CK.busy[id]; if (on) delete CK.checks[id]; else CK.checks[id] = cur; toast('저장하지 못했어요. 다시 눌러 주세요.', true); }
   render();
 }
@@ -694,16 +695,56 @@ function vCheck() {
   if (!S.ckPart) S.ckPart = T.hour < 15 ? 'open' : 'close';
   const part = S.ckPart, label = new Date(T.date + 'T12:00:00').toLocaleDateString('ko-KR', {month:'long', day:'numeric', weekday:'short'});
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">체크리스트</b><span class="mut">${label}</span></div>`;
+  if (admin()) h += `<button class="btn" style="width:100%;margin-bottom:8px" data-act="go" data-v="ckhist">📋 체크 기록 보기 (관리자)</button>`;
   if (!ckUrl()) h += `<div class="note">임시 모드예요. 지금은 <b>이 폰에서만</b> 체크가 저장되고 다른 직원 폰에는 보이지 않아요. 곧 모두에게 공유되도록 바뀌어요.</div>`;
   else if (CK.err) h += `<div class="warn">${esc(CK.err)}</div>`;
   h += `<div class="seg">${[['open', '오픈'], ['close', '마감']].map(([k, l]) => { const [a, b] = ckDone(k); return `<button data-act="ckPart" data-v="${k}" class="${part === k ? 'on' : ''}">${l} ${CK.loaded ? `<span style="opacity:.6">${a}/${b}</span>` : ''}</button>`; }).join('')}</div>`;
   if (!S.me) h += `<div class="note">체크하려면 오른쪽 위 <b>내 이름</b>을 먼저 선택해 주세요.</div>`;
   for (const [floor, items] of ckItems(part)) {
     const done = items.filter(i => CK.checks[i.id]).length;
-    h += `<div class="card" style="padding:6px 14px"><h3 style="margin:8px 0 4px">${esc(floor === '1F' ? '1층' : floor === '2F' ? '2층' : floor)} <span class="mut">${done}/${items.length}</span></h3>${items.map(i => { const c = CK.checks[i.id], t = c && c.at ? new Date(c.at).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false}) : '';
-      return `<button class="li" style="width:100%;text-align:left" data-act="ck" data-v="${esc(i.id)}"><span class="ckbox ${c ? 'on' : ''}">${c ? '✓' : ''}</span><div class="grow"><div class="nm" style="${c ? 'color:var(--mut);text-decoration:line-through' : ''}">${esc(i.text)}</div>${c ? `<div class="rl" style="color:var(--ok);font-weight:650">${esc(c.by || '')} · ${t}</div>` : ''}</div></button>`; }).join('')}</div>`;
+    h += `<div class="card" style="padding:6px 14px"><h3 style="margin:8px 0 4px">${esc(floor)} <span class="mut">${done}/${items.length}</span></h3>${items.map(i => { const c = CK.checks[i.id], t = c && c.at ? new Date(c.at).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false}) : '';
+      return `<button class="li" style="width:100%;text-align:left" data-act="ck" data-v="${esc(i.id)}"><span class="ckbox ${c ? 'on' : ''}">${c ? '✓' : ''}</span><div class="grow"><div class="nm" style="${c ? 'color:var(--mut);text-decoration:line-through' : ''}">${esc(i.text)}</div>${i.note && !c ? `<div class="rl">${esc(i.note)}</div>` : ''}${c ? `<div class="rl" style="color:var(--ok);font-weight:650">${esc(c.by || '')} · ${t}</div>` : ''}</div></button>`; }).join('')}</div>`;
   }
   h += `<div class="mut" style="text-align:center;margin-top:6px">${ckUrl() ? '체크하면 모든 직원 폰에 바로 보여요 · ' : ''}매일 새로 시작해요</div>`;
+  return h;
+}
+/* 관리자 전용: 날짜별 체크 기록 */
+const CKH = {data:null, loading:false, err:'', open:null};
+async function ckHistLoad() {
+  if (CKH.loading) return; CKH.loading = true; CKH.err = '';
+  try {
+    if (ckUrl()) { const r = await fetch(ckUrl() + '?history=1&t=' + Date.now()); const j = await r.json(); if (!j.ok) throw Error(j.error); CKH.data = j.days || {}; }
+    else { const o = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith('dsh_ck_')) o[k.slice(7)] = JSON.parse(localStorage.getItem(k)); } } catch {} CKH.data = o; }
+  } catch (e) { CKH.err = '기록을 불러오지 못했어요.'; }
+  finally { CKH.loading = false; if (S.tab === 'ckhist') render(); }
+}
+function vCkHist() {
+  if (!admin()) { S.tab = 'check'; return vCheck(); }
+  if (!CKH.data && !CKH.loading) ckHistLoad();
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="check">‹ 체크리스트</button><b style="font-size:18px;margin-left:6px" class="grow">체크 기록</b><button class="link" data-act="ckHistReload">새로 불러오기</button></div>`;
+  if (!ckUrl()) h += `<div class="note">임시 모드라 <b>이 폰에서 체크한 기록만</b> 보여요. 서버를 연결하면 모든 직원의 기록이 여기에 모여요.</div>`;
+  if (CKH.err) h += `<div class="warn">${esc(CKH.err)}</div>`;
+  if (!CKH.data) return h + '<div class="card empty">불러오는 중…</div>';
+  const dates = Object.keys(CKH.data).filter(k => Object.keys(CKH.data[k] || {}).length).sort().reverse();
+  if (!dates.length) return h + '<div class="card empty">아직 체크 기록이 없어요.</div>';
+  const tm = at => at ? new Date(at).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false}) : '';
+  for (const dt of dates) {
+    const rec = CKH.data[dt] || {}, open = CKH.open === dt, wd = WD[new Date(dt + 'T12:00:00').getDay()];
+    const stat = part => { const all = ckAll(part); return `${all.filter(i => rec[i.id]).length}/${all.length}`; };
+    h += `<div class="card" style="padding:0;overflow:hidden"><button class="row" style="width:100%;text-align:left;padding:14px" data-act="ckHistOpen" data-v="${dt}"><b class="grow">${+dt.slice(5, 7)}/${+dt.slice(8)} (${wd})</b><span class="mut">오픈 ${stat('open')} · 마감 ${stat('close')}</span><span class="mut" style="margin-left:6px">${open ? '⌃' : '⌄'}</span></button>`;
+    if (open) {
+      h += `<div style="padding:0 14px 12px">`;
+      for (const [part, pl] of [['open', '오픈'], ['close', '마감']]) {
+        h += `<div style="font-weight:750;margin:8px 0 2px">${pl}</div>`;
+        for (const [g, items] of ckItems(part)) for (const i of items) { const c = rec[i.id];
+          h += `<div class="row" style="padding:5px 0;border-bottom:1px solid var(--edge);font-size:13px"><span class="mut" style="width:44px;flex:0 0 44px">${esc(g)}</span><span class="grow">${esc(i.text)}</span>${c ? `<b style="color:var(--ok)">${esc(c.by || '')} ${tm(c.at)}</b>` : '<b style="color:var(--dan)">미완료</b>'}</div>`; }
+      }
+      const known = new Set(['open', 'close'].flatMap(p => ckAll(p).map(i => i.id))), extra = Object.entries(rec).filter(([id]) => !known.has(id));
+      if (extra.length) h += `<div class="mut" style="margin-top:8px">지금은 목록에 없는 항목</div>` + extra.map(([id, c]) => `<div class="row" style="padding:5px 0;font-size:13px"><span class="grow">${esc(c.t || id)}</span><b style="color:var(--ok)">${esc(c.by || '')} ${tm(c.at)}</b></div>`).join('');
+      h += `</div>`;
+    }
+    h += `</div>`;
+  }
   return h;
 }
 function vManual() {
@@ -797,7 +838,7 @@ function render() {
   $('bars').innerHTML = bars;
   if (!S.ready && !D.config) { $('view').innerHTML = `<div class="card empty">${S.offline ? '로그인이 필요해요.' : '불러오는 중…'}</div>`; return; }
   const tbl = $('mtbl') || $('dtbl'), keep = tbl ? [tbl.id, tbl.scrollLeft, tbl.scrollTop] : null;
-  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck})[S.tab]();
+  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist})[S.tab]();
   $('foot').innerHTML = (D.updated ? '마지막 업데이트 ' + esc(D.updated) : '');
   $('saveBar').style.display = adm && S.dirty ? 'flex' : 'none';
   $('saveBar').innerHTML = `<span class="grow">저장 안 된 변경 ${S.dirty}건</span><button class="btn sm" data-act="discardAll" style="background:transparent;color:inherit;border-color:#fff6">되돌리기</button><button class="btn sm" data-act="saveAll" style="background:var(--rev);color:var(--acc);border:0" ${S.saving ? 'disabled' : ''}>${S.saving ? '저장 중…' : '저장'}</button>`;
@@ -818,9 +859,11 @@ document.addEventListener('click', async e => {
     case 'pickMe': pickMe(); return;
     case 'guide': S.tab = 'manual'; scrollTo(0, 0); break;
     case 'ckPart': S.ckPart = v; break;
+    case 'ckHistOpen': CKH.open = CKH.open === v ? null : v; break;
+    case 'ckHistReload': CKH.data = null; ckHistLoad(); break;
     case 'ck': ckToggle(v); return;
     case 'manOpen': { const m = (C().manuals || []).find(x => x.id === v); if (m) viewer(m); return; }
-    case 'go': S.tab = v; scrollTo(0, 0); break;
+    case 'go': if (v === 'ckhist') CKH.data = null; S.tab = v; scrollTo(0, 0); break;
     case 'myMonth': S.tab = 'month'; S.mView = 'mine'; scrollTo(0, 0); break;
     case 'mMove': { const ks = monthKeys(); S.month = ks[ks.indexOf(S.month) + +v] || S.month; break; }
     case 'mView': S.mView = v; ls.set('mView2', v); break;
