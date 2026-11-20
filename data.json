@@ -268,8 +268,39 @@
        "text": "빔 프로젝터 끄기"
       },
       {
-       "id": "c1-light",
-       "text": "조명 · 음악 끄기 (예시)"
+       "id": "c1-pos",
+       "text": "POS 시재 확인 및 끄기"
+      },
+      {
+       "id": "c1-music",
+       "text": "음악 끄기"
+      },
+      {
+       "id": "c1-hvac",
+       "text": "냉·난방기 끄기"
+      },
+      {
+       "head": "청소"
+      },
+      {
+       "id": "c1-cl-mirror",
+       "text": "거울 얼룩 닦기"
+      },
+      {
+       "id": "c1-cl-floor",
+       "text": "바닥 밀대 밀기"
+      },
+      {
+       "id": "c1-cl-drawer",
+       "text": "서랍장 먼지 제거"
+      },
+      {
+       "id": "c1-cl-mannequin",
+       "text": "마네킹 먼지 털기"
+      },
+      {
+       "id": "c1-cl-dp",
+       "text": "DP 상품 먼지 제거"
       }
      ]
     },
@@ -277,12 +308,39 @@
      "title": "2층",
      "items": [
       {
-       "id": "c2-hvac",
-       "text": "냉난방기(에어컨 · 히터) 끄기"
+       "id": "c2-pos",
+       "text": "POS 시재 확인 및 끄기"
       },
       {
-       "id": "c2-cash",
-       "text": "캐셔 시재 마감 (예시)"
+       "id": "c2-music",
+       "text": "음악 끄기"
+      },
+      {
+       "id": "c2-hvac",
+       "text": "냉·난방기 끄기"
+      },
+      {
+       "head": "청소"
+      },
+      {
+       "id": "c2-cl-mirror",
+       "text": "거울 얼룩 닦기"
+      },
+      {
+       "id": "c2-cl-floor",
+       "text": "바닥 밀대 밀기"
+      },
+      {
+       "id": "c2-cl-drawer",
+       "text": "서랍장 먼지 제거"
+      },
+      {
+       "id": "c2-cl-mannequin",
+       "text": "마네킹 먼지 털기"
+      },
+      {
+       "id": "c2-cl-dp",
+       "text": "DP 상품 먼지 제거"
       }
      ]
     }
