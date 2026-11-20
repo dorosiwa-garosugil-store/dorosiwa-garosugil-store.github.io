@@ -266,7 +266,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-5';
+const APP_VER = '2026.11.21-6';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -437,6 +437,7 @@ function hourGroups(dl, d, hour) {
   return Object.keys(by).sort((a, b) => (order.indexOf(a) + 99) % 99 - (order.indexOf(b) + 99) % 99).map(p => `<div class="grp"><div class="gh">${posChip(p)}<div class="mut" style="font-size:10.5px;margin-top:3px">${by[p].length}명</div></div><div class="names" style="flex:1">${by[p].map(n => `<span class="${n === S.me ? 'me' : ''}">${esc(n)}</span>`).join('')}</div></div>`).join('') || '<div class="empty">이 시간 근무자 없음</div>';
 }
 const needMe = () => `<div class="card"><div class="row"><div class="grow"><b>내 이름을 선택하세요</b><div class="mut">내 근무와 포지션을 바로 보여드려요.</div></div><button class="pill on" data-act="pickMe">선택</button></div></div>`;
+const dailyGuide = () => C().guide ? `<details class="card" style="margin-top:14px"><summary style="font-weight:700;cursor:pointer">조닝 운영 참고</summary><div class="guide" style="margin-top:10px">${esc(C().guide)}</div></details>` : '';
 const legend = () => `<div class="row" style="flex-wrap:wrap;gap:5px;margin-top:10px">${C().positions.map(p => posChip(p.name)).join('')}</div>`;
 
 /* ───────── 오늘 ───────── */
@@ -469,7 +470,7 @@ function vToday() {
     ['month', '먼슬리', '월간 근무 스케줄', 'go:month'],
     ['daily', '데일리 조닝', dl ? '오늘 조닝 확정' : '시간별 배치', 'go:daily'],
     ['notice', '공지사항', unreadCount() ? `읽지 않은 공지 ${unreadCount()}건` : nCount ? `공지 ${nCount}건` : '새 공지 확인', 'go:notice'],
-    ['guide', '응대·조닝 가이드', '매장 운영 기준', 'guide'],
+    ['guide', '응대·조닝 가이드', C().manual ? '본사 스토어 메뉴얼' : '준비 중', C().manual ? 'guide' : ''],
     ['check', '체크리스트', '추후 오픈', ''],
     ['todo', '해야 할 일', '추후 오픈', ''],
     ['product', '판매 제품·설명', '추후 오픈', ''],
@@ -591,7 +592,7 @@ function vDaily() {
     else h += `<div class="row"><button class="btn grow" data-act="edClose">닫기</button><button class="btn grow" data-act="edSave" data-v="0">비공개 보관</button><button class="btn pri grow" data-act="edSave" data-v="1">공개</button></div><div id="warns" style="margin-top:8px">${warnHtml(d)}</div>`;
     h += `</div>`;
   }
-  if (!dl) return h + `<div class="card empty">이 날짜의 데일리 조닝이 아직 공개되지 않았어요.</div>` + legend();
+  if (!dl) return h + `<div class="card empty">이 날짜의 데일리 조닝이 아직 공개되지 않았어요.</div>` + legend() + dailyGuide();
   const view = editing ? 'table' : S.dView;
   if (!editing) h += `<div class="seg">${[['table','전체 표'],['hour','시간대별'],['mine','내 포지션']].map(([k, l]) => `<button data-act="dView" data-v="${k}" class="${view === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   if (view === 'hour') {
@@ -610,7 +611,7 @@ function vDaily() {
       return editing ? `<td><select data-ed="${esc(x.name)}" data-hi="${hi}" style="${posStyle(p)}">${opts.map(o => `<option ${o === p ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></td>` : `<td>${posChip(p)}</td>`;
     }).join('')}</tr>`).join('')}</tbody></table></div>`;
   }
-  return h + legend();
+  return h + legend() + dailyGuide();
 }
 function warnHtml(d) {
   if (!S.edit) return '';
@@ -656,7 +657,6 @@ function vNotice() {
   h += list.length ? list.map(n => { const open = S.openNotice === n.id, unread = !r.has(n.id), imgs = n.images || [];
     return `<div class="card notice" style="padding:0;overflow:hidden"><button class="row" style="width:100%;text-align:left;padding:14px;align-items:flex-start" data-act="nOpen" data-v="${esc(n.id)}"><div class="grow"><div class="tt">${unread ? dot : ''}${n.pinned ? '📌 ' : ''}${esc(n.title)}</div><div class="mut">${esc(n.date || '')}${imgs.length ? ` · 자료 ${imgs.length}장` : ''}</div></div><span class="mut" style="font-size:16px">${open ? '⌃' : '⌄'}</span></button>
       ${open ? `<div style="padding:0 14px 14px"><div class="bd" style="margin-top:0">${esc(n.body)}</div>${imgs.length ? `<button class="btn pri" style="width:100%;margin-top:12px" data-act="nView" data-v="${esc(n.id)}">📄 자료 보기 (${imgs.length}장)</button>` : ''}${admin() ? `<button class="btn sm" style="margin-top:10px" data-act="nEdit" data-v="${esc(n.id)}">수정</button>` : ''}</div>` : ''}</div>`; }).join('') : '<div class="card empty">등록된 공지가 없어요.</div>';
-  if (C().guide) h += `<div class="card"><h3>매장 운영 가이드</h3><div class="guide">${esc(C().guide)}</div></div>`;
   return h;
 }
 function viewer(n) {
@@ -755,7 +755,7 @@ document.addEventListener('click', async e => {
   const a = e.target.closest('[data-act]'); if (!a) return; const v = a.dataset.v;
   switch (a.dataset.act) {
     case 'pickMe': pickMe(); return;
-    case 'guide': sheet(`<h2>응대·조닝 가이드</h2><div class="guide" style="margin-top:10px">${esc(C().guide || '등록된 가이드가 없어요.')}</div><button class="btn" style="width:100%;margin-top:16px" id="gClose">닫기</button>`); $('gClose').onclick = closeSheet; return;
+    case 'guide': if (C().manual) viewer(C().manual); return;
     case 'go': S.tab = v; scrollTo(0, 0); break;
     case 'myMonth': S.tab = 'month'; S.mView = 'mine'; scrollTo(0, 0); break;
     case 'mMove': { const ks = monthKeys(); S.month = ks[ks.indexOf(S.month) + +v] || S.month; break; }
