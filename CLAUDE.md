@@ -16,6 +16,9 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - notices = [{ id, title, body, pinned, date: "YYYY-MM-DD", images?: ["manual/01.jpg", ...] }] (images = 자료 보기 뷰어로 보여줄 사진, 저장소에 파일로 올림)
 - 공지 읽음 표시는 각 기기 localStorage(dsh_readNotices)에 공지 id로 저장 → 새 공지는 새 id로 만들어야 빨간 점이 뜸
 
+## 화면 업데이트
+- index.html을 고치면 index.html의 APP_VER와 data.json의 appVersion을 같은 새 값으로 올린다 → 직원 폰이 옛 화면(캐시)을 쓰고 있으면 자동으로 새로 불러옴.
+
 ## 비밀번호
 - index.html 의 PASS_HASH = SHA-256(매장 공용 비밀번호). 화면 잠금일 뿐 진짜 보안은 아님 (저장소가 공개).
 - 원가·출시 전 제품 등 민감 정보는 올리지 않는다.

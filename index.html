@@ -258,7 +258,8 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-function applyData(j) { D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
+const APP_VER = '2026.11.21-2';
+function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
   if (manual) $('refBtn').classList.add('spin');
@@ -267,6 +268,8 @@ async function loadData(manual) {
     if (S.canEdit) { try { const g = await ghGet(); j = g.data; S.sha = g.sha; } catch (e) { if (e.auth) toast('관리자 열쇠가 맞지 않아요. 관리자 메뉴에서 다시 등록해 주세요.', true); } }
     if (!j) { const r = await fetch('data.json?t=' + Date.now(), {cache:'no-store'}); if (!r.ok) throw Error(r.status); j = await r.json(); }
     applyData(j); S.dirty = 0; S.edit = null;
+    // 화면 파일이 새로 바뀌었으면 자동으로 새 화면 불러오기 (폰 캐시 때문에 옛 화면이 남는 것 방지)
+    if (j.appVersion && j.appVersion !== APP_VER) { let k = ''; try { k = sessionStorage.getItem('dsh_upd'); } catch {} if (k !== j.appVersion) { try { sessionStorage.setItem('dsh_upd', j.appVersion); } catch {} location.replace(location.pathname + '?v=' + encodeURIComponent(j.appVersion)); return; } }
     S.synced = true; S.slow = false; T = now(); onData();
     if (manual) toast('최신 내용이에요');
   } catch (e) { S.slow = true; render(); if (manual) toast('불러오기 실패 · 인터넷 연결을 확인해 주세요', true); }
@@ -282,7 +285,7 @@ async function saveAll() {
     const cur = await ghGet();
     if (S.sha && cur.sha !== S.sha && !(await ask('다른 곳에서 먼저 바뀐 내용이 있어요. 내 변경사항으로 덮어쓸까요?', '덮어쓰기', true))) { S.saving = false; render(); return; }
     const t = now().date.replace(/-/g, '.');
-    const body = {updated:t, config:D.config, months:D.months, daily:D.daily, notices:D.notices};
+    const body = {updated:t, appVersion:D.appVersion || APP_VER, config:D.config, months:D.months, daily:D.daily, notices:D.notices};
     const r = await fetch(GH_URL, {method:'PUT', headers:{...ghHeaders(), 'Content-Type':'application/json'}, body:JSON.stringify({message:`사이트에서 수정 (${t})`, content:b64enc(JSON.stringify(body, null, 1) + '\n'), sha:cur.sha, branch:GH.branch})});
     if (!r.ok) throw Error(r.status === 409 ? '동시에 수정됐어요. 새로고침 후 다시 해주세요.' : '저장 실패 (' + r.status + ')');
     const j = await r.json(); S.sha = j.content.sha; D.updated = t; S.dirty = 0; saveCache();
