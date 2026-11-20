@@ -268,7 +268,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-12';
+const APP_VER = '2026.11.21-13';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -451,6 +451,7 @@ const ICON = {
   todo:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/>',
   product:'<path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/>',
   guide:'<path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4M8.5 12h7M8.5 16h5"/>',
+  log:'<path d="M4 20h16"/><path d="M7 16V10M12 16V6M17 16v-4"/>',
   vmd:'<path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/>'
 };
 const ico = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
@@ -474,6 +475,7 @@ function vToday() {
     ['notice', '공지사항', unreadCount() ? `읽지 않은 공지 ${unreadCount()}건` : nCount ? `공지 ${nCount}건` : '새 공지 확인', 'go:notice'],
     ['guide', '업무 매뉴얼', '본사 지침 · 캐셔 · 교환/환불', 'guide'],
     ['check', '체크리스트', ckSummary(), 'go:check'],
+    ['log', '매장 기록', '유동인구 · 외국인 고객', 'go:log'],
     ['todo', '해야 할 일', '추후 오픈', ''],
     ['product', '판매 제품·설명', '추후 오픈', ''],
     ['vmd', 'VMD', '추후 오픈', '']
@@ -640,6 +642,7 @@ async function edSave(pub) {
   D.daily[date] = body; if (pub) S.edit = null; render();
   write(() => S.db.doc('daily/' + date).set(body), pub ? '조닝 공개로 바뀜' : '조닝 비공개로 보관');
 }
+document.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.lg; if (k == null) return; if (!LG.draft || LG.draft.date !== LG.date) LG.draft = {date:LG.date}; LG.draft[k] = e.target.value; });
 document.addEventListener('change', e => {
   const t = e.target;
   if (t.dataset.ed != null && S.edit) { S.edit.assign[t.dataset.ed][+t.dataset.hi] = t.value; t.setAttribute('style', posStyle(t.value)); const w = $('warns'); if (w) w.innerHTML = warnHtml(dayInfo(S.dDate)); }
@@ -747,6 +750,168 @@ function vCkHist() {
   }
   return h;
 }
+/* ───────── 매장 기록 (유동인구 · 외국인 고객 · 기간 정리) ───────── */
+const LG = {date:null, day:null, loading:false, err:'', draft:null, tab:'traffic', rep:{from:'', to:'', data:null, loading:false, err:''}};
+const WEATHER = [['맑음', '☀️'], ['흐림', '☁️'], ['비', '🌧️'], ['눈', '❄️']];
+const NATS = ['일본', '중국', '대만', '홍콩', '동남아', '미국', '유럽', '기타'];
+const FF = [['time', '방문 시간', ''], ['nat', '국적', '예: 일본 남성 2명'], ['interest', '관심 제품', '예: 잠옷 위주로 둘러보심'], ['route', '동선', '예: 2층 방문 없이 1층에서 구매'], ['bought', '구매 제품', '예: 헤리티지 라인 그레이 M 1벌 / 없음'], ['etc', '기타 사항', '응대 중 특이사항 · 추가 요청'], ['extra', '추가 사항', '구매 전후 행동 · 체류 시간']];
+const lgLocalT = () => ls.get('log_t', {}), lgLocalF = () => ls.get('log_f', []);
+const dLabel = d => new Date(d + 'T12:00:00').toLocaleDateString('ko-KR', {month:'long', day:'numeric', weekday:'short'});
+const addDays = (d, n) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+const pct = (a, b) => a !== '' && b ? Math.round(a / b * 1000) / 10 + '%' : '–';
+const nv = v => v === '' || v == null ? '' : +v;
+function lgLocalDay(date) { const f = lgLocalF().filter(x => x.date === date).sort((a, b) => a.time.localeCompare(b.time)); return {date, traffic:lgLocalT()[date] || null, foreign:f}; }
+async function lgLoad(date) {
+  LG.date = date; LG.err = '';
+  if (!ckUrl()) { LG.day = lgLocalDay(date); return; }
+  LG.loading = true; LG.day = null;
+  try { const r = await fetch(ckUrl() + '?log=' + date + '&t=' + Date.now()); const j = await r.json(); if (!j.ok) throw Error(j.error); if (LG.date === date) LG.day = j.log; }
+  catch (e) { LG.err = '기록을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.'; }
+  finally { LG.loading = false; if (S.tab === 'log') render(); }
+}
+async function lgPost(body) {
+  if (!ckUrl()) {
+    if (body.kind === 'traffic') { const t = lgLocalT(); t[body.date] = {date:body.date, out:nv(body.out), in1:nv(body.in1), in2:nv(body.in2), weather:body.weather, temp:body.temp, memo:body.memo, by:body.by, at:new Date().toISOString()}; ls.set('log_t', t); }
+    else { let f = lgLocalF(); if (body.op === 'del') f = f.filter(x => x.id !== body.id); else { const o = {...body, id:body.id || Math.random().toString(36).slice(2, 10), at:new Date().toISOString()}; delete o.kind; delete o.op; const i = f.findIndex(x => x.id === o.id); if (i >= 0) { o.at = f[i].at; f[i] = o; } else f.push(o); } ls.set('log_f', f); }
+    return lgLocalDay(body.date);
+  }
+  const r = await fetch(ckUrl(), {method:'POST', body:JSON.stringify(body)}); const j = await r.json(); if (!j.ok) throw Error(j.error); return j.log;
+}
+const needName = () => { if (S.me) return false; toast('먼저 오른쪽 위에서 내 이름을 선택해 주세요', true); pickMe(); return true; };
+function vLog() {
+  if (!LG.date) LG.date = T.date;
+  if (LG.tab !== 'report' && (!LG.day || LG.day.date !== LG.date) && !LG.loading && !LG.err) lgLoad(LG.date);
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">매장 기록</b></div>`;
+  if (!ckUrl()) h += `<div class="note">임시 모드예요. 지금은 <b>이 폰에서만</b> 저장되고 다른 직원 폰에는 보이지 않아요. 서버를 연결하면 모두에게 공유되고 구글 시트에 쌓여요.</div>`;
+  const nF = LG.day && LG.day.date === LG.date ? LG.day.foreign.length : 0;
+  h += `<div class="seg">${[['traffic', '유동인구'], ['foreign', `외국인 고객${nF ? ` <span style="opacity:.6">${nF}</span>` : ''}`], ['report', '기간 정리']].map(([k, l]) => `<button data-act="lgTab" data-v="${k}" class="${LG.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  if (LG.tab === 'report') return h + vLogReport();
+  h += `<div class="row" style="margin:4px 0 8px"><button class="ib" data-act="lgDate" data-v="-1">‹</button><div class="grow" style="text-align:center"><b>${dLabel(LG.date)}</b>${LG.date === T.date ? ' <span class="mut">오늘</span>' : ` <button class="link" data-act="lgDate" data-v="0">오늘로</button>`}</div><button class="ib" data-act="lgDate" data-v="1" ${LG.date >= T.date ? 'disabled style="opacity:.3"' : ''}>›</button></div>`;
+  if (LG.err) return h + `<div class="warn">${esc(LG.err)}</div><button class="btn" style="width:100%" data-act="lgReload">다시 불러오기</button>`;
+  if (!LG.day || LG.day.date !== LG.date) return h + '<div class="card empty">불러오는 중…</div>';
+  if (!S.me) h += `<div class="note">기록하려면 오른쪽 위 <b>내 이름</b>을 먼저 선택해 주세요.</div>`;
+  return h + (LG.tab === 'traffic' ? vTraffic() : vForeign());
+}
+function vTraffic() {
+  const t = LG.day.traffic || {}, d = LG.draft && LG.draft.date === LG.date ? LG.draft : null, g = k => d && k in d ? d[k] : (t[k] ?? '');
+  const out = nv(t.out), in1 = nv(t.in1), in2 = nv(t.in2), w = g('weather');
+  const num = (k, l, sub) => `<div class="li" style="gap:10px"><div class="grow"><div class="nm">${l}</div><div class="rl">${sub}</div></div><input type="number" inputmode="numeric" min="0" data-lg="${k}" value="${esc(String(g(k)))}" placeholder="0" style="width:96px;text-align:right;font-weight:700"></div>`;
+  let h = `<div class="card" style="padding:6px 14px 14px"><h3 style="margin:8px 0 2px">계수기 기록 <span class="mut" style="font-weight:500">팀 단위</span></h3>
+    ${num('out', '매장 밖 유동인구', '1층 앞을 지나간 팀 수')}${num('in1', '1층 인입', '1층에 들어온 팀 수')}${num('in2', '2층 인입', '2층에 올라온 팀 수')}
+    <label class="f">날씨</label><div class="row" style="gap:6px">${WEATHER.map(([k, e]) => `<button class="pill grow ${w === k ? 'on' : ''}" data-act="lgW" data-v="${k}">${e} ${k}</button>`).join('')}</div>
+    <div class="row" style="gap:8px"><div style="width:110px"><label class="f">기온 (℃)</label><input type="text" inputmode="decimal" data-lg="temp" value="${esc(String(g('temp')))}" placeholder="예: 8"></div><div class="grow"><label class="f">메모</label><input type="text" data-lg="memo" value="${esc(String(g('memo')))}" placeholder="예: 근처 행사, 오후 비"></div></div>
+    <button class="btn pri" style="width:100%;margin-top:14px" data-act="lgSaveT" ${LG.saving ? 'disabled' : ''}>${LG.saving ? '저장 중…' : t.at ? '수정 저장' : '저장'}</button>
+    ${t.at ? `<div class="mut" style="text-align:center;margin-top:8px">마지막 저장 ${esc(t.by || '')} · ${new Date(t.at).toLocaleString('ko-KR', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false})}</div>` : ''}</div>`;
+  if (t.at) h += `<div class="card"><div class="row" style="text-align:center"><div class="grow"><div class="mut">1층 인입률</div><b style="font-size:20px">${pct(in1, out)}</b></div><div class="grow"><div class="mut">2층 인입률</div><b style="font-size:20px">${pct(in2, out)}</b></div><div class="grow"><div class="mut">1층→2층</div><b style="font-size:20px">${pct(in2, in1)}</b></div></div><div class="mut" style="text-align:center;margin-top:8px;font-size:11px">인입률 = 인입 ÷ 매장 밖 유동인구</div></div>`;
+  h += `<div class="mut" style="text-align:center">하루 마감 때 계수기 숫자를 적어 주세요. 틀렸으면 누구나 고칠 수 있어요.</div>`;
+  return h;
+}
+function vForeign() {
+  const list = LG.day.foreign;
+  let h = `<button class="btn pri" style="width:100%;margin-bottom:8px" data-act="lgFNew">+ 외국인 고객 기록 추가</button>`;
+  h += list.length ? list.map(f => `<div class="card" style="padding:12px 14px"><div class="row" style="margin-bottom:6px"><b class="grow">${esc(f.time || '')}${f.time ? ' · ' : ''}${esc(f.nat || '국적 미기록')}</b><button class="link" data-act="lgFEdit" data-v="${esc(f.id)}">수정</button></div>
+      ${FF.slice(2).filter(([k]) => f[k]).map(([k, l]) => `<div style="font-size:13px;line-height:1.55;margin:3px 0"><span class="mut" style="display:inline-block;min-width:64px">${l}</span> ${esc(f[k])}</div>`).join('')}
+      <div class="mut" style="margin-top:6px;font-size:11px">작성 ${esc(f.by || '')}</div></div>`).join('') : '<div class="card empty">이 날 외국인 고객 기록이 없어요.</div>';
+  return h;
+}
+function foreignSheet(f) {
+  if (needName()) return;
+  const nowT = new Date().toLocaleTimeString('en-GB', {timeZone:'Asia/Seoul', hour:'2-digit', minute:'2-digit'});
+  const o = f || {time:LG.date === T.date ? nowT : ''};
+  sheet(`<h2>${f ? '외국인 고객 기록 수정' : '외국인 고객 기록'}</h2><div class="mut">${dLabel(LG.date)} · 구매하지 않아도 확인된 내용을 적어 주세요. 빈 칸이 있어도 저장돼요.</div>
+    <label class="f">방문 시간</label><input type="time" id="lf_time" value="${esc(o.time || '')}" style="width:100%;border:1px solid var(--edge);background:var(--card);border-radius:11px;padding:10px 12px;font-size:16px;color:inherit">
+    <label class="f">국적</label><div class="row" style="flex-wrap:wrap;gap:5px;margin-bottom:6px">${NATS.map(n => `<button class="pill" data-nat="${n}">${n}</button>`).join('')}</div><input type="text" id="lf_nat" value="${esc(o.nat || '')}" placeholder="${FF[1][2]}">
+    ${FF.slice(2).map(([k, l, ph]) => `<label class="f">${l}</label><textarea id="lf_${k}" style="min-height:58px" placeholder="${esc(ph)}">${esc(o[k] || '')}</textarea>`).join('')}
+    <button class="btn pri" style="width:100%;margin-top:14px" id="lfSave">저장</button>
+    ${f ? `<button class="btn dan" style="width:100%;margin-top:8px" id="lfDel">삭제</button>` : ''}`);
+  document.querySelectorAll('[data-nat]').forEach(b => b.onclick = () => { const i = $('lf_nat'), v = i.value.trim(), n = b.dataset.nat; i.value = v.startsWith(n) ? v : (n + ' ' + v.replace(new RegExp('^(' + NATS.join('|') + ')\\s*'), '')).trim(); i.focus(); });
+  const send = async (op, btn) => {
+    const body = {kind:'foreign', op, id:f ? f.id : '', date:LG.date, by:f && f.by ? f.by : S.me};
+    for (const [k] of FF) body[k] = $('lf_' + k).value.trim();
+    if (op !== 'del' && !FF.some(([k]) => k !== 'time' && body[k])) { toast('내용을 하나 이상 적어 주세요', true); return; }
+    btn.disabled = true; btn.textContent = '저장 중…';
+    try { LG.day = await lgPost(body); closeSheet(); toast(op === 'del' ? '삭제했어요' : '저장했어요'); render(); }
+    catch (e) { btn.disabled = false; btn.textContent = op === 'del' ? '삭제' : '저장'; toast('저장하지 못했어요. 다시 눌러 주세요.', true); }
+  };
+  $('lfSave').onclick = () => send(f ? 'edit' : 'add', $('lfSave'));
+  if (f) $('lfDel').onclick = async () => { const keep = {}; for (const [k] of FF) keep[k] = $('lf_' + k).value; if (await ask('이 기록을 삭제할까요?', '삭제', true)) { const b = {kind:'foreign', op:'del', id:f.id, date:LG.date}; try { LG.day = await lgPost(b); toast('삭제했어요'); render(); } catch { toast('삭제하지 못했어요', true); } } else { foreignSheet({...f, ...keep}); } };
+}
+async function lgSaveT() {
+  if (needName()) return;
+  const t = LG.day.traffic || {}, d = LG.draft && LG.draft.date === LG.date ? LG.draft : {}, g = k => k in d ? d[k] : (t[k] ?? '');
+  const body = {kind:'traffic', date:LG.date, by:S.me}; for (const k of ['out', 'in1', 'in2', 'weather', 'temp', 'memo']) body[k] = String(g(k)).trim();
+  if (['out', 'in1', 'in2'].some(k => body[k] !== '' && !/^\d{1,6}$/.test(body[k]))) { toast('숫자만 입력해 주세요', true); return; }
+  if (['out', 'in1', 'in2'].every(k => body[k] === '')) { toast('숫자를 하나 이상 적어 주세요', true); return; }
+  LG.saving = true; render();
+  try { LG.day = await lgPost(body); LG.draft = null; toast('저장했어요'); }
+  catch (e) { toast('저장하지 못했어요. 다시 눌러 주세요.', true); }
+  LG.saving = false; render();
+}
+/* 기간 정리 (대표님 보고용) */
+function repRange(k) {
+  const [y, m] = T.date.split('-').map(Number);
+  if (k === 'week') { const wd = (new Date(T.date + 'T12:00:00Z').getUTCDay() + 6) % 7; return [addDays(T.date, -wd), T.date]; }
+  if (k === 'last') { const ly = m === 1 ? y - 1 : y, lm = m === 1 ? 12 : m - 1; return [`${ly}-${pad(lm)}-01`, addDays(`${y}-${pad(m)}-01`, -1)]; }
+  return [`${y}-${pad(m)}-01`, T.date];
+}
+async function repLoad() {
+  const R = LG.rep; if (R.from > R.to) { toast('시작일이 끝일보다 늦어요', true); return; }
+  R.err = ''; R.data = null;
+  if (!ckUrl()) { const inR = d => d >= R.from && d <= R.to; R.data = {traffic:Object.values(lgLocalT()).filter(x => inR(x.date)).sort((a, b) => a.date.localeCompare(b.date)), foreign:lgLocalF().filter(x => inR(x.date)).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))}; render(); return; }
+  R.loading = true; render();
+  try { const r = await fetch(`${ckUrl()}?logs=1&from=${R.from}&to=${R.to}&t=${Date.now()}`); const j = await r.json(); if (!j.ok) throw Error(j.error); R.data = j; }
+  catch (e) { R.err = '기록을 불러오지 못했어요.'; }
+  finally { R.loading = false; if (S.tab === 'log') render(); }
+}
+const bought = f => f.bought && !/^(없음|x|-|구매\s*x|미구매|구매\s*안\s*함)/i.test(f.bought.trim());
+const natKey = s => { const v = String(s || '').trim(); const n = NATS.find(x => v.startsWith(x)); return n || (v ? v.split(/\s/)[0] : '미기록'); };
+function repStats(data) {
+  const t = data.traffic.filter(x => x.out !== '' || x.in1 !== '' || x.in2 !== ''), sum = k => t.reduce((a, x) => a + (+x[k] || 0), 0), cnt = k => t.filter(x => x[k] !== '' && x[k] != null).length;
+  const avg = k => cnt(k) ? Math.round(sum(k) / cnt(k) * 10) / 10 : '–';
+  const both = t.filter(x => x.out !== '' && x.in1 !== '' && +x.out > 0), rate = both.length ? pct(both.reduce((a, x) => a + +x.in1, 0), both.reduce((a, x) => a + +x.out, 0)) : '–';
+  const both2 = t.filter(x => x.out !== '' && x.in2 !== '' && +x.out > 0), rate2 = both2.length ? pct(both2.reduce((a, x) => a + +x.in2, 0), both2.reduce((a, x) => a + +x.out, 0)) : '–';
+  const byW = {}; t.forEach(x => { const w = x.weather || '미기록'; (byW[w] = byW[w] || []).push(x); });
+  const byWD = {}; t.forEach(x => { const w = WD[new Date(x.date + 'T12:00:00Z').getUTCDay()]; (byWD[w] = byWD[w] || []).push(x); });
+  const f = data.foreign, nat = {}; f.forEach(x => { const k = natKey(x.nat); nat[k] = (nat[k] || 0) + 1; });
+  return {t, sum, cnt, avg, rate, rate2, byW, byWD, f, nat:Object.entries(nat).sort((a, b) => b[1] - a[1]), nBought:f.filter(bought).length};
+}
+const avgOf = (l, k) => { const v = l.filter(x => x[k] !== '' && x[k] != null); return v.length ? Math.round(v.reduce((a, x) => a + +x[k], 0) / v.length * 10) / 10 : '–'; };
+function repText(R, s) {
+  const md = d => `${+d.slice(5, 7)}/${+d.slice(8)}`;
+  let o = `[도로시와 ${C().store} 매장 기록] ${md(R.from)}~${md(R.to)}\n\n■ 유동인구 (팀 단위, 기록 ${s.t.length}일)\n`;
+  o += `- 매장 밖 유동인구: 합계 ${s.sum('out')} / 일평균 ${s.avg('out')}\n- 1층 인입: 합계 ${s.sum('in1')} / 일평균 ${s.avg('in1')} (인입률 ${s.rate})\n- 2층 인입: 합계 ${s.sum('in2')} / 일평균 ${s.avg('in2')} (인입률 ${s.rate2})\n`;
+  const ws = Object.entries(s.byW); if (ws.length) o += `- 날씨별 일평균 유동인구: ${ws.map(([w, l]) => `${w} ${avgOf(l, 'out')}(${l.length}일)`).join(', ')}\n`;
+  o += `\n■ 외국인 고객 ${s.f.length}팀 (구매 ${s.nBought}팀)\n`;
+  if (s.nat.length) o += `- 국적: ${s.nat.map(([k, n]) => `${k} ${n}`).join(', ')}\n`;
+  s.f.forEach(f => { o += `\n· ${md(f.date)} ${f.time || ''} ${f.nat || ''}\n`; FF.slice(2).forEach(([k, l]) => { if (f[k]) o += `  ${l}: ${f[k]}\n`; }); });
+  return o.trim();
+}
+function vLogReport() {
+  const R = LG.rep; if (!R.from) [R.from, R.to] = repRange('month');
+  const dateIn = (id, v) => `<input type="date" id="${id}" value="${v}" max="${T.date}" style="width:100%;border:1px solid var(--edge);background:var(--card);border-radius:11px;padding:9px 10px;font-size:15px;color:inherit">`;
+  let h = `<div class="card"><div class="row" style="gap:6px;margin-bottom:10px">${[['week', '이번 주'], ['month', '이번 달'], ['last', '지난달']].map(([k, l]) => `<button class="pill grow" data-act="repQ" data-v="${k}">${l}</button>`).join('')}</div>
+    <div class="row" style="gap:6px">${dateIn('rFrom', R.from)}<span>~</span>${dateIn('rTo', R.to)}</div>
+    <button class="btn pri" style="width:100%;margin-top:10px" data-act="repGo">${R.loading ? '불러오는 중…' : '정리 보기'}</button></div>`;
+  if (R.err) h += `<div class="warn">${esc(R.err)}</div>`;
+  if (!R.data) return h + (R.loading ? '' : `<div class="mut" style="text-align:center">기간을 고르고 <b>정리 보기</b>를 눌러 주세요.</div>`);
+  const s = repStats(R.data), md = d => `${+d.slice(5, 7)}/${+d.slice(8)}`;
+  h += `<div class="row" style="gap:8px;margin-bottom:8px"><button class="btn grow" data-act="repCopy">📋 보고용 텍스트 복사</button>${R.data.sheetUrl ? `<a class="btn grow" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit" href="${esc(R.data.sheetUrl)}" target="_blank" rel="noopener">구글 시트 열기</a>` : ''}</div>`;
+  h += `<div class="card"><h3>유동인구 <span class="mut" style="font-weight:500">기록 ${s.t.length}일 · 팀 단위</span></h3>
+    <div class="row" style="text-align:center;margin:6px 0 10px">${[['out', '매장 밖'], ['in1', '1층 인입'], ['in2', '2층 인입']].map(([k, l]) => `<div class="grow"><div class="mut">${l}</div><b style="font-size:19px">${s.sum(k)}</b><div class="mut" style="font-size:11px">일평균 ${s.avg(k)}</div></div>`).join('')}</div>
+    <div class="row" style="text-align:center"><div class="grow"><div class="mut">1층 인입률</div><b>${s.rate}</b></div><div class="grow"><div class="mut">2층 인입률</div><b>${s.rate2}</b></div></div>`;
+  const ws = Object.entries(s.byW); if (ws.length) h += `<div class="mut" style="margin-top:12px;font-weight:650">날씨별 일평균</div>` + ws.map(([w, l]) => `<div class="row" style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--edge)"><span class="grow">${(WEATHER.find(x => x[0] === w) || ['', ''])[1]} ${esc(w)} <span class="mut">${l.length}일</span></span><span>밖 ${avgOf(l, 'out')} · 1층 ${avgOf(l, 'in1')} · 2층 ${avgOf(l, 'in2')}</span></div>`).join('');
+  const wds = WD.filter(w => s.byWD[w]); if (wds.length) h += `<div class="mut" style="margin-top:12px;font-weight:650">요일별 일평균 (매장 밖)</div><div class="row" style="text-align:center;gap:4px;margin-top:4px">${wds.map(w => `<div class="grow" style="background:var(--soft);border-radius:8px;padding:5px 0"><div class="mut" style="font-size:11px">${w}</div><b style="font-size:13px">${avgOf(s.byWD[w], 'out')}</b></div>`).join('')}</div>`;
+  if (s.t.length) h += `<details style="margin-top:12px"><summary class="mut" style="cursor:pointer;font-weight:650">날짜별 보기</summary><div style="margin-top:6px">${s.t.map(x => `<div class="row" style="font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--edge)"><span style="width:62px">${md(x.date)} ${WD[new Date(x.date + 'T12:00:00Z').getUTCDay()]}</span><span style="width:24px">${(WEATHER.find(w => w[0] === x.weather) || ['', ''])[1]}</span><span class="grow" style="text-align:right">${x.out === '' ? '–' : x.out} / ${x.in1 === '' ? '–' : x.in1} / ${x.in2 === '' ? '–' : x.in2}</span><span class="mut" style="width:52px;text-align:right">${pct(nv(x.in1), nv(x.out))}</span></div>`).join('')}<div class="mut" style="font-size:11px;margin-top:4px">매장 밖 / 1층 / 2층 · 1층 인입률</div></div></details>`;
+  h += `</div><div class="card"><h3>외국인 고객 <span class="mut" style="font-weight:500">${s.f.length}팀 · 구매 ${s.nBought}팀</span></h3>`;
+  if (s.nat.length) h += `<div class="row" style="flex-wrap:wrap;gap:5px;margin:6px 0 4px">${s.nat.map(([k, n]) => `<span class="chip" style="--h:210;--s:30%">${esc(k)} ${n}</span>`).join('')}</div>`;
+  h += s.f.length ? s.f.map(f => `<div style="border-top:1px solid var(--edge);padding:8px 0;font-size:13px"><b>${md(f.date)} ${esc(f.time || '')} · ${esc(f.nat || '국적 미기록')}</b>${FF.slice(2).filter(([k]) => f[k]).map(([k, l]) => `<div style="line-height:1.5"><span class="mut">${l}</span> ${esc(f[k])}</div>`).join('')}</div>`).join('') : '<div class="empty">기록이 없어요.</div>';
+  return h + `</div>`;
+}
+async function repCopy() {
+  const txt = repText(LG.rep, repStats(LG.rep.data));
+  try { await navigator.clipboard.writeText(txt); toast('복사했어요 · 카톡/슬랙에 붙여넣으세요'); }
+  catch { sheet(`<h2>보고용 텍스트</h2><div class="mut">길게 눌러 전체 선택 후 복사하세요.</div><textarea style="min-height:320px;margin-top:10px;font-size:13px" readonly>${esc(txt)}</textarea><button class="btn" style="width:100%;margin-top:10px" id="rcx">닫기</button>`); $('rcx').onclick = closeSheet; }
+}
 function vManual() {
   const list = C().manuals || [];
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px">업무 매뉴얼</b></div>`;
@@ -838,7 +1003,7 @@ function render() {
   $('bars').innerHTML = bars;
   if (!S.ready && !D.config) { $('view').innerHTML = `<div class="card empty">${S.offline ? '로그인이 필요해요.' : '불러오는 중…'}</div>`; return; }
   const tbl = $('mtbl') || $('dtbl'), keep = tbl ? [tbl.id, tbl.scrollLeft, tbl.scrollTop] : null;
-  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist})[S.tab]();
+  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog})[S.tab]();
   $('foot').innerHTML = (D.updated ? '마지막 업데이트 ' + esc(D.updated) : '');
   $('saveBar').style.display = adm && S.dirty ? 'flex' : 'none';
   $('saveBar').innerHTML = `<span class="grow">저장 안 된 변경 ${S.dirty}건</span><button class="btn sm" data-act="discardAll" style="background:transparent;color:inherit;border-color:#fff6">되돌리기</button><button class="btn sm" data-act="saveAll" style="background:var(--rev);color:var(--acc);border:0" ${S.saving ? 'disabled' : ''}>${S.saving ? '저장 중…' : '저장'}</button>`;
@@ -862,8 +1027,18 @@ document.addEventListener('click', async e => {
     case 'ckHistOpen': CKH.open = CKH.open === v ? null : v; break;
     case 'ckHistReload': CKH.data = null; ckHistLoad(); break;
     case 'ck': ckToggle(v); return;
+    case 'lgTab': LG.tab = v; break;
+    case 'lgDate': { const nd = v === '0' ? T.date : addDays(LG.date, +v); if (nd > T.date) return; LG.date = nd; LG.err = ''; LG.draft = null; lgLoad(nd); break; }
+    case 'lgReload': LG.err = ''; lgLoad(LG.date); break;
+    case 'lgW': { if (!LG.draft || LG.draft.date !== LG.date) LG.draft = {date:LG.date}; const cur = 'weather' in LG.draft ? LG.draft.weather : ((LG.day && LG.day.traffic) || {}).weather; LG.draft.weather = cur === v ? '' : v; break; }
+    case 'lgSaveT': lgSaveT(); return;
+    case 'lgFNew': foreignSheet(null); return;
+    case 'lgFEdit': { const f = LG.day && LG.day.foreign.find(x => x.id === v); if (f) foreignSheet(f); return; }
+    case 'repQ': [LG.rep.from, LG.rep.to] = repRange(v); repLoad(); return;
+    case 'repGo': LG.rep.from = $('rFrom').value || LG.rep.from; LG.rep.to = $('rTo').value || LG.rep.to; repLoad(); return;
+    case 'repCopy': repCopy(); return;
     case 'manOpen': { const m = (C().manuals || []).find(x => x.id === v); if (m) viewer(m); return; }
-    case 'go': if (v === 'ckhist') CKH.data = null; S.tab = v; scrollTo(0, 0); break;
+    case 'go': if (v === 'ckhist') CKH.data = null; if (v === 'log') { LG.date = T.date; LG.day = null; LG.err = ''; LG.draft = null; } S.tab = v; scrollTo(0, 0); break;
     case 'myMonth': S.tab = 'month'; S.mView = 'mine'; scrollTo(0, 0); break;
     case 'mMove': { const ks = monthKeys(); S.month = ks[ks.indexOf(S.month) + +v] || S.month; break; }
     case 'mView': S.mView = v; ls.set('mView2', v); break;

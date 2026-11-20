@@ -8,7 +8,8 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - robots.txt : 검색엔진 차단
 - manual/ : 본사 스토어 매뉴얼 25장 (홈 '업무 매뉴얼' → 본사 지침). 캐셔·환불 사진은 manual/cashier-01.jpg 식으로 추가
 - admin.json : 관리자 열쇠(암호화) — 손대지 말 것
-- checklist-server.gs : 체크리스트 저장 서버(Google Apps Script) 원본. 사장님 구글 계정에 웹앱으로 배포, 주소는 data.json config.checkUrl
+- checklist-server.gs : 저장 서버(Google Apps Script) 원본 — 체크리스트(스크립트 속성, 60일) + 매장 기록(구글 시트 '도로시와 가로수길점 매장 기록' 자동 생성: 유동인구·외국인 고객 탭, 계속 보관). 사장님 구글 계정에 웹앱으로 배포, 주소는 data.json config.checkUrl. 이 파일을 고치면 사장님이 Apps Script에 다시 붙여넣고 '배포 관리 → 새 버전'을 해야 함
+- 매장 기록 화면(홈 '매장 기록'): 유동인구(매장 밖·1층 인입·2층 인입, 팀 단위 하루 합계 + 날씨·기온·메모) / 외국인 고객(방문 시간·국적·관심 제품·동선·구매 제품·기타·추가) / 기간 정리(대표님 보고용 텍스트 복사, 구글 시트 열기). 모두 작성·열람 가능. checkUrl 비면 기기별 임시 저장(localStorage dsh_log_t, dsh_log_f)
 
 ## data.json 구조
 - config: store, hours{open,close}, staff[{name,role}], positions[{name,hue,gray?}], shiftPresets[], absences[], guide(데일리 탭 맨 아래 '조닝 운영 참고'), manuals[{id,title,desc,body?,images[]}](홈 '업무 매뉴얼' 타일 → 목록 → 뷰어. body/images 비면 '준비 중'. 현재: hq 본사 지침, cashier 캐셔·결제 방법, refund 교환·환불), holidays{날짜:이름}, restTypes[], checklist{open|close:[{title:'1층'|'2층', items:[{id,text,note?} 또는 {head:'청소'}(카드 안 작은 제목, 체크 안 됨)]}]} — 1층·2층은 모든 항목을 따로 체크 (id는 영문·숫자·-만, 바꾸면 기존 기록과 연결이 끊김 — 기록에는 항목 이름 t도 함께 저장됨). 관리자: 체크리스트 화면 '체크 기록 보기'에서 날짜별 누가·언제 확인 (서버 60일 보관), checkUrl
