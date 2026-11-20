@@ -124,36 +124,52 @@
    "요청휴무",
    "대휴"
   ],
-  "manual": {
-   "title": "본사 지침 · 스토어 메뉴얼",
-   "images": [
-    "manual/01.jpg",
-    "manual/02.jpg",
-    "manual/03.jpg",
-    "manual/04.jpg",
-    "manual/05.jpg",
-    "manual/06.jpg",
-    "manual/07.jpg",
-    "manual/08.jpg",
-    "manual/09.jpg",
-    "manual/10.jpg",
-    "manual/11.jpg",
-    "manual/12.jpg",
-    "manual/13.jpg",
-    "manual/14.jpg",
-    "manual/15.jpg",
-    "manual/16.jpg",
-    "manual/17.jpg",
-    "manual/18.jpg",
-    "manual/19.jpg",
-    "manual/20.jpg",
-    "manual/21.jpg",
-    "manual/22.jpg",
-    "manual/23.jpg",
-    "manual/24.jpg",
-    "manual/25.jpg"
-   ]
-  }
+  "manuals": [
+   {
+    "id": "hq",
+    "title": "본사 지침 · 스토어 매뉴얼",
+    "desc": "조직·근무 규정·매장 기본·고객 응대·근무 수칙",
+    "images": [
+     "manual/01.jpg",
+     "manual/02.jpg",
+     "manual/03.jpg",
+     "manual/04.jpg",
+     "manual/05.jpg",
+     "manual/06.jpg",
+     "manual/07.jpg",
+     "manual/08.jpg",
+     "manual/09.jpg",
+     "manual/10.jpg",
+     "manual/11.jpg",
+     "manual/12.jpg",
+     "manual/13.jpg",
+     "manual/14.jpg",
+     "manual/15.jpg",
+     "manual/16.jpg",
+     "manual/17.jpg",
+     "manual/18.jpg",
+     "manual/19.jpg",
+     "manual/20.jpg",
+     "manual/21.jpg",
+     "manual/22.jpg",
+     "manual/23.jpg",
+     "manual/24.jpg",
+     "manual/25.jpg"
+    ]
+   },
+   {
+    "id": "cashier",
+    "title": "캐셔 · 결제 방법",
+    "desc": "카드·현금·간편결제 등",
+    "images": []
+   },
+   {
+    "id": "refund",
+    "title": "교환 · 환불",
+    "desc": "기준과 처리 순서",
+    "images": []
+   }
+  ]
  },
  "months": {
   "2026-11": {
@@ -684,5 +700,5 @@
   }
  },
  "notices": [],
- "appVersion": "2026.11.21-6"
+ "appVersion": "2026.11.21-7"
 }

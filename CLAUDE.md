@@ -6,11 +6,11 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - index.html : 화면 전체 (수정 시 폰 화면 390px 기준으로 확인)
 - data.json  : 매장 데이터. 근무표·조닝·공지 변경은 대부분 이 파일만 고친다. 고친 뒤 "updated"를 오늘 날짜(YYYY.MM.DD)로 바꾼다.
 - robots.txt : 검색엔진 차단
-- manual/ : 본사 스토어 메뉴얼 25장 (홈 '응대·조닝 가이드'에서 열림)
+- manual/ : 본사 스토어 매뉴얼 25장 (홈 '업무 매뉴얼' → 본사 지침). 캐셔·환불 사진은 manual/cashier-01.jpg 식으로 추가
 - admin.json : 관리자 열쇠(암호화) — 손대지 말 것
 
 ## data.json 구조
-- config: store, hours{open,close}, staff[{name,role}], positions[{name,hue,gray?}], shiftPresets[], absences[], guide(데일리 탭 맨 아래 '조닝 운영 참고'), manual{title, images[]}(홈 '응대·조닝 가이드' 타일 = 본사 스토어 메뉴얼 뷰어), holidays{날짜:이름}, restTypes[]
+- config: store, hours{open,close}, staff[{name,role}], positions[{name,hue,gray?}], shiftPresets[], absences[], guide(데일리 탭 맨 아래 '조닝 운영 참고'), manuals[{id,title,desc,body?,images[]}](홈 '업무 매뉴얼' 타일 → 목록 → 뷰어. body/images 비면 '준비 중'. 현재: hq 본사 지침, cashier 캐셔·결제 방법, refund 교환·환불), holidays{날짜:이름}, restTypes[]
 - months["YYYY-MM"][직원이름][날짜] = "11~20" | "휴" | "요청휴무" | "연차" ...
 - daily["YYYY-MM-DD"] = { published: true, assign: { 직원이름: [open시부터 1시간 단위 포지션, 근무 외는 null] } }
 - notices = [{ id, title, body, pinned, date: "YYYY-MM-DD", images?: ["manual/01.jpg", ...] }] (images = 자료 보기 뷰어로 보여줄 사진, 저장소에 파일로 올림)

@@ -266,7 +266,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-6';
+const APP_VER = '2026.11.21-7';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -470,7 +470,7 @@ function vToday() {
     ['month', '먼슬리', '월간 근무 스케줄', 'go:month'],
     ['daily', '데일리 조닝', dl ? '오늘 조닝 확정' : '시간별 배치', 'go:daily'],
     ['notice', '공지사항', unreadCount() ? `읽지 않은 공지 ${unreadCount()}건` : nCount ? `공지 ${nCount}건` : '새 공지 확인', 'go:notice'],
-    ['guide', '응대·조닝 가이드', C().manual ? '본사 스토어 메뉴얼' : '준비 중', C().manual ? 'guide' : ''],
+    ['guide', '업무 매뉴얼', '본사 지침 · 캐셔 · 교환/환불', 'guide'],
     ['check', '체크리스트', '추후 오픈', ''],
     ['todo', '해야 할 일', '추후 오픈', ''],
     ['product', '판매 제품·설명', '추후 오픈', ''],
@@ -659,9 +659,17 @@ function vNotice() {
       ${open ? `<div style="padding:0 14px 14px"><div class="bd" style="margin-top:0">${esc(n.body)}</div>${imgs.length ? `<button class="btn pri" style="width:100%;margin-top:12px" data-act="nView" data-v="${esc(n.id)}">📄 자료 보기 (${imgs.length}장)</button>` : ''}${admin() ? `<button class="btn sm" style="margin-top:10px" data-act="nEdit" data-v="${esc(n.id)}">수정</button>` : ''}</div>` : ''}</div>`; }).join('') : '<div class="card empty">등록된 공지가 없어요.</div>';
   return h;
 }
+const manReady = m => (m.images && m.images.length) || (m.body && m.body.trim());
+function manualSheet() {
+  const list = C().manuals || [];
+  sheet(`<h2>업무 매뉴얼</h2><div class="mut">필요한 항목을 눌러 확인하세요.</div>
+    <div style="margin-top:12px">${list.map(m => { const ok = manReady(m); return `<button class="li" style="width:100%;text-align:left;${ok ? '' : 'opacity:.45'}" ${ok ? `data-act="manOpen" data-v="${esc(m.id)}"` : 'disabled'}><div class="grow"><div class="nm">${esc(m.title)}</div><div class="rl">${ok ? esc(m.desc || '') : '준비 중'}</div></div><span class="mut">${ok ? '›' : ''}</span></button>`; }).join('') || '<div class="empty">등록된 매뉴얼이 없어요.</div>'}</div>
+    <button class="btn" style="width:100%;margin-top:14px" id="mClose">닫기</button>`);
+  $('mClose').onclick = closeSheet;
+}
 function viewer(n) {
   const v = $('viewer');
-  v.innerHTML = `<div class="vtop"><b class="grow">${esc(n.title)}</b><button class="btn sm" id="vClose">닫기</button></div><div class="vbody">${(n.images || []).map((src, i) => `<img src="${esc(src)}" loading="${i < 2 ? 'eager' : 'lazy'}" alt="${i + 1}쪽">`).join('')}</div>`;
+  v.innerHTML = `<div class="vtop"><b class="grow">${esc(n.title)}</b><button class="btn sm" id="vClose">닫기</button></div><div class="vbody">${n.body ? `<div class="card" style="width:100%;max-width:820px;white-space:pre-wrap;line-height:1.7;font-size:14px">${esc(n.body)}</div>` : ''}${(n.images || []).map((src, i) => `<img src="${esc(src)}" loading="${i < 2 ? 'eager' : 'lazy'}" alt="${i + 1}쪽">`).join('')}</div>`;
   v.style.display = 'flex'; document.body.style.overflow = 'hidden';
   $('vClose').onclick = () => { v.style.display = 'none'; document.body.style.overflow = ''; };
 }
@@ -755,7 +763,8 @@ document.addEventListener('click', async e => {
   const a = e.target.closest('[data-act]'); if (!a) return; const v = a.dataset.v;
   switch (a.dataset.act) {
     case 'pickMe': pickMe(); return;
-    case 'guide': if (C().manual) viewer(C().manual); return;
+    case 'guide': manualSheet(); return;
+    case 'manOpen': { const m = (C().manuals || []).find(x => x.id === v); if (m) { closeSheet(); viewer(m); } return; }
     case 'go': S.tab = v; scrollTo(0, 0); break;
     case 'myMonth': S.tab = 'month'; S.mView = 'mine'; scrollTo(0, 0); break;
     case 'mMove': { const ks = monthKeys(); S.month = ks[ks.indexOf(S.month) + +v] || S.month; break; }
