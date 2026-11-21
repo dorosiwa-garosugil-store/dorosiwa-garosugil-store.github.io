@@ -268,7 +268,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-15';
+const APP_VER = '2026.11.21-16';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -959,11 +959,13 @@ function vTodo() {
   const adm = admin(), idle = idleItems(), done = idle.filter(i => CK.checks[i.id]).length;
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">해야 할 일</b></div>`;
   if (ckUrl() && CK.err) h += `<div class="warn">${esc(CK.err)}</div>`;
-  h += `<div class="card" style="padding:6px 14px"><div class="row" style="margin:8px 0 2px"><h3 class="grow" style="margin:0">📌 한가할 때 할 일 <span class="mut">${done}/${idle.length}</span></h3>${adm ? '<button class="link" data-act="idleEdit">편집</button>' : ''}</div>`;
+  const io = !!S.idleOpen;
+  h += `<div class="card" style="padding:${io ? '6px 14px' : '0'};overflow:hidden"><div class="row" style="${io ? 'margin:8px 0 2px' : ''}"><button class="row grow" style="text-align:left;${io ? '' : 'padding:14px'}" data-act="idleToggle"><h3 class="grow" style="margin:0">📌 한가할 때 할 일 <span class="mut">${done}/${idle.length}</span></h3><span class="mut" style="font-size:16px">${io ? '⌃' : '⌄'}</span></button>${adm && io ? '<button class="link" style="margin-left:10px" data-act="idleEdit">편집</button>' : ''}</div>`;
+  if (!io) h += `</div>`; else {
   if (!S.me) h += `<div class="note">체크하려면 오른쪽 위 <b>내 이름</b>을 먼저 선택해 주세요.</div>`;
   h += idle.map(i => { const c = CK.checks[i.id], t = c && c.at ? new Date(c.at).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false}) : '';
     return `<button class="li" style="width:100%;text-align:left" data-act="ck" data-v="${esc(i.id)}"><span class="ckbox ${c ? 'on' : ''}">${c ? '✓' : ''}</span><div class="grow"><div class="nm" style="${c ? 'color:var(--mut);text-decoration:line-through' : ''}">${esc(i.text)}</div>${c ? `<div class="rl" style="color:var(--ok);font-weight:650">${esc(c.by || '')} · ${t}</div>` : ''}</div></button>`; }).join('') || '<div class="empty">등록된 항목이 없어요.</div>';
-  h += `<div class="mut" style="font-size:11px;margin:8px 0">${ckUrl() ? '체크하면 모든 직원 폰에 보여요 · ' : '임시 모드: 이 폰에만 저장돼요 · '}매일 새로 시작해요</div></div>`;
+  h += `<div class="mut" style="font-size:11px;margin:8px 0">${ckUrl() ? '체크하면 모든 직원 폰에 보여요 · ' : '임시 모드: 이 폰에만 저장돼요 · '}매일 새로 시작해요</div></div>`; }
   if (adm) h += `<button class="btn pri" style="width:100%;margin:4px 0 8px" data-act="tdNew">+ 할 일 작성</button>`;
   const list = [...(D.todos || [])].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(b.id).localeCompare(String(a.id)));
   h += list.length ? list.map(n => { const open = S.openTodo === n.id;
@@ -1114,6 +1116,7 @@ document.addEventListener('click', async e => {
     case 'tdEdit': todoSheet((D.todos || []).find(n => n.id === v)); return;
     case 'tdOpen': S.openTodo = S.openTodo === v ? null : v; break;
     case 'idleEdit': idleSheet(); return;
+    case 'idleToggle': S.idleOpen = !S.idleOpen; break;
     case 'prCat': PR.cat = v; break;
     case 'prReload': PR.err = ''; prLoad(); break;
     case 'prImg': { const p = PR.data && PR.data.items.find(x => x.id === v); if (p) viewer({title:p.name, images:p.images, small:1}); return; }
