@@ -7,6 +7,7 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - data.json  : 매장 데이터. 근무표·조닝·공지 변경은 대부분 이 파일만 고친다. 고친 뒤 "updated"를 오늘 날짜(YYYY.MM.DD)로 바꾼다.
 - robots.txt : 검색엔진 차단
 - manual/ : 본사 스토어 매뉴얼 25장 (홈 '업무 매뉴얼' → 본사 지침). 캐셔·환불 사진은 manual/cashier-01.jpg 식으로 추가
+- products.json + products/ : 홈 '판매 제품' 화면 데이터 ({categories[{id,name}], items[{id,cat,name,colors[],sizes[],images[]}]}). 사진은 products/p01-1.jpg 식. 사이트 관리자 저장은 data.json만 건드리므로 제품은 Claude가 이 파일을 직접 고친다 (APP_VER 갱신 불필요). 원가·출시 전 제품은 넣지 않는다
 - admin.json : 관리자 열쇠(암호화) — 손대지 말 것
 - checklist-server.gs : 저장 서버(Google Apps Script) 원본 — 체크리스트(스크립트 속성, 60일) + 매장 기록(구글 시트 '도로시와 가로수길점 매장 기록' 자동 생성: 유동인구·외국인 고객 탭, 계속 보관). 사장님 구글 계정에 웹앱으로 배포, 주소는 data.json config.checkUrl. 이 파일을 고치면 사장님이 Apps Script에 다시 붙여넣고 '배포 관리 → 새 버전'을 해야 함
 - 매장 기록 화면(홈 '매장 기록'): 유동인구(매장 밖·1층 인입·2층 인입, 팀 단위 하루 합계 + 날씨·기온·메모) / 외국인 고객(방문 시간·국적·관심 제품·동선·구매 제품·기타·추가) / 기간 정리(대표님 보고용 텍스트 복사, 구글 시트 열기). 모두 작성·열람 가능. checkUrl 비면 기기별 임시 저장(localStorage dsh_log_t, dsh_log_f)

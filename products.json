@@ -1,0 +1,1094 @@
+{
+ "updated": "2026-11-13",
+ "source": "가로수길 매장 상품 안내서 (2026-11-13 기준)",
+ "categories": [
+  {
+   "id": "bra",
+   "name": "브라"
+  },
+  {
+   "id": "bralette",
+   "name": "브라렛"
+  },
+  {
+   "id": "tube",
+   "name": "튜브탑·나시"
+  },
+  {
+   "id": "panty",
+   "name": "팬티"
+  },
+  {
+   "id": "pajama",
+   "name": "파자마·홈웨어"
+  },
+  {
+   "id": "thermo",
+   "name": "써모터치"
+  },
+  {
+   "id": "skin",
+   "name": "스킨브라"
+  }
+ ],
+ "items": [
+  {
+   "id": "p01",
+   "cat": "bra",
+   "name": "미니멀 스트랩 심리스 브라",
+   "colors": [
+    "베이지",
+    "딥레드",
+    "아이보리",
+    "블랙"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L"
+   ],
+   "images": [
+    "products/p01-1.jpg",
+    "products/p01-2.jpg",
+    "products/p01-3.jpg",
+    "products/p01-4.jpg"
+   ]
+  },
+  {
+   "id": "p02",
+   "cat": "bra",
+   "name": "츠메르브라 쫀쫀 심리스",
+   "colors": [
+    "아이보리",
+    "브라운",
+    "핑크베이지",
+    "블랙"
+   ],
+   "sizes": [
+    "70A",
+    "75A",
+    "80A",
+    "85A",
+    "70B",
+    "75B",
+    "80B",
+    "85B",
+    "70C",
+    "75C",
+    "80C",
+    "85C",
+    "70D",
+    "75D",
+    "80D",
+    "85D"
+   ],
+   "images": [
+    "products/p02-1.jpg",
+    "products/p02-2.jpg",
+    "products/p02-3.jpg",
+    "products/p02-4.jpg"
+   ]
+  },
+  {
+   "id": "p03",
+   "cat": "bra",
+   "name": "쿨샷브라 심리스 서포트",
+   "colors": [
+    "옐로우베이지",
+    "블랙",
+    "화이트"
+   ],
+   "sizes": [
+    "S(70)",
+    "M(75)",
+    "L(80)",
+    "XL(85)",
+    "2XL(90)"
+   ],
+   "images": [
+    "products/p03-1.jpg",
+    "products/p03-2.jpg",
+    "products/p03-3.jpg",
+    "products/p03-4.jpg",
+    "products/p03-5.jpg"
+   ]
+  },
+  {
+   "id": "p04",
+   "cat": "bra",
+   "name": "쿨샷브라 심리스 스쿱라인",
+   "colors": [
+    "옐로우베이지",
+    "블랙",
+    "화이트"
+   ],
+   "sizes": [
+    "S(70)",
+    "M(75)",
+    "L(80)",
+    "XL(85)",
+    "Big S(70)",
+    "Big M(75)",
+    "Big L(80)"
+   ],
+   "images": [
+    "products/p04-1.jpg",
+    "products/p04-2.jpg",
+    "products/p04-3.jpg",
+    "products/p04-4.jpg",
+    "products/p04-5.jpg"
+   ]
+  },
+  {
+   "id": "p05",
+   "cat": "bra",
+   "name": "쿨샷브라 심리스 오프숄더",
+   "colors": [
+    "옐로우베이지",
+    "블랙",
+    "화이트"
+   ],
+   "sizes": [
+    "S(70)",
+    "M(75)",
+    "L(80)",
+    "XL(85)"
+   ],
+   "images": [
+    "products/p05-1.jpg",
+    "products/p05-2.jpg",
+    "products/p05-3.jpg"
+   ]
+  },
+  {
+   "id": "p06",
+   "cat": "bra",
+   "name": "쿨샷브라 심리스 컴포트",
+   "colors": [
+    "옐로우베이지",
+    "블랙",
+    "화이트"
+   ],
+   "sizes": [
+    "S(70)",
+    "M(75)",
+    "L(80)",
+    "XL(85)",
+    "2XL(90)"
+   ],
+   "images": [
+    "products/p06-1.jpg",
+    "products/p06-2.jpg",
+    "products/p06-3.jpg",
+    "products/p06-4.jpg",
+    "products/p06-5.jpg"
+   ]
+  },
+  {
+   "id": "p44",
+   "cat": "bra",
+   "name": "에어리 소프트 더블 레이어 브라",
+   "colors": [
+    "그레이쉬 베이지",
+    "블랙",
+    "베이비 핑크",
+    "크림 아이보리",
+    "페일 민트",
+    "화이트"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L",
+    "BIG S",
+    "BIG M"
+   ],
+   "images": [
+    "products/p44-1.jpg",
+    "products/p44-2.jpg",
+    "products/p44-3.jpg",
+    "products/p44-4.jpg",
+    "products/p44-5.jpg",
+    "products/p44-6.jpg"
+   ]
+  },
+  {
+   "id": "p45",
+   "cat": "bra",
+   "name": "에어리 소프트 롱라인 브라",
+   "colors": [
+    "그레이쉬 베이지",
+    "블랙",
+    "베이비 핑크",
+    "크림 아이보리",
+    "페일 민트",
+    "화이트"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L",
+    "XL"
+   ],
+   "images": [
+    "products/p45-1.jpg",
+    "products/p45-2.jpg",
+    "products/p45-3.jpg",
+    "products/p45-4.jpg",
+    "products/p45-5.jpg",
+    "products/p45-6.jpg"
+   ]
+  },
+  {
+   "id": "p46",
+   "cat": "bra",
+   "name": "에어 프리컷 원몰드 스포츠브라",
+   "colors": [
+    "화이트",
+    "브라운",
+    "그레이",
+    "블랙",
+    "파우더핑크",
+    "카키"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L",
+    "XL"
+   ],
+   "images": [
+    "products/p46-1.jpg",
+    "products/p46-2.jpg",
+    "products/p46-3.jpg",
+    "products/p46-4.jpg",
+    "products/p46-5.jpg",
+    "products/p46-6.jpg"
+   ]
+  },
+  {
+   "id": "p47",
+   "cat": "bra",
+   "name": "에어리 소프트 하이서포트 브라 (앞후크)",
+   "colors": [
+    "그레이쉬 베이지",
+    "블랙",
+    "베이비 핑크",
+    "크림 아이보리",
+    "페일 민트",
+    "화이트"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L",
+    "XL"
+   ],
+   "images": [
+    "products/p47-1.jpg",
+    "products/p47-2.jpg",
+    "products/p47-3.jpg",
+    "products/p47-4.jpg",
+    "products/p47-5.jpg",
+    "products/p47-6.jpg"
+   ]
+  },
+  {
+   "id": "p48",
+   "cat": "bra",
+   "name": "에어리 소프트 크로스밴드 브라",
+   "colors": [
+    "그레이쉬 베이지",
+    "블랙",
+    "베이비 핑크",
+    "크림 아이보리",
+    "페일 민트",
+    "화이트"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L",
+    "XL"
+   ],
+   "images": [
+    "products/p48-1.jpg",
+    "products/p48-2.jpg",
+    "products/p48-3.jpg",
+    "products/p48-4.jpg",
+    "products/p48-5.jpg",
+    "products/p48-6.jpg"
+   ]
+  },
+  {
+   "id": "p49",
+   "cat": "bra",
+   "name": "에어리 소프트 더블 스트랩 브라",
+   "colors": [
+    "그레이쉬 베이지",
+    "블랙",
+    "베이비 핑크",
+    "크림 아이보리",
+    "페일 민트",
+    "화이트"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L",
+    "XL"
+   ],
+   "images": [
+    "products/p49-1.jpg",
+    "products/p49-2.jpg",
+    "products/p49-3.jpg",
+    "products/p49-4.jpg",
+    "products/p49-5.jpg",
+    "products/p49-6.jpg"
+   ]
+  },
+  {
+   "id": "p50",
+   "cat": "bra",
+   "name": "에어리 소프트 컷아웃 레이어 브라",
+   "colors": [
+    "그레이쉬 베이지",
+    "블랙",
+    "베이비 핑크",
+    "크림 아이보리",
+    "페일 민트",
+    "화이트"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L"
+   ],
+   "images": [
+    "products/p50-1.jpg",
+    "products/p50-2.jpg",
+    "products/p50-3.jpg",
+    "products/p50-4.jpg",
+    "products/p50-5.jpg",
+    "products/p50-6.jpg"
+   ]
+  },
+  {
+   "id": "p38",
+   "cat": "bralette",
+   "name": "소프트터치 레이스 브라렛",
+   "colors": [
+    "화이트",
+    "초콜릿브라운",
+    "블랙"
+   ],
+   "sizes": [
+    "S/M",
+    "L/XL"
+   ],
+   "images": []
+  },
+  {
+   "id": "p39",
+   "cat": "bralette",
+   "name": "Minimal Garments Solid Cotton Bralette",
+   "colors": [
+    "화이트",
+    "블랙"
+   ],
+   "sizes": [
+    "S(70)",
+    "M(75)",
+    "L(80)"
+   ],
+   "images": [
+    "products/p39-1.jpg",
+    "products/p39-2.jpg"
+   ]
+  },
+  {
+   "id": "p40",
+   "cat": "bralette",
+   "name": "Minimal Garments Modal Bralette",
+   "colors": [
+    "화이트",
+    "블랙"
+   ],
+   "sizes": [
+    "S(70)",
+    "M(75)",
+    "L(80)"
+   ],
+   "images": [
+    "products/p40-1.jpg",
+    "products/p40-2.jpg"
+   ]
+  },
+  {
+   "id": "p41",
+   "cat": "bralette",
+   "name": "프레리 플라워 링클 브라렛",
+   "colors": [
+    "아이보리",
+    "민트"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L"
+   ],
+   "images": [
+    "products/p41-1.jpg",
+    "products/p41-2.jpg"
+   ]
+  },
+  {
+   "id": "p42",
+   "cat": "bralette",
+   "name": "Minimal Garments Cotton Cut Line Bralette (Wireless)",
+   "colors": [
+    "화이트",
+    "블랙"
+   ],
+   "sizes": [
+    "S(70)",
+    "M(75)",
+    "L(80)"
+   ],
+   "images": [
+    "products/p42-1.jpg",
+    "products/p42-2.jpg"
+   ]
+  },
+  {
+   "id": "p43",
+   "cat": "bralette",
+   "name": "Minimal Garments Snap Banding Bralette",
+   "colors": [
+    "화이트",
+    "블랙",
+    "그레이"
+   ],
+   "sizes": [
+    "S(70)",
+    "M(75)",
+    "L(80)"
+   ],
+   "images": [
+    "products/p43-1.jpg",
+    "products/p43-2.jpg",
+    "products/p43-3.jpg"
+   ]
+  },
+  {
+   "id": "p07",
+   "cat": "tube",
+   "name": "쿨샷브라 밴딩 튜브탑",
+   "colors": [
+    "옐로우베이지",
+    "블랙",
+    "화이트"
+   ],
+   "sizes": [
+    "S(70)",
+    "M(75)",
+    "L(80)",
+    "XL(85)",
+    "Big S(70)",
+    "Big M(75)",
+    "Big L(80)"
+   ],
+   "images": [
+    "products/p07-1.jpg",
+    "products/p07-2.jpg",
+    "products/p07-3.jpg",
+    "products/p07-4.jpg",
+    "products/p07-5.jpg"
+   ]
+  },
+  {
+   "id": "p08",
+   "cat": "tube",
+   "name": "[풀샷몰드] 심플 튜브탑 캡나시 (베이직)",
+   "colors": [
+    "화이트",
+    "블랙",
+    "차콜",
+    "카키"
+   ],
+   "sizes": [
+    "FREE(44-66)"
+   ],
+   "images": [
+    "products/p08-1.jpg",
+    "products/p08-2.jpg",
+    "products/p08-3.jpg",
+    "products/p08-4.jpg"
+   ]
+  },
+  {
+   "id": "p09",
+   "cat": "tube",
+   "name": "[풀샷몰드] 심플 튜브탑 캡나시 (크롭)",
+   "colors": [
+    "화이트",
+    "블랙",
+    "차콜",
+    "카키"
+   ],
+   "sizes": [
+    "FREE(44-66)"
+   ],
+   "images": [
+    "products/p09-1.jpg",
+    "products/p09-2.jpg",
+    "products/p09-3.jpg",
+    "products/p09-4.jpg"
+   ]
+  },
+  {
+   "id": "p10",
+   "cat": "tube",
+   "name": "풀샷몰드 소프트골지 라운드 캡나시",
+   "colors": [
+    "레몬버터",
+    "블랙",
+    "멜란지그레이",
+    "베이지",
+    "베이비블루",
+    "화이트",
+    "베이비핑크"
+   ],
+   "sizes": [
+    "M",
+    "L"
+   ],
+   "images": [
+    "products/p10-1.jpg",
+    "products/p10-2.jpg",
+    "products/p10-3.jpg",
+    "products/p10-4.jpg",
+    "products/p10-5.jpg",
+    "products/p10-6.jpg",
+    "products/p10-7.jpg"
+   ]
+  },
+  {
+   "id": "p11",
+   "cat": "tube",
+   "name": "베이직 쫀쫀 나시",
+   "colors": [
+    "샌드",
+    "네이비",
+    "쿨그레이",
+    "화이트",
+    "블랙",
+    "토프",
+    "퍼플"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L",
+    "XL"
+   ],
+   "images": [
+    "products/p11-1.jpg",
+    "products/p11-2.jpg",
+    "products/p11-3.jpg",
+    "products/p11-4.jpg",
+    "products/p11-5.jpg",
+    "products/p11-6.jpg",
+    "products/p11-7.jpg"
+   ]
+  },
+  {
+   "id": "p12",
+   "cat": "tube",
+   "name": "풀샷몰드 퓨징캡 셔링 골지 튜브탑 (캡고정)",
+   "colors": [
+    "크림",
+    "블랙",
+    "인디핑크",
+    "차콜"
+   ],
+   "sizes": [
+    "슬림/1(S-M)",
+    "슬림/2(L-XL)",
+    "볼륨/1(S-M)",
+    "볼륨/2(L-XL)"
+   ],
+   "images": [
+    "products/p12-1.jpg",
+    "products/p12-2.jpg",
+    "products/p12-3.jpg",
+    "products/p12-4.jpg"
+   ]
+  },
+  {
+   "id": "p13",
+   "cat": "tube",
+   "name": "풀샷몰드 스탠다드 와이드넥 캡나시",
+   "colors": [
+    "화이트",
+    "블랙",
+    "멜란지그레이",
+    "네이비",
+    "올리브"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L"
+   ],
+   "images": [
+    "products/p13-1.jpg",
+    "products/p13-2.jpg",
+    "products/p13-3.jpg",
+    "products/p13-4.jpg",
+    "products/p13-5.jpg"
+   ]
+  },
+  {
+   "id": "p27",
+   "cat": "panty",
+   "name": "쫀쫀 심리스 삼각팬티",
+   "colors": [
+    "블랙",
+    "아이보리",
+    "핑크베이지",
+    "브라운"
+   ],
+   "sizes": [
+    "S(90)",
+    "M(95)",
+    "L(100)",
+    "XL(105)"
+   ],
+   "images": [
+    "products/p27-1.jpg",
+    "products/p27-2.jpg",
+    "products/p27-3.jpg",
+    "products/p27-4.jpg"
+   ]
+  },
+  {
+   "id": "p28",
+   "cat": "panty",
+   "name": "[심리스] 볼륨메이커 퓨징 삼각 팬티",
+   "colors": [
+    "블랙",
+    "핑크베이지",
+    "크림아이보리"
+   ],
+   "sizes": [
+    "S(85-90)",
+    "M(90-95)",
+    "L(95-100)",
+    "XL(100-105)"
+   ],
+   "images": [
+    "products/p28-1.jpg",
+    "products/p28-2.jpg",
+    "products/p28-3.jpg"
+   ]
+  },
+  {
+   "id": "p29",
+   "cat": "panty",
+   "name": "쿨샷 심리스 삼각팬티",
+   "colors": [
+    "블랙",
+    "옐로우베이지",
+    "화이트"
+   ],
+   "sizes": [
+    "S(90)",
+    "M(95)",
+    "L(100)",
+    "XL(105)",
+    "2XL(110)"
+   ],
+   "images": [
+    "products/p29-1.jpg",
+    "products/p29-2.jpg",
+    "products/p29-3.jpg",
+    "products/p29-4.jpg",
+    "products/p29-5.jpg"
+   ]
+  },
+  {
+   "id": "p30",
+   "cat": "panty",
+   "name": "Minimal Garments Banded Cotton panties",
+   "colors": [
+    "블랙",
+    "화이트"
+   ],
+   "sizes": [
+    "S(90)",
+    "M(95)",
+    "L(100)"
+   ],
+   "images": [
+    "products/p30-1.jpg",
+    "products/p30-2.jpg"
+   ]
+  },
+  {
+   "id": "p31",
+   "cat": "panty",
+   "name": "소프트터치 레이스 쇼티 팬티",
+   "colors": [
+    "초콜릿브라운",
+    "블랙",
+    "화이트"
+   ],
+   "sizes": [
+    "S/M",
+    "L/XL"
+   ],
+   "images": []
+  },
+  {
+   "id": "p32",
+   "cat": "panty",
+   "name": "Minimal Garments Modal Cheeky Panties",
+   "colors": [
+    "블랙",
+    "화이트"
+   ],
+   "sizes": [
+    "S(90)",
+    "M(95)",
+    "L(100)"
+   ],
+   "images": [
+    "products/p32-1.jpg",
+    "products/p32-2.jpg"
+   ]
+  },
+  {
+   "id": "p33",
+   "cat": "panty",
+   "name": "소프트터치 레이스 치키 팬티",
+   "colors": [
+    "초콜릿브라운",
+    "블랙",
+    "화이트"
+   ],
+   "sizes": [
+    "S/M",
+    "L/XL"
+   ],
+   "images": []
+  },
+  {
+   "id": "p35",
+   "cat": "panty",
+   "name": "골반 볼륨업 심리스 팬티",
+   "colors": [
+    "블랙",
+    "샌드베이지"
+   ],
+   "sizes": [
+    "S-M(90-95)",
+    "L-XL(100-105)"
+   ],
+   "images": [
+    "products/p35-1.jpg",
+    "products/p35-2.jpg"
+   ]
+  },
+  {
+   "id": "p18",
+   "cat": "pajama",
+   "name": "슬리피 펀칭 파자마 세트",
+   "colors": [
+    "버터",
+    "네이비",
+    "라벤더",
+    "화이트",
+    "초코",
+    "핑크"
+   ],
+   "sizes": [
+    "FREE"
+   ],
+   "images": [
+    "products/p18-1.jpg",
+    "products/p18-2.jpg",
+    "products/p18-3.jpg",
+    "products/p18-4.jpg",
+    "products/p18-5.jpg",
+    "products/p18-6.jpg"
+   ]
+  },
+  {
+   "id": "p19",
+   "cat": "pajama",
+   "name": "베니벨 2P SET",
+   "colors": [
+    "화이트",
+    "웜그레이"
+   ],
+   "sizes": [
+    "FREE"
+   ],
+   "images": [
+    "products/p19-1.jpg",
+    "products/p19-2.jpg"
+   ]
+  },
+  {
+   "id": "p20",
+   "cat": "pajama",
+   "name": "베니벨 3P SET(쇼츠)",
+   "colors": [
+    "화이트",
+    "웜그레이"
+   ],
+   "sizes": [
+    "FREE"
+   ],
+   "images": [
+    "products/p20-1.jpg",
+    "products/p20-2.jpg"
+   ]
+  },
+  {
+   "id": "p21",
+   "cat": "pajama",
+   "name": "베니벨 3P SET(팬츠)",
+   "colors": [
+    "화이트",
+    "웜그레이"
+   ],
+   "sizes": [
+    "FREE"
+   ],
+   "images": [
+    "products/p21-1.jpg",
+    "products/p21-2.jpg"
+   ]
+  },
+  {
+   "id": "p22",
+   "cat": "pajama",
+   "name": "플라워 와플 팬츠",
+   "colors": [
+    "버터",
+    "민트",
+    "화이트",
+    "핑크"
+   ],
+   "sizes": [
+    "FREE"
+   ],
+   "images": [
+    "products/p22-1.jpg",
+    "products/p22-2.jpg",
+    "products/p22-3.jpg",
+    "products/p22-4.jpg"
+   ]
+  },
+  {
+   "id": "p23",
+   "cat": "pajama",
+   "name": "Minimal Garments Lyocell Stripe Pajama Set (Long)",
+   "colors": [
+    "아이보리",
+    "스카이",
+    "화이트",
+    "핑크"
+   ],
+   "sizes": [
+    "롱"
+   ],
+   "images": [
+    "products/p23-1.jpg",
+    "products/p23-2.jpg",
+    "products/p23-3.jpg",
+    "products/p23-4.jpg"
+   ]
+  },
+  {
+   "id": "p24",
+   "cat": "pajama",
+   "name": "Minimal Garments Lyocell Stripe Pajama Set (Shorts)",
+   "colors": [
+    "아이보리",
+    "스카이",
+    "화이트",
+    "핑크"
+   ],
+   "sizes": [
+    "쇼츠"
+   ],
+   "images": [
+    "products/p24-1.jpg",
+    "products/p24-2.jpg",
+    "products/p24-3.jpg",
+    "products/p24-4.jpg"
+   ]
+  },
+  {
+   "id": "p25",
+   "cat": "pajama",
+   "name": "Minimal Garments Heritage Check Pajama Set",
+   "colors": [
+    "소프트브라운",
+    "소프트그레이"
+   ],
+   "sizes": [
+    "M",
+    "L"
+   ],
+   "images": [
+    "products/p25-1.jpg",
+    "products/p25-2.jpg"
+   ]
+  },
+  {
+   "id": "p26",
+   "cat": "pajama",
+   "name": "Minimal Garments Lounge shorts",
+   "colors": [
+    "딥그린",
+    "그레이"
+   ],
+   "sizes": [
+    "FREE"
+   ],
+   "images": [
+    "products/p26-1.jpg",
+    "products/p26-2.jpg"
+   ]
+  },
+  {
+   "id": "p34",
+   "cat": "pajama",
+   "name": "프레리 플라워 링클 쇼츠",
+   "colors": [
+    "민트",
+    "아이보리"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L"
+   ],
+   "images": [
+    "products/p34-1.jpg",
+    "products/p34-2.jpg"
+   ]
+  },
+  {
+   "id": "p14",
+   "cat": "thermo",
+   "name": "써모터치 심리스 레깅스",
+   "colors": [
+    "베이지",
+    "블랙"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L"
+   ],
+   "images": [
+    "products/p14-1.jpg",
+    "products/p14-2.jpg"
+   ]
+  },
+  {
+   "id": "p15",
+   "cat": "thermo",
+   "name": "써모터치 심리스 스퀘어넥 브라탑",
+   "colors": [
+    "베이지",
+    "블랙"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L"
+   ],
+   "images": [
+    "products/p15-1.jpg",
+    "products/p15-2.jpg"
+   ]
+  },
+  {
+   "id": "p16",
+   "cat": "thermo",
+   "name": "써모터치 심리스 이너 슬립",
+   "colors": [
+    "베이지",
+    "블랙"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L"
+   ],
+   "images": [
+    "products/p16-1.jpg",
+    "products/p16-2.jpg"
+   ]
+  },
+  {
+   "id": "p17",
+   "cat": "thermo",
+   "name": "써모터치 브이넥 브라탑 롱슬리브",
+   "colors": [
+    "베이지",
+    "블랙"
+   ],
+   "sizes": [
+    "S",
+    "M",
+    "L"
+   ],
+   "images": []
+  },
+  {
+   "id": "p36",
+   "cat": "skin",
+   "name": "퍼스널컬러 스킨브라 8cm",
+   "colors": [
+    "A1(핑크베이지)",
+    "A4(탠베이지)"
+   ],
+   "sizes": [
+    "FREE(8cm)"
+   ],
+   "images": [
+    "products/p36-1.jpg",
+    "products/p36-2.jpg",
+    "products/p36-3.jpg",
+    "products/p36-4.jpg"
+   ]
+  },
+  {
+   "id": "p37",
+   "cat": "skin",
+   "name": "퍼스널컬러 스킨브라 9.7cm",
+   "colors": [
+    "A1(핑크베이지)",
+    "A2(옐로우베이지)",
+    "A3(뉴트럴베이지)",
+    "A4(탠베이지)"
+   ],
+   "sizes": [
+    "FREE(9.7cm)"
+   ],
+   "images": [
+    "products/p37-1.jpg",
+    "products/p37-2.jpg",
+    "products/p37-3.jpg",
+    "products/p37-4.jpg"
+   ]
+  }
+ ]
+}

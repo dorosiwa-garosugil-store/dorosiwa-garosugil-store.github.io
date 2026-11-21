@@ -268,7 +268,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-13';
+const APP_VER = '2026.11.21-14';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -477,7 +477,7 @@ function vToday() {
     ['check', '체크리스트', ckSummary(), 'go:check'],
     ['log', '매장 기록', '유동인구 · 외국인 고객', 'go:log'],
     ['todo', '해야 할 일', '추후 오픈', ''],
-    ['product', '판매 제품·설명', '추후 오픈', ''],
+    ['product', '판매 제품', '카테고리별 컬러 · 사이즈', 'go:product'],
     ['vmd', 'VMD', '추후 오픈', '']
   ];
   h += `<div class="hub">${tiles.map(([k, t, sub, act]) => { const [a, v] = act.split(':'); return `<button class="tile ${act ? '' : 'off'}" ${act ? `data-act="${a}" ${v ? `data-v="${v}"` : ''}` : 'disabled'}>${k === 'notice' && unreadCount() ? `<span class="tdot">${unreadCount()}</span>` : ''}${ico(k)}<b>${t}</b><small>${sub}</small></button>`; }).join('')}</div>`;
@@ -642,7 +642,7 @@ async function edSave(pub) {
   D.daily[date] = body; if (pub) S.edit = null; render();
   write(() => S.db.doc('daily/' + date).set(body), pub ? '조닝 공개로 바뀜' : '조닝 비공개로 보관');
 }
-document.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.lg; if (k == null) return; if (!LG.draft || LG.draft.date !== LG.date) LG.draft = {date:LG.date}; LG.draft[k] = e.target.value; });
+document.addEventListener('input', e => { if (e.target.id === 'prQ') { PR.q = e.target.value; const l = $('plist'); if (l) l.innerHTML = prList(); return; } const k = e.target.dataset && e.target.dataset.lg; if (k == null) return; if (!LG.draft || LG.draft.date !== LG.date) LG.draft = {date:LG.date}; LG.draft[k] = e.target.value; });
 document.addEventListener('change', e => {
   const t = e.target;
   if (t.dataset.ed != null && S.edit) { S.edit.assign[t.dataset.ed][+t.dataset.hi] = t.value; t.setAttribute('style', posStyle(t.value)); const w = $('warns'); if (w) w.innerHTML = warnHtml(dayInfo(S.dDate)); }
@@ -912,6 +912,42 @@ async function repCopy() {
   try { await navigator.clipboard.writeText(txt); toast('복사했어요 · 카톡/슬랙에 붙여넣으세요'); }
   catch { sheet(`<h2>보고용 텍스트</h2><div class="mut">길게 눌러 전체 선택 후 복사하세요.</div><textarea style="min-height:320px;margin-top:10px;font-size:13px" readonly>${esc(txt)}</textarea><button class="btn" style="width:100%;margin-top:10px" id="rcx">닫기</button>`); $('rcx').onclick = closeSheet; }
 }
+/* ───────── 판매 제품 (products.json · 카테고리별 · 컬러/사이즈) ───────── */
+const PR = {data:null, loading:false, err:'', cat:'all', q:''};
+async function prLoad() {
+  if (PR.loading) return; PR.loading = true; PR.err = '';
+  try { const r = await fetch('products.json?v=' + APP_VER + '&t=' + Date.now()); if (!r.ok) throw Error(r.status); PR.data = await r.json(); }
+  catch (e) { PR.err = '제품 목록을 불러오지 못했어요.'; }
+  finally { PR.loading = false; if (S.tab === 'product') render(); }
+}
+function prList() {
+  const d = PR.data, q = PR.q.trim().toLowerCase().replace(/\s+/g, '');
+  const hit = p => !q || (p.name + p.colors.join('') + p.sizes.join('')).toLowerCase().replace(/\s+/g, '').includes(q);
+  let h = '';
+  for (const c of d.categories) {
+    if (PR.cat !== 'all' && PR.cat !== c.id) continue;
+    const list = d.items.filter(p => p.cat === c.id && hit(p)); if (!list.length) continue;
+    h += `<div style="font-weight:750;font-size:15px;margin:16px 2px 8px">${esc(c.name)} <span class="mut" style="font-weight:500">${list.length}</span></div>`;
+    h += list.map(p => `<div class="card" style="padding:12px">
+      ${p.images.length ? `<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none">${p.images.map((src, i) => `<img src="${esc(src)}" loading="lazy" alt="" data-act="prImg" data-v="${esc(p.id)}" style="width:78px;height:78px;flex:0 0 78px;object-fit:cover;border-radius:10px;background:#f3f2ef;cursor:pointer">`).join('')}</div>` : `<div class="mut" style="font-size:11px;margin-bottom:6px">사진 준비 중</div>`}
+      <div style="font-weight:700;font-size:14.5px;line-height:1.35">${esc(p.name)}</div>
+      <div class="row" style="align-items:flex-start;gap:8px;margin-top:8px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">컬러 ${p.colors.length}</span><span class="grow" style="line-height:1.6">${p.colors.map(esc).join(' · ')}</span></div>
+      <div class="row" style="align-items:flex-start;gap:8px;margin-top:4px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">사이즈</span><span class="grow" style="line-height:1.6">${p.sizes.map(esc).join(' · ')}</span></div></div>`).join('');
+  }
+  return h || '<div class="card empty">찾는 제품이 없어요.</div>';
+}
+function vProduct() {
+  if (!PR.data && !PR.loading && !PR.err) prLoad();
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">판매 제품</b>${PR.data ? `<span class="mut">${PR.data.items.length}종</span>` : ''}</div>`;
+  if (PR.err) return h + `<div class="warn">${esc(PR.err)}</div><button class="btn" style="width:100%" data-act="prReload">다시 불러오기</button>`;
+  if (!PR.data) return h + '<div class="card empty">불러오는 중…</div>';
+  const d = PR.data;
+  h += `<input type="text" id="prQ" value="${esc(PR.q)}" placeholder="제품명 · 컬러 · 사이즈 검색" autocomplete="off">`;
+  h += `<div style="display:flex;gap:6px;overflow-x:auto;margin:10px -2px 0;padding:0 2px 2px;scrollbar-width:none">${[{id:'all', name:'전체'}, ...d.categories].map(c => `<button class="pill ${PR.cat === c.id ? 'on' : ''}" style="flex:0 0 auto" data-act="prCat" data-v="${c.id}">${esc(c.name)} <span style="opacity:.6">${c.id === 'all' ? d.items.length : d.items.filter(p => p.cat === c.id).length}</span></button>`).join('')}</div>`;
+  h += `<div id="plist">${prList()}</div>`;
+  if (d.source) h += `<div class="mut" style="text-align:center;margin-top:10px;font-size:11px">${esc(d.source)}</div>`;
+  return h;
+}
 function vManual() {
   const list = C().manuals || [];
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px">업무 매뉴얼</b></div>`;
@@ -928,7 +964,7 @@ function manualSheet() {
 }
 function viewer(n) {
   const v = $('viewer');
-  v.innerHTML = `<div class="vtop"><b class="grow">${esc(n.title)}</b><button class="btn sm" id="vClose">닫기</button></div><div class="vbody">${n.body ? `<div class="card" style="width:100%;max-width:820px;white-space:pre-wrap;line-height:1.7;font-size:14px">${esc(n.body)}</div>` : ''}${(n.images || []).map((src, i) => `<img src="${esc(src)}" loading="${i < 2 ? 'eager' : 'lazy'}" alt="${i + 1}쪽">`).join('')}</div>`;
+  v.innerHTML = `<div class="vtop"><b class="grow">${esc(n.title)}</b><button class="btn sm" id="vClose">닫기</button></div><div class="vbody">${n.body ? `<div class="card" style="width:100%;max-width:820px;white-space:pre-wrap;line-height:1.7;font-size:14px">${esc(n.body)}</div>` : ''}${(n.images || []).map((src, i) => `<img src="${esc(src)}" loading="${i < 2 ? 'eager' : 'lazy'}" alt="${i + 1}쪽"${n.small ? ' style="max-width:340px"' : ''}>`).join('')}</div>`;
   v.style.display = 'flex'; document.body.style.overflow = 'hidden';
   $('vClose').onclick = () => { v.style.display = 'none'; document.body.style.overflow = ''; };
 }
@@ -1003,7 +1039,7 @@ function render() {
   $('bars').innerHTML = bars;
   if (!S.ready && !D.config) { $('view').innerHTML = `<div class="card empty">${S.offline ? '로그인이 필요해요.' : '불러오는 중…'}</div>`; return; }
   const tbl = $('mtbl') || $('dtbl'), keep = tbl ? [tbl.id, tbl.scrollLeft, tbl.scrollTop] : null;
-  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog})[S.tab]();
+  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog, product:vProduct})[S.tab]();
   $('foot').innerHTML = (D.updated ? '마지막 업데이트 ' + esc(D.updated) : '');
   $('saveBar').style.display = adm && S.dirty ? 'flex' : 'none';
   $('saveBar').innerHTML = `<span class="grow">저장 안 된 변경 ${S.dirty}건</span><button class="btn sm" data-act="discardAll" style="background:transparent;color:inherit;border-color:#fff6">되돌리기</button><button class="btn sm" data-act="saveAll" style="background:var(--rev);color:var(--acc);border:0" ${S.saving ? 'disabled' : ''}>${S.saving ? '저장 중…' : '저장'}</button>`;
@@ -1027,6 +1063,9 @@ document.addEventListener('click', async e => {
     case 'ckHistOpen': CKH.open = CKH.open === v ? null : v; break;
     case 'ckHistReload': CKH.data = null; ckHistLoad(); break;
     case 'ck': ckToggle(v); return;
+    case 'prCat': PR.cat = v; break;
+    case 'prReload': PR.err = ''; prLoad(); break;
+    case 'prImg': { const p = PR.data && PR.data.items.find(x => x.id === v); if (p) viewer({title:p.name, images:p.images, small:1}); return; }
     case 'lgTab': LG.tab = v; break;
     case 'lgDate': { const nd = v === '0' ? T.date : addDays(LG.date, +v); if (nd > T.date) return; LG.date = nd; LG.err = ''; LG.draft = null; lgLoad(nd); break; }
     case 'lgReload': LG.err = ''; lgLoad(LG.date); break;
