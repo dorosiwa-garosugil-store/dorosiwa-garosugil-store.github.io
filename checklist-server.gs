@@ -2,6 +2,7 @@
    이 코드를 새 Apps Script 프로젝트에 통째로 붙여넣고 "웹 앱"으로 배포하면 끝입니다. (고칠 곳 없음)
    - 체크리스트·한가할 때 할 일: 날짜별로 누가 어떤 항목을 언제 체크했는지 저장 (사이트 화면은 최근 60일)
      + 모든 체크·해제 기록을 구글 시트 '체크 기록' 탭에 계속 남김
+   - 해야 할 일: 할 일마다 완료 체크(누가·언제)와 직원 댓글 저장 (계속 보관)
    - 매장 기록: 유동인구·외국인 고객 기록을 구글 시트 "도로시와 가로수길점 매장 기록"에 저장 (계속 보관)
      시트는 처음 기록할 때 내 구글 드라이브에 자동으로 만들어집니다.
 */
@@ -16,6 +17,7 @@ function doGet(e) {
     const q = (e && e.parameter) || {};
     if (q.history) return out_(history_());
     if (q.log) return out_({ok: true, log: dayLog_(date_(q.log))});
+    if (q.todos) return out_(todos_());
     if (q.logs) return out_(rangeLog_(date_(q.from), date_(q.to)));
     return out_(read_(q.date));
   }
@@ -29,6 +31,7 @@ function doPost(e) {
     const b = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (b.kind === 'traffic') return out_(saveTraffic_(b));
     if (b.kind === 'foreign') return out_(saveForeign_(b));
+    if (b.kind === 'todo') return out_(saveTodo_(b));
     const date = date_(b.date), key = 'CK_' + date;
     const id = String(b.id || '');
     if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) throw Error('항목 오류');
@@ -56,6 +59,28 @@ function history_() {
 function cleanup_() {
   const limit = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10);
   P.getKeys().forEach(function (k) { if (k.indexOf('CK_') === 0 && k.slice(3) < limit) P.deleteProperty(k); });
+}
+
+/* ── 해야 할 일 (완료 체크 · 댓글) ── */
+function todos_() {
+  const t = {};
+  P.getKeys().forEach(function (k) { if (k.indexOf('TD_') === 0) t[k.slice(3)] = JSON.parse(P.getProperty(k) || '{}'); });
+  return {ok: true, todos: t};
+}
+function saveTodo_(b) {
+  const id = String(b.id || '');
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) throw Error('항목 오류');
+  const key = 'TD_' + id, d = JSON.parse(P.getProperty(key) || '{}');
+  d.comments = d.comments || [];
+  const now = new Date().toISOString();
+  if (b.op === 'done') d.done = {by: s_(b.by, 20), at: now};
+  else if (b.op === 'undone') delete d.done;
+  else if (b.op === 'comment') { const text = s_(b.text, 1000).trim(); if (!text) throw Error('내용 없음'); d.comments.push({id: Utilities.getUuid().slice(0, 8), by: s_(b.by, 20), at: now, text: text}); }
+  else if (b.op === 'delc') d.comments = d.comments.filter(function (c) { return c.id !== String(b.cid); });
+  else if (b.op === 'clear') { P.deleteProperty(key); return todos_(); }
+  else throw Error('동작 오류');
+  P.setProperty(key, JSON.stringify(d));
+  return todos_();
 }
 
 /* ── 매장 기록 (구글 시트) ── */
