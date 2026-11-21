@@ -268,8 +268,8 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-14';
-function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; }
+const APP_VER = '2026.11.21-15';
+function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
   if (manual) $('refBtn').classList.add('spin');
@@ -315,7 +315,7 @@ async function saveAll() {
     const cur = await ghGet();
     if (S.sha && cur.sha !== S.sha && !(await ask('다른 곳에서 먼저 바뀐 내용이 있어요. 내 변경사항으로 덮어쓸까요?', '덮어쓰기', true))) { S.saving = false; render(); return; }
     const t = now().date.replace(/-/g, '.');
-    const body = {updated:t, appVersion:D.appVersion || APP_VER, config:D.config, months:D.months, daily:D.daily, notices:D.notices};
+    const body = {updated:t, appVersion:D.appVersion || APP_VER, config:D.config, months:D.months, daily:D.daily, notices:D.notices, todos:D.todos || []};
     const r = await fetch(GH_URL, {method:'PUT', headers:{...ghHeaders(), 'Content-Type':'application/json'}, body:JSON.stringify({message:`사이트에서 수정 (${t})`, content:b64enc(JSON.stringify(body, null, 1) + '\n'), sha:cur.sha, branch:GH.branch})});
     if (!r.ok) throw Error(r.status === 409 ? '동시에 수정됐어요. 새로고침 후 다시 해주세요.' : '저장 실패 (' + r.status + ')');
     const j = await r.json(); S.sha = j.content.sha; D.updated = t; S.dirty = 0; saveCache();
@@ -455,6 +455,7 @@ const ICON = {
   vmd:'<path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/>'
 };
 const ico = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
+const todoSub = () => { const n = idleItems().length, d = idleItems().filter(i => CK.checks[i.id] && CK.date === T.date).length, k = (D.todos || []).length; return `한가할 때 ${d}/${n}${k ? ` · 할 일 ${k}건` : ''}`; };
 function vToday() {
   const d = dayInfo(T.date), dl = pubDaily(T.date);
   const label = new Date(T.date + 'T12:00:00').toLocaleDateString('ko-KR', {month:'long', day:'numeric', weekday:'short'});
@@ -476,7 +477,7 @@ function vToday() {
     ['guide', '업무 매뉴얼', '본사 지침 · 캐셔 · 교환/환불', 'guide'],
     ['check', '체크리스트', ckSummary(), 'go:check'],
     ['log', '매장 기록', '유동인구 · 외국인 고객', 'go:log'],
-    ['todo', '해야 할 일', '추후 오픈', ''],
+    ['todo', '해야 할 일', todoSub(), 'go:todo'],
     ['product', '판매 제품', '카테고리별 컬러 · 사이즈', 'go:product'],
     ['vmd', 'VMD', '추후 오픈', '']
   ];
@@ -669,7 +670,7 @@ const manReady = m => (m.images && m.images.length) || (m.body && m.body.trim())
 const CK = {date:null, checks:{}, loaded:false, busy:{}, err:'', timer:null};
 const ckUrl = () => C().checkUrl || '';
 const ckItems = part => { const c = (C().checklist || {})[part] || []; return Array.isArray(c) ? c.map(g => [g.title, g.items || []]) : Object.entries(c).map(([k, v]) => [k === '1F' ? '1층' : k === '2F' ? '2층' : k, v]); };
-const ckText = id => { for (const part of ['open', 'close']) for (const [, l] of ckItems(part)) { const i = l.find(x => x.id === id); if (i) return i.text; } return ''; };
+const ckText = id => { const ii = (C().idle || []).find(x => x.id === id); if (ii) return ii.text; for (const part of ['open', 'close']) for (const [, l] of ckItems(part)) { const i = l.find(x => x.id === id); if (i) return i.text; } return ''; };
 const ckAll = part => ckItems(part).flatMap(([, l]) => l.filter(i => i.id));
 function ckDone(part) { const all = ckAll(part); return [all.filter(i => CK.checks[i.id]).length, all.length]; }
 function ckLocal() { if (CK.date !== T.date || !CK.loaded) { CK.date = T.date; CK.checks = ls.get('ck_' + T.date, {}); CK.loaded = true; } }
@@ -678,7 +679,7 @@ async function ckLoad(quiet) {
   if (!ckUrl() || CK.loading) return; CK.loading = true;
   try { const r = await fetch(ckUrl() + '?date=' + T.date + '&t=' + Date.now()); const j = await r.json(); if (!j.ok) throw Error(j.error); if (!Object.keys(CK.busy).length) { CK.checks = j.checks || {}; } CK.date = j.date; CK.loaded = true; CK.err = ''; CK.at = Date.now(); }
   catch (e) { CK.err = '체크 기록을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.'; }
-  finally { CK.loading = false; if (S.tab === 'check' || S.tab === 'today') render(); }
+  finally { CK.loading = false; if (S.tab === 'check' || S.tab === 'today' || S.tab === 'todo') render(); }
 }
 async function ckToggle(id) {
   if (!S.me) { toast('먼저 오른쪽 위에서 내 이름을 선택해 주세요', true); pickMe(); return; }
@@ -690,7 +691,7 @@ async function ckToggle(id) {
   catch (e) { delete CK.busy[id]; if (on) delete CK.checks[id]; else CK.checks[id] = cur; toast('저장하지 못했어요. 다시 눌러 주세요.', true); }
   render();
 }
-function ckPoll() { clearInterval(CK.timer); CK.timer = setInterval(() => { if (S.tab === 'check' && !document.hidden) ckLoad(true); }, 15000); }
+function ckPoll() { clearInterval(CK.timer); CK.timer = setInterval(() => { if ((S.tab === 'check' || S.tab === 'todo') && !document.hidden) ckLoad(true); }, 15000); }
 function vCheck() {
   if (CK.date !== T.date) { CK.loaded = false; CK.checks = {}; }
   if (!ckUrl()) ckLocal();
@@ -742,7 +743,8 @@ function vCkHist() {
         for (const [g, items] of ckItems(part)) for (const i of items.filter(x => x.id)) { const c = rec[i.id];
           h += `<div class="row" style="padding:5px 0;border-bottom:1px solid var(--edge);font-size:13px"><span class="mut" style="width:44px;flex:0 0 44px">${esc(g)}</span><span class="grow">${esc(i.text)}</span>${c ? `<b style="color:var(--ok)">${esc(c.by || '')} ${tm(c.at)}</b>` : '<b style="color:var(--dan)">미완료</b>'}</div>`; }
       }
-      const known = new Set(['open', 'close'].flatMap(p => ckAll(p).map(i => i.id))), extra = Object.entries(rec).filter(([id]) => !known.has(id));
+      const idl = idleItems(); if (idl.length) { h += `<div style="font-weight:750;margin:8px 0 2px">한가할 때 할 일</div>`; for (const i of idl) { const c = rec[i.id]; h += `<div class="row" style="padding:5px 0;border-bottom:1px solid var(--edge);font-size:13px"><span class="grow">${esc(i.text)}</span>${c ? `<b style="color:var(--ok)">${esc(c.by || '')} ${tm(c.at)}</b>` : '<span class="mut">–</span>'}</div>`; } }
+      const known = new Set(['open', 'close'].flatMap(p => ckAll(p).map(i => i.id)).concat(idl.map(i => i.id))), extra = Object.entries(rec).filter(([id]) => !known.has(id));
       if (extra.length) h += `<div class="mut" style="margin-top:8px">지금은 목록에 없는 항목</div>` + extra.map(([id, c]) => `<div class="row" style="padding:5px 0;font-size:13px"><span class="grow">${esc(c.t || id)}</span><b style="color:var(--ok)">${esc(c.by || '')} ${tm(c.at)}</b></div>`).join('');
       h += `</div>`;
     }
@@ -948,6 +950,51 @@ function vProduct() {
   if (d.source) h += `<div class="mut" style="text-align:center;margin-top:10px;font-size:11px">${esc(d.source)}</div>`;
   return h;
 }
+/* ───────── 해야 할 일 (위: 한가할 때 할 일 · 매일 체크 공유 / 아래: 관리자가 쓰는 할 일 목록) ───────── */
+const idleItems = () => (C().idle || []).filter(i => i.id);
+function vTodo() {
+  if (CK.date !== T.date) { CK.loaded = false; CK.checks = {}; }
+  if (!ckUrl()) ckLocal();
+  if (ckUrl() && (!CK.loaded || Date.now() - (CK.at || 0) > 5000)) ckLoad(); ckPoll();
+  const adm = admin(), idle = idleItems(), done = idle.filter(i => CK.checks[i.id]).length;
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">해야 할 일</b></div>`;
+  if (ckUrl() && CK.err) h += `<div class="warn">${esc(CK.err)}</div>`;
+  h += `<div class="card" style="padding:6px 14px"><div class="row" style="margin:8px 0 2px"><h3 class="grow" style="margin:0">📌 한가할 때 할 일 <span class="mut">${done}/${idle.length}</span></h3>${adm ? '<button class="link" data-act="idleEdit">편집</button>' : ''}</div>`;
+  if (!S.me) h += `<div class="note">체크하려면 오른쪽 위 <b>내 이름</b>을 먼저 선택해 주세요.</div>`;
+  h += idle.map(i => { const c = CK.checks[i.id], t = c && c.at ? new Date(c.at).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false}) : '';
+    return `<button class="li" style="width:100%;text-align:left" data-act="ck" data-v="${esc(i.id)}"><span class="ckbox ${c ? 'on' : ''}">${c ? '✓' : ''}</span><div class="grow"><div class="nm" style="${c ? 'color:var(--mut);text-decoration:line-through' : ''}">${esc(i.text)}</div>${c ? `<div class="rl" style="color:var(--ok);font-weight:650">${esc(c.by || '')} · ${t}</div>` : ''}</div></button>`; }).join('') || '<div class="empty">등록된 항목이 없어요.</div>';
+  h += `<div class="mut" style="font-size:11px;margin:8px 0">${ckUrl() ? '체크하면 모든 직원 폰에 보여요 · ' : '임시 모드: 이 폰에만 저장돼요 · '}매일 새로 시작해요</div></div>`;
+  if (adm) h += `<button class="btn pri" style="width:100%;margin:4px 0 8px" data-act="tdNew">+ 할 일 작성</button>`;
+  const list = [...(D.todos || [])].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(b.id).localeCompare(String(a.id)));
+  h += list.length ? list.map(n => { const open = S.openTodo === n.id;
+    return `<div class="card" style="padding:0;overflow:hidden"><button class="row" style="width:100%;text-align:left;padding:14px;align-items:flex-start" data-act="tdOpen" data-v="${esc(n.id)}"><div class="grow"><div class="tt" style="font-size:15px;font-weight:700">${esc(n.title)}</div><div class="mut" style="margin-top:3px">${esc(n.date ? dLabel(n.date) : '')}</div></div><span class="mut" style="font-size:16px">${open ? '⌃' : '⌄'}</span></button>
+      ${open ? `<div style="padding:0 14px 14px"><div class="bd" style="margin-top:0;white-space:pre-wrap;line-height:1.7;font-size:14px">${esc(n.body || '')}</div>${adm ? `<button class="btn sm" style="margin-top:10px" data-act="tdEdit" data-v="${esc(n.id)}">수정</button>` : ''}</div>` : ''}</div>`; }).join('') : '<div class="card empty">등록된 할 일이 없어요.</div>';
+  return h;
+}
+function todoSheet(n) {
+  sheet(`<h2>${n ? '할 일 수정' : '할 일 작성'}</h2><label class="f">날짜</label><input type="date" id="tdD" value="${esc(n ? n.date : T.date)}" style="width:100%;border:1px solid var(--edge);background:var(--card);border-radius:11px;padding:10px 12px;font-size:16px;color:inherit">
+   <label class="f">제목</label><input type="text" id="tdT" maxlength="100" value="${esc(n ? n.title : '')}"><label class="f">상세 내용</label><textarea id="tdB" maxlength="3000" style="min-height:170px">${esc(n ? n.body : '')}</textarea>
+   <div class="row" style="margin-top:14px">${n ? '<button class="btn dan" id="tdX">삭제</button>' : ''}<button class="btn grow" id="tdC">취소</button><button class="btn pri grow" id="tdS">${n ? '수정 저장' : '등록'}</button></div>`);
+  $('tdC').onclick = closeSheet;
+  $('tdS').onclick = () => {
+    const title = $('tdT').value.trim(), body = $('tdB').value.trim(), date = $('tdD').value || T.date; if (!title) { toast('제목을 입력하세요', true); return; }
+    D.todos = D.todos || []; const id = n ? n.id : 't' + Date.now(), i = D.todos.findIndex(x => x.id === id);
+    if (i >= 0) D.todos[i] = {...D.todos[i], date, title, body}; else D.todos.push({id, date, title, body});
+    closeSheet(); markDirty('할 일 저장됨 · 아래 저장을 눌러 주세요');
+  };
+  if (n) $('tdX').onclick = async () => { if (await ask(`「${n.title}」을(를) 삭제할까요?`, '삭제', true)) { D.todos = D.todos.filter(x => x.id !== n.id); markDirty('할 일 삭제됨 · 아래 저장을 눌러 주세요'); } };
+}
+function idleSheet() {
+  const cur = C().idle || [];
+  sheet(`<h2>한가할 때 할 일 편집</h2><div class="mut">한 줄에 하나씩 적어 주세요. 매일 새로 체크해요.</div><textarea id="idT" style="min-height:200px;margin-top:10px">${esc(cur.map(i => i.text).join('\n'))}</textarea>
+   <div class="row" style="margin-top:14px"><button class="btn grow" id="idC">취소</button><button class="btn pri grow" id="idS">적용</button></div>`);
+  $('idC').onclick = closeSheet;
+  $('idS').onclick = () => {
+    const used = new Set(), lines = $('idT').value.split('\n').map(x => x.trim()).filter(Boolean);
+    const idle = lines.map(text => { const old = cur.find(i => i.text === text && !used.has(i.id)); const id = old ? old.id : 'idle-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); used.add(id); return {id, text}; });
+    D.config = {...C(), idle}; closeSheet(); markDirty('한가할 때 할 일 변경됨 · 아래 저장을 눌러 주세요');
+  };
+}
 function vManual() {
   const list = C().manuals || [];
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px">업무 매뉴얼</b></div>`;
@@ -1039,7 +1086,7 @@ function render() {
   $('bars').innerHTML = bars;
   if (!S.ready && !D.config) { $('view').innerHTML = `<div class="card empty">${S.offline ? '로그인이 필요해요.' : '불러오는 중…'}</div>`; return; }
   const tbl = $('mtbl') || $('dtbl'), keep = tbl ? [tbl.id, tbl.scrollLeft, tbl.scrollTop] : null;
-  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog, product:vProduct})[S.tab]();
+  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog, product:vProduct, todo:vTodo})[S.tab]();
   $('foot').innerHTML = (D.updated ? '마지막 업데이트 ' + esc(D.updated) : '');
   $('saveBar').style.display = adm && S.dirty ? 'flex' : 'none';
   $('saveBar').innerHTML = `<span class="grow">저장 안 된 변경 ${S.dirty}건</span><button class="btn sm" data-act="discardAll" style="background:transparent;color:inherit;border-color:#fff6">되돌리기</button><button class="btn sm" data-act="saveAll" style="background:var(--rev);color:var(--acc);border:0" ${S.saving ? 'disabled' : ''}>${S.saving ? '저장 중…' : '저장'}</button>`;
@@ -1063,6 +1110,10 @@ document.addEventListener('click', async e => {
     case 'ckHistOpen': CKH.open = CKH.open === v ? null : v; break;
     case 'ckHistReload': CKH.data = null; ckHistLoad(); break;
     case 'ck': ckToggle(v); return;
+    case 'tdNew': todoSheet(null); return;
+    case 'tdEdit': todoSheet((D.todos || []).find(n => n.id === v)); return;
+    case 'tdOpen': S.openTodo = S.openTodo === v ? null : v; break;
+    case 'idleEdit': idleSheet(); return;
     case 'prCat': PR.cat = v; break;
     case 'prReload': PR.err = ''; prLoad(); break;
     case 'prImg': { const p = PR.data && PR.data.items.find(x => x.id === v); if (p) viewer({title:p.name, images:p.images, small:1}); return; }
@@ -1108,7 +1159,7 @@ document.addEventListener('click', async e => {
 });
 let lastLoad = Date.now();
 addEventListener('beforeunload', e => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
-document.addEventListener('visibilitychange', () => { if (!document.hidden && unlocked()) { T = now(); if (S.tab === 'check') ckLoad(true); render(); if (!S.dirty && !S.edit && Date.now() - lastLoad > 60000) { lastLoad = Date.now(); loadData(); } } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && unlocked()) { T = now(); if (S.tab === 'check' || S.tab === 'todo') ckLoad(true); render(); if (!S.dirty && !S.edit && Date.now() - lastLoad > 60000) { lastLoad = Date.now(); loadData(); } } });
 
 
 /* ───────── 매장 공용 비밀번호 (한 번 입력하면 이 휴대폰에서 30일 유지) ───────── */
