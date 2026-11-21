@@ -268,7 +268,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.21-16';
+const APP_VER = '2026.11.21-17';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -670,6 +670,7 @@ const manReady = m => (m.images && m.images.length) || (m.body && m.body.trim())
 const CK = {date:null, checks:{}, loaded:false, busy:{}, err:'', timer:null};
 const ckUrl = () => C().checkUrl || '';
 const ckItems = part => { const c = (C().checklist || {})[part] || []; return Array.isArray(c) ? c.map(g => [g.title, g.items || []]) : Object.entries(c).map(([k, v]) => [k === '1F' ? '1층' : k === '2F' ? '2층' : k, v]); };
+const ckGroup = id => { if ((C().idle || []).some(x => x.id === id)) return '한가할 때'; for (const [part, pl] of [['open', '오픈'], ['close', '마감']]) for (const [g, l] of ckItems(part)) if (l.some(x => x.id === id)) return pl + ' ' + g; return ''; };
 const ckText = id => { const ii = (C().idle || []).find(x => x.id === id); if (ii) return ii.text; for (const part of ['open', 'close']) for (const [, l] of ckItems(part)) { const i = l.find(x => x.id === id); if (i) return i.text; } return ''; };
 const ckAll = part => ckItems(part).flatMap(([, l]) => l.filter(i => i.id));
 function ckDone(part) { const all = ckAll(part); return [all.filter(i => CK.checks[i.id]).length, all.length]; }
@@ -687,7 +688,7 @@ async function ckToggle(id) {
   if (!ckUrl()) { if (on) CK.checks[id] = {by:S.me, at:new Date().toISOString(), t:ckText(id)}; else delete CK.checks[id]; ls.set('ck_' + T.date, CK.checks); render(); return; }
   if (cur && cur.by && cur.by !== S.me && !(await ask(`${cur.by}님이 체크한 항목이에요. 체크를 해제할까요?`, '해제', true))) return;
   CK.busy[id] = 1; if (on) CK.checks[id] = {by:S.me, at:new Date().toISOString()}; else delete CK.checks[id]; render();
-  try { const r = await fetch(ckUrl(), {method:'POST', body:JSON.stringify({date:T.date, id, checked:on, by:S.me, t:ckText(id)})}); const j = await r.json(); if (!j.ok) throw Error(j.error); delete CK.busy[id]; CK.checks = j.checks || {}; }
+  try { const r = await fetch(ckUrl(), {method:'POST', body:JSON.stringify({date:T.date, id, checked:on, by:S.me, t:ckText(id), g:ckGroup(id)})}); const j = await r.json(); if (!j.ok) throw Error(j.error); delete CK.busy[id]; CK.checks = j.checks || {}; }
   catch (e) { delete CK.busy[id]; if (on) delete CK.checks[id]; else CK.checks[id] = cur; toast('저장하지 못했어요. 다시 눌러 주세요.', true); }
   render();
 }
@@ -699,7 +700,7 @@ function vCheck() {
   if (!S.ckPart) S.ckPart = T.hour < 15 ? 'open' : 'close';
   const part = S.ckPart, label = new Date(T.date + 'T12:00:00').toLocaleDateString('ko-KR', {month:'long', day:'numeric', weekday:'short'});
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">체크리스트</b><span class="mut">${label}</span></div>`;
-  if (admin()) h += `<button class="btn" style="width:100%;margin-bottom:8px" data-act="go" data-v="ckhist">📋 체크 기록 보기 (관리자)</button>`;
+  if (admin()) h += `<button class="btn" style="width:100%;margin-bottom:8px" data-act="ckHistFrom" data-v="check">📋 체크 기록 보기 (관리자)</button>`;
   if (!ckUrl()) h += `<div class="note">임시 모드예요. 지금은 <b>이 폰에서만</b> 체크가 저장되고 다른 직원 폰에는 보이지 않아요. 곧 모두에게 공유되도록 바뀌어요.</div>`;
   else if (CK.err) h += `<div class="warn">${esc(CK.err)}</div>`;
   h += `<div class="seg">${[['open', '오픈'], ['close', '마감']].map(([k, l]) => { const [a, b] = ckDone(k); return `<button data-act="ckPart" data-v="${k}" class="${part === k ? 'on' : ''}">${l} ${CK.loaded ? `<span style="opacity:.6">${a}/${b}</span>` : ''}</button>`; }).join('')}</div>`;
@@ -725,7 +726,7 @@ async function ckHistLoad() {
 function vCkHist() {
   if (!admin()) { S.tab = 'check'; return vCheck(); }
   if (!CKH.data && !CKH.loading) ckHistLoad();
-  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="check">‹ 체크리스트</button><b style="font-size:18px;margin-left:6px" class="grow">체크 기록</b><button class="link" data-act="ckHistReload">새로 불러오기</button></div>`;
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="${S.ckBack || 'check'}">‹ ${S.ckBack === 'todo' ? '해야 할 일' : '체크리스트'}</button><b style="font-size:18px;margin-left:6px" class="grow">체크 기록</b><button class="link" data-act="ckHistReload">새로 불러오기</button></div>`;
   if (!ckUrl()) h += `<div class="note">임시 모드라 <b>이 폰에서 체크한 기록만</b> 보여요. 서버를 연결하면 모든 직원의 기록이 여기에 모여요.</div>`;
   if (CKH.err) h += `<div class="warn">${esc(CKH.err)}</div>`;
   if (!CKH.data) return h + '<div class="card empty">불러오는 중…</div>';
@@ -735,7 +736,7 @@ function vCkHist() {
   for (const dt of dates) {
     const rec = CKH.data[dt] || {}, open = CKH.open === dt, wd = WD[new Date(dt + 'T12:00:00').getDay()];
     const stat = part => { const all = ckAll(part); return `${all.filter(i => rec[i.id]).length}/${all.length}`; };
-    h += `<div class="card" style="padding:0;overflow:hidden"><button class="row" style="width:100%;text-align:left;padding:14px" data-act="ckHistOpen" data-v="${dt}"><b class="grow">${+dt.slice(5, 7)}/${+dt.slice(8)} (${wd})</b><span class="mut">오픈 ${stat('open')} · 마감 ${stat('close')}</span><span class="mut" style="margin-left:6px">${open ? '⌃' : '⌄'}</span></button>`;
+    h += `<div class="card" style="padding:0;overflow:hidden"><button class="row" style="width:100%;text-align:left;padding:14px" data-act="ckHistOpen" data-v="${dt}"><b class="grow">${+dt.slice(5, 7)}/${+dt.slice(8)} (${wd})</b><span class="mut">오픈 ${stat('open')} · 마감 ${stat('close')}${idleItems().length ? ` · 한가 ${idleItems().filter(i => rec[i.id]).length}/${idleItems().length}` : ''}</span><span class="mut" style="margin-left:6px">${open ? '⌃' : '⌄'}</span></button>`;
     if (open) {
       h += `<div style="padding:0 14px 12px">`;
       for (const [part, pl] of [['open', '오픈'], ['close', '마감']]) {
@@ -966,6 +967,7 @@ function vTodo() {
   h += idle.map(i => { const c = CK.checks[i.id], t = c && c.at ? new Date(c.at).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false}) : '';
     return `<button class="li" style="width:100%;text-align:left" data-act="ck" data-v="${esc(i.id)}"><span class="ckbox ${c ? 'on' : ''}">${c ? '✓' : ''}</span><div class="grow"><div class="nm" style="${c ? 'color:var(--mut);text-decoration:line-through' : ''}">${esc(i.text)}</div>${c ? `<div class="rl" style="color:var(--ok);font-weight:650">${esc(c.by || '')} · ${t}</div>` : ''}</div></button>`; }).join('') || '<div class="empty">등록된 항목이 없어요.</div>';
   h += `<div class="mut" style="font-size:11px;margin:8px 0">${ckUrl() ? '체크하면 모든 직원 폰에 보여요 · ' : '임시 모드: 이 폰에만 저장돼요 · '}매일 새로 시작해요</div></div>`; }
+  if (adm) h += `<button class="btn" style="width:100%;margin:4px 0 8px" data-act="ckHistFrom" data-v="todo">📋 체크 기록 보기 (관리자)</button>`;
   if (adm) h += `<button class="btn pri" style="width:100%;margin:4px 0 8px" data-act="tdNew">+ 할 일 작성</button>`;
   const list = [...(D.todos || [])].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(b.id).localeCompare(String(a.id)));
   h += list.length ? list.map(n => { const open = S.openTodo === n.id;
@@ -1115,6 +1117,7 @@ document.addEventListener('click', async e => {
     case 'tdNew': todoSheet(null); return;
     case 'tdEdit': todoSheet((D.todos || []).find(n => n.id === v)); return;
     case 'tdOpen': S.openTodo = S.openTodo === v ? null : v; break;
+    case 'ckHistFrom': S.ckBack = v; CKH.data = null; S.tab = 'ckhist'; scrollTo(0, 0); break;
     case 'idleEdit': idleSheet(); return;
     case 'idleToggle': S.idleOpen = !S.idleOpen; break;
     case 'prCat': PR.cat = v; break;

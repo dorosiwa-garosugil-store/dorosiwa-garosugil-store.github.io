@@ -14,7 +14,7 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 
 ## data.json 구조
 - config: store, hours{open,close}, staff[{name,role}], positions[{name,hue,gray?}], shiftPresets[], absences[], guide(데일리 탭 맨 아래 '조닝 운영 참고'), manuals[{id,title,desc,body?,images[]}](홈 '업무 매뉴얼' 타일 → 목록 → 뷰어. body/images 비면 '준비 중'. 현재: hq 본사 지침, cashier 캐셔·결제 방법, refund 교환·환불), holidays{날짜:이름}, restTypes[], checklist{open|close:[{title:'1층'|'2층', items:[{id,text,note?} 또는 {head:'청소'}(카드 안 작은 제목, 체크 안 됨)]}]} — 1층·2층은 모든 항목을 따로 체크 (id는 영문·숫자·-만, 바꾸면 기존 기록과 연결이 끊김 — 기록에는 항목 이름 t도 함께 저장됨). 관리자: 체크리스트 화면 '체크 기록 보기'에서 날짜별 누가·언제 확인 (서버 60일 보관), checkUrl
-- config.idle = [{id:'idle-…', text}] : 해야 할 일 화면 위 '한가할 때 할 일' (매일 리셋, 체크는 체크리스트와 같은 서버 저장 CK_날짜에 함께 들어감, 관리자 체크 기록에도 표시)
+- config.idle = [{id:'idle-…', text}] : 해야 할 일 화면 위 '한가할 때 할 일' (접힘, 매일 리셋, 체크는 체크리스트와 같은 서버 저장 CK_날짜에 함께 들어감, 관리자 체크 기록에도 표시). 모든 체크·해제는 서버가 구글 시트 '체크 기록' 탭에 영구 기록
 - todos = [{id, date, title, body}] : 해야 할 일 목록 (관리자만 작성 — 사이트에서 '+ 할 일 작성' 또는 Claude가 직접)
 - months["YYYY-MM"][직원이름][날짜] = "11~20" | "휴" | "요청휴무" | "연차" ...
 - daily["YYYY-MM-DD"] = { published: true, assign: { 직원이름: [open시부터 1시간 단위 포지션, 근무 외는 null] } }

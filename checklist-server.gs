@@ -1,6 +1,7 @@
 /* 도로시와 스토어 허브 · 저장 서버 (체크리스트 + 매장 기록)
    이 코드를 새 Apps Script 프로젝트에 통째로 붙여넣고 "웹 앱"으로 배포하면 끝입니다. (고칠 곳 없음)
-   - 체크리스트: 날짜별로 누가 어떤 항목을 언제 체크했는지 저장 (최근 60일 보관)
+   - 체크리스트·한가할 때 할 일: 날짜별로 누가 어떤 항목을 언제 체크했는지 저장 (사이트 화면은 최근 60일)
+     + 모든 체크·해제 기록을 구글 시트 '체크 기록' 탭에 계속 남김
    - 매장 기록: 유동인구·외국인 고객 기록을 구글 시트 "도로시와 가로수길점 매장 기록"에 저장 (계속 보관)
      시트는 처음 기록할 때 내 구글 드라이브에 자동으로 만들어집니다.
 */
@@ -36,6 +37,7 @@ function doPost(e) {
     else delete d[id];
     P.setProperty(key, JSON.stringify(d));
     cleanup_();
+    try { logCheck_(date, b); } catch (e) {}
     return out_({ok: true, date: date, checks: d});
   } catch (err) {
     return out_({ok: false, error: String(err.message || err)});
@@ -65,6 +67,12 @@ function book_() {
   setup_(ss.insertSheet('외국인 고객'), F_HEAD, 'A:K');
   P.setProperty('LOG_SHEET', ss.getId());
   return ss;
+}
+const C_HEAD = ['날짜', '시각', '구분', '항목', '체크/해제', '직원'];
+function logCheck_(date, b) {
+  const ss = book_(); let sh = ss.getSheetByName('체크 기록');
+  if (!sh) { sh = ss.insertSheet('체크 기록'); setup_(sh, C_HEAD, 'A:F'); }
+  sh.appendRow([date, Utilities.formatDate(new Date(), 'Asia/Seoul', 'HH:mm:ss'), s_(b.g, 20), s_(b.t, 60), b.checked ? '체크' : '해제', s_(b.by, 20)]);
 }
 function setup_(sh, head, textCols) {
   sh.getRange(textCols).setNumberFormat('@');
