@@ -17,7 +17,7 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - 먼슬리 관리자 오른쪽 고정 칸: 근무 / 휴무(restTypes 중 대체휴무 제외: 휴·요청휴무) / 필요(주말 수) / 차이 / 대체(쓴 '대체휴무'(또는 '대휴') 수 / 평일 공휴일 수). 직원 화면은 근무 / 휴무(대체휴무 포함)
 - config.monthStaff = {"YYYY-MM": [{name,role}]} : 달마다 직원 명단 (먼슬리·데일리 표는 그 달 명단으로 그림). 없는 달은 config.staff(가장 최근 명단) 사용. 사이트 '직원 관리'는 보고 있는 달 명단만 바꿈(이름 변경은 전체 기록에 반영). 직원을 빼도 months/daily 기록은 지우지 않음
 - config.idle = [{id:'idle-…', text}] : 해야 할 일 화면 위 '한가할 때 할 일' (접힘, 매일 리셋, 체크는 체크리스트와 같은 서버 저장 CK_날짜에 함께 들어감, 관리자 체크 기록에도 표시). 모든 체크·해제는 서버가 구글 시트 '체크 기록' 탭에 영구 기록
-- todos = [{id, date, title, body}] : 해야 할 일 목록 (관리자만 작성 — 사이트에서 '+ 할 일 작성' 또는 Claude가 직접). 각 할 일의 완료 체크(누가·언제)와 직원 댓글은 서버 TD_<id>에 저장(계속 보관). 새 할 일·새 댓글은 빨간 점 (각 폰 localStorage dsh_todoSeen {id: 본 댓글 수}) — 새 할 일은 새 id로
+- todos = [{id, date, title, body}] : 해야 할 일 목록 (화면 정렬: 미완료 먼저 날짜 빠른 순, 완료는 맨 아래. 관리자만 작성 — 사이트에서 '+ 할 일 작성' 또는 Claude가 직접). 각 할 일의 완료 체크(누가·언제)와 직원 댓글은 서버 TD_<id>에 저장(계속 보관). 새 할 일·새 댓글은 빨간 점 (각 폰 localStorage dsh_todoSeen {id: 본 댓글 수}) — 새 할 일은 새 id로
 - months["YYYY-MM"][직원이름][날짜] = "11~20" | "휴" | "요청휴무" | "연차" ...
 - daily["YYYY-MM-DD"] = { published: true, assign: { 직원이름: [open시부터 1시간 단위 포지션, 근무 외는 null] } }
 - notices = [{ id, title, body, pinned, date: "YYYY-MM-DD", images?: ["manual/01.jpg", ...] }] (images = 자료 보기 뷰어로 보여줄 사진, 저장소에 파일로 올림)
