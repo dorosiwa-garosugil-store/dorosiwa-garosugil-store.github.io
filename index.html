@@ -282,7 +282,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.22-5';
+const APP_VER = '2026.11.22-6';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -998,8 +998,8 @@ function vTodo() {
     if (open) tdSeen(n);
     return `<div class="card" style="padding:0;overflow:hidden"><div class="row" style="align-items:flex-start">
       <button style="padding:14px 4px 14px 14px" data-act="tdDone" data-v="${esc(n.id)}" aria-label="완료"><span class="ckbox ${done ? 'on' : ''}">${done ? '✓' : ''}</span></button>
-      <button class="row grow" style="text-align:left;padding:14px 14px 14px 8px;align-items:flex-start" data-act="tdOpen" data-v="${esc(n.id)}"><div class="grow"><div class="tt" style="font-size:15px;font-weight:700;${done ? 'color:var(--mut);text-decoration:line-through' : ''}">${un ? '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#e5383b;margin:0 6px 2px 0;vertical-align:middle"></span>' : ''}${esc(n.title)}</div>
-        <div class="mut" style="margin-top:3px">${esc(n.date ? dLabel(n.date) : '')}${cm.length ? ` · 💬 ${cm.length}` : ''}</div>${done ? `<div style="color:var(--ok);font-weight:650;font-size:12px;margin-top:3px">✓ ${esc(done.by || '')} · ${tm(done.at)} 완료</div>` : ''}</div><span class="mut" style="font-size:16px">${open ? '⌃' : '⌄'}</span></button></div>
+      <button class="row grow" style="text-align:left;padding:14px 14px 14px 8px;align-items:flex-start" data-act="tdOpen" data-v="${esc(n.id)}"><div class="grow"><div class="mut" style="font-size:12.5px;font-weight:650;margin-bottom:3px">${esc(n.date ? dLabel(n.date) : '')}${cm.length ? ` · 💬 ${cm.length}` : ''}</div>
+        <div class="tt" style="font-size:15px;font-weight:700;${done ? 'color:var(--mut);text-decoration:line-through' : ''}">${un ? '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#e5383b;margin:0 6px 2px 0;vertical-align:middle"></span>' : ''}${esc(n.title)}</div>${done ? `<div style="color:var(--ok);font-weight:650;font-size:12px;margin-top:3px">✓ ${esc(done.by || '')} · ${tm(done.at)} 완료</div>` : ''}</div><span class="mut" style="font-size:16px">${open ? '⌃' : '⌄'}</span></button></div>
       ${open ? `<div style="padding:0 14px 14px"><div class="bd" style="margin-top:0;white-space:pre-wrap;line-height:1.7;font-size:14px">${esc(n.body || '')}</div>${adm ? `<button class="btn sm" style="margin-top:10px" data-act="tdEdit" data-v="${esc(n.id)}">수정</button>` : ''}
         <div style="border-top:1px solid var(--edge);margin-top:14px;padding-top:10px"><div class="mut" style="font-weight:650;margin-bottom:6px">댓글 ${cm.length}</div>
         ${cm.map(c => `<div style="padding:7px 0;border-bottom:1px solid var(--edge)"><div class="row" style="font-size:12px"><b class="grow">${esc(c.by || '')} <span class="mut" style="font-weight:500">${tm(c.at)}</span></b>${(c.by === S.me || adm) ? `<button class="link" style="font-size:12px" data-act="tdDelC" data-v="${esc(n.id)}|${esc(c.id)}">삭제</button>` : ''}</div><div style="white-space:pre-wrap;font-size:13.5px;line-height:1.55;margin-top:2px">${esc(c.text)}</div></div>`).join('')}
