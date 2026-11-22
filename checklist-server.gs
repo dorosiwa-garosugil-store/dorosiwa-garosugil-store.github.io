@@ -108,16 +108,16 @@ function rows_(name) {
   const sh = book_().getSheetByName(name), v = sh.getDataRange().getValues();
   return {sh: sh, rows: v.slice(1)};
 }
-function tObj_(r) { return {date: String(r[0]), out: num_(r[2]), in1: num_(r[3]), in2: num_(r[4]), weather: String(r[5] || ''), temp: String(r[6] || ''), memo: String(r[7] || ''), by: String(r[8] || ''), at: String(r[9] || '')}; }
-function fObj_(r) { const o = {}; F_KEYS.forEach(function (k, i) { o[k] = String(r[i] == null ? '' : r[i]); }); return o; }
+function tObj_(r) { return {date: d_(r[0]), out: num_(r[2]), in1: num_(r[3]), in2: num_(r[4]), weather: String(r[5] || ''), temp: String(r[6] || ''), memo: String(r[7] || ''), by: String(r[8] || ''), at: String(r[9] || '')}; }
+function fObj_(r) { const o = {}; F_KEYS.forEach(function (k, i) { o[k] = k === 'date' ? d_(r[i]) : k === 'time' ? t_(r[i]) : k === 'at' && r[i] instanceof Date ? r[i].toISOString() : String(r[i] == null ? '' : r[i]); }); return o; }
 function dayLog_(date) {
-  const t = rows_('유동인구').rows.filter(function (r) { return String(r[0]) === date; })[0];
-  const f = rows_('외국인 고객').rows.filter(function (r) { return String(r[1]) === date; }).map(fObj_);
+  const t = rows_('유동인구').rows.filter(function (r) { return d_(r[0]) === date; })[0];
+  const f = rows_('외국인 고객').rows.filter(function (r) { return d_(r[1]) === date; }).map(fObj_);
   f.sort(function (a, b) { return a.time.localeCompare(b.time); });
   return {date: date, traffic: t ? tObj_(t) : null, foreign: f};
 }
 function rangeLog_(from, to) {
-  const ss = book_(), inR = function (d) { d = String(d); return d >= from && d <= to; };
+  const ss = book_(), inR = function (d) { d = d_(d); return d >= from && d <= to; };
   const traffic = rows_('유동인구').rows.filter(function (r) { return inR(r[0]); }).map(tObj_).sort(function (a, b) { return a.date.localeCompare(b.date); });
   const foreign = rows_('외국인 고객').rows.filter(function (r) { return inR(r[1]); }).map(fObj_).sort(function (a, b) { return (a.date + a.time).localeCompare(b.date + b.time); });
   return {ok: true, from: from, to: to, traffic: traffic, foreign: foreign, sheetUrl: ss.getUrl()};
@@ -125,7 +125,7 @@ function rangeLog_(from, to) {
 function saveTraffic_(b) {
   const date = date_(b.date), x = rows_('유동인구');
   const row = [date, WD[new Date(date + 'T12:00:00Z').getUTCDay()], numIn_(b.out), numIn_(b.in1), numIn_(b.in2), s_(b.weather, 10), s_(b.temp, 10), s_(b.memo, 300), s_(b.by, 20), new Date().toISOString()];
-  const i = x.rows.findIndex(function (r) { return String(r[0]) === date; });
+  const i = x.rows.findIndex(function (r) { return d_(r[0]) === date; });
   if (i >= 0) x.sh.getRange(i + 2, 1, 1, row.length).setValues([row]);
   else x.sh.appendRow(row);
   return {ok: true, log: dayLog_(date)};
@@ -141,6 +141,8 @@ function saveForeign_(b) {
 }
 
 /* ── 공통 ── */
+function d_(v) { return v instanceof Date ? Utilities.formatDate(v, 'Asia/Seoul', 'yyyy-MM-dd') : String(v == null ? '' : v).trim(); }
+function t_(v) { return v instanceof Date ? Utilities.formatDate(v, 'Asia/Seoul', 'HH:mm') : String(v == null ? '' : v).trim(); }
 function s_(v, n) { return String(v == null ? '' : v).slice(0, n); }
 function num_(v) { return v === '' || v == null ? '' : Number(v); }
 function numIn_(v) { v = String(v == null ? '' : v).trim(); return /^\d{1,6}$/.test(v) ? Number(v) : ''; }
