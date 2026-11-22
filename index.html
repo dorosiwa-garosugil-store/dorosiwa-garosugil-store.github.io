@@ -124,7 +124,7 @@ details.rb{background:var(--card);border:1px solid var(--edge);border-radius:16p
 details.rb>summary{list-style:none;cursor:pointer;padding:15px 16px;font-weight:750;font-size:15.5px;display:flex;align-items:center}
 details.rb>summary::-webkit-details-marker{display:none}details.rb>summary::after{content:'⌄';margin-left:auto;color:var(--mut)}details.rb[open]>summary::after{content:'⌃'}
 .rbb{padding:0 16px 14px;font-size:14px;line-height:1.6}.rb-h{font-weight:750;margin:14px 0 6px;padding-left:8px;border-left:3px solid var(--ink)}.rbb>.rb-h:first-child{margin-top:2px}
-.rb-say{background:var(--soft);border-radius:4px 14px 14px 14px;padding:8px 12px;margin:6px 0}.rb-li{padding-left:14px;position:relative;margin:4px 0;color:var(--mut)}.rb-li::before{content:'•';position:absolute;left:2px}
+.rb-img{display:block;width:100%;border-radius:10px;margin:2px 0 12px;border:1px solid var(--edge)}.rb-say{background:var(--soft);border-radius:4px 14px 14px 14px;padding:8px 12px;margin:6px 0}.rb-li{padding-left:14px;position:relative;margin:4px 0;color:var(--mut)}.rb-li::before{content:'•';position:absolute;left:2px}
 .rb-no{color:var(--dan);font-weight:650;margin:5px 0}.rb-em{color:var(--dan);font-weight:700;margin:4px 0}.rb-tip{background:rgba(52,120,246,.1);color:#2f6fe0;border-radius:10px;padding:8px 12px;margin:8px 0;font-weight:600}
 .rb-q{font-weight:750;margin:16px 0 6px;display:flex;gap:8px;align-items:flex-start}.rbb>.rb-q:first-child{margin-top:2px}.rb-q span{flex:0 0 22px;height:22px;border-radius:7px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-size:12px}
 #viewer .vbody{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px;touch-action:pan-x pan-y pinch-zoom}
@@ -282,7 +282,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.22-3';
+const APP_VER = '2026.11.22-4';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1087,7 +1087,8 @@ function richBody(t) {
   for (const raw of t.split('\n')) {
     const l = raw.trim(); if (!l) continue;
     if (l.startsWith('## ')) { if (open) h += '</div></details>'; h += `<details class="rb" ${first ? 'open' : ''}><summary>${esc(l.slice(3))}</summary><div class="rbb">`; open = true; first = false; continue; }
-    if (l.startsWith('### ')) h += `<div class="rb-h">${esc(l.slice(4))}</div>`;
+    if (l.startsWith('@img ')) h += `<img class="rb-img" src="${esc(l.slice(5).trim())}" alt="" loading="lazy">`;
+    else if (l.startsWith('### ')) h += `<div class="rb-h">${esc(l.slice(4))}</div>`;
     else if (l.startsWith('Q. ')) h += `<div class="rb-q"><span>Q</span>${esc(l.slice(3))}</div>`;
     else if (l.startsWith('"')) h += `<div class="rb-say">${esc(l.slice(1).trim())}</div>`;
     else if (l.startsWith('✕ ')) h += `<div class="rb-no">✕ ${esc(l.slice(2))}</div>`;
