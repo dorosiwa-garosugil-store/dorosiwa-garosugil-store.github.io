@@ -284,7 +284,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-6';
+const APP_VER = '2026.11.24-7';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -947,23 +947,61 @@ async function prLoad() {
   if (PR.loading) return; PR.loading = true; PR.err = '';
   try { const r = await fetch('products.json?v=' + APP_VER + '&t=' + Date.now()); if (!r.ok) throw Error(r.status); PR.data = await r.json(); }
   catch (e) { PR.err = '제품 목록을 불러오지 못했어요.'; }
-  finally { PR.loading = false; if (S.tab === 'product' || S.tab === 'stock') render(); }
+  finally { PR.loading = false; if (S.tab === 'product' || S.tab === 'stock' || S.tab === 'pdetail') render(); }
+}
+const won = n => n == null || n === '' ? '' : Number(n).toLocaleString('ko-KR');
+const TYPES = ['둥근', '벌어진', '처진', '퍼진', '종모양', '비대칭', 'AA·A'];
+function prTypesHtml(i) {
+  if (i.types) return `<div style="display:flex;flex-wrap:wrap;gap:5px">${TYPES.map(t => { const v = i.types[t]; return `<span style="font-size:12.5px;font-weight:700;border-radius:999px;padding:4px 10px;${v === 1 ? 'background:var(--ink);color:var(--bg)' : v ? 'background:var(--soft);color:var(--ink);border:1.5px dashed var(--ink)' : 'background:var(--soft);color:var(--mut);opacity:.55;text-decoration:line-through'}">${v === .5 ? '◐ ' : ''}${t}</span>`; }).join('')}</div>`;
+  if (i.types_text) return `<div style="font-size:13.5px;font-weight:650">${esc(i.types_text)}</div>`;
+  return '';
 }
 function prList() {
   const d = PR.data, q = PR.q.trim().toLowerCase().replace(/\s+/g, '');
-  const hit = p => !q || (p.name + p.colors.join('') + p.sizes.join('')).toLowerCase().replace(/\s+/g, '').includes(q);
+  const hit = p => !q || (p.name + p.colors.join('') + p.sizes.join('') + ((p.info && p.info.feat) || []).join('') + Object.keys((p.info && p.info.types) || {}).join('')).toLowerCase().replace(/\s+/g, '').includes(q);
   let h = '';
   for (const c of d.categories) {
     if (PR.cat !== 'all' && PR.cat !== c.id) continue;
     const list = d.items.filter(p => p.cat === c.id && hit(p)); if (!list.length) continue;
     h += `<div style="font-weight:750;font-size:15px;margin:16px 2px 8px">${esc(c.name)} <span class="mut" style="font-weight:500">${list.length}</span></div>`;
-    h += list.map(p => `<div class="card" style="padding:12px">
-      ${p.images.length ? `<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none">${p.images.map((src, i) => `<img src="${esc(src)}" loading="lazy" alt="" data-act="prImg" data-v="${esc(p.id)}" style="width:78px;height:78px;flex:0 0 78px;object-fit:cover;border-radius:10px;background:#f3f2ef;cursor:pointer">`).join('')}</div>` : `<div class="mut" style="font-size:11px;margin-bottom:6px">사진 준비 중</div>`}
-      <div style="font-weight:700;font-size:14.5px;line-height:1.35">${esc(p.name)}</div>
-      <div class="row" style="align-items:flex-start;gap:8px;margin-top:8px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">컬러 ${p.colors.length}</span><span class="grow" style="line-height:1.6">${p.colors.map(esc).join(' · ')}</span></div>
-      <div class="row" style="align-items:flex-start;gap:8px;margin-top:4px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">사이즈</span><span class="grow" style="line-height:1.6">${p.sizes.map(esc).join(' · ')}</span></div>${stockOf(p.id).length ? `<button class="row" style="gap:8px;margin-top:6px;font-size:12.5px;width:100%;text-align:left" data-act="prLoc" data-v="${esc(p.id)}"><span class="mut" style="flex:0 0 38px">위치</span><span class="grow" style="font-weight:650">📍 ${esc(locSummary(p.id))}</span>${qtSumBadge(p.id)}<span class="mut">›</span></button>` : ''}</div>`).join('');
+    if (c.id === 'tmh') {
+      if (d.tmhNote) h += `<div class="note" style="font-size:12px">${d.tmhNote.map(esc).join('<br>')}</div>`;
+      const tiers = [...new Set(list.map(p => p.info.tier))].sort((a, b) => b - a);
+      h += tiers.map(tr => `<div class="card" style="padding:10px 14px"><div style="font-weight:800;margin-bottom:4px">${won(tr)}원 매대</div>${list.filter(p => p.info.tier === tr).map(p => `<button class="row" style="width:100%;text-align:left;padding:8px 0;border-top:1px solid var(--edge);gap:8px;font-size:13px" data-act="prOpen" data-v="${esc(p.id)}"><span class="grow" style="font-weight:650">${esc(p.name)}</span><span class="mut" style="font-size:12px;text-align:right">${p.info.price.list ? `소비자가 ${won(p.info.price.list)} · <b style="color:var(--dan)">${esc(p.info.price.max)}</b>` : '소비자가 확인 필요'}</span><span class="mut">›</span></button>`).join('')}</div>`).join('');
+      continue;
+    }
+    h += list.map(p => { const i = p.info || {}, pr = i.price;
+      return `<div class="card" style="padding:12px">
+      ${p.images.length ? `<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none">${p.images.map(src => `<img src="${esc(src)}" loading="lazy" alt="" data-act="prImg" data-v="${esc(p.id)}" style="width:78px;height:78px;flex:0 0 78px;object-fit:cover;border-radius:10px;background:#f3f2ef;cursor:pointer">`).join('')}</div>` : `<div class="mut" style="font-size:11px;margin-bottom:6px">사진 준비 중</div>`}
+      <button style="width:100%;text-align:left;display:block" data-act="prOpen" data-v="${esc(p.id)}">
+      <div class="row" style="align-items:flex-start;gap:8px"><div class="grow" style="font-weight:700;font-size:14.5px;line-height:1.35">${esc(p.name)}</div><span class="mut" style="font-size:12px;white-space:nowrap">자세히 ›</span></div>
+      ${pr ? `<div style="margin-top:5px;font-size:13px"><b style="font-size:15px">${won(pr.store)}원</b> <span class="mut" style="text-decoration:line-through">${won(pr.list)}</span> <b style="color:var(--dan);font-size:12px">최대 ${esc(pr.max)}</b></div>` : ''}
+      ${p.colors.length ? `<div class="row" style="align-items:flex-start;gap:8px;margin-top:6px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">컬러 ${p.colors.length}</span><span class="grow" style="line-height:1.6">${p.colors.map(esc).join(' · ')}</span></div>` : ''}
+      ${p.sizes.length ? `<div class="row" style="align-items:flex-start;gap:8px;margin-top:4px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">사이즈</span><span class="grow" style="line-height:1.6">${p.sizes.map(esc).join(' · ')}</span></div>` : ''}
+      ${i.types ? `<div class="row" style="align-items:flex-start;gap:8px;margin-top:4px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">체형</span><span class="grow" style="line-height:1.6">${TYPES.filter(t => i.types[t]).map(t => esc(i.types[t] === .5 ? t + '(◐)' : t)).join(' · ')}</span></div>` : ''}
+      </button></div>`; }).join('');
   }
   return h || '<div class="card empty">찾는 제품이 없어요.</div>';
+}
+function vPDetail() {
+  if (!PR.data) { if (!PR.loading) prLoad(); return '<div class="card empty">불러오는 중…</div>'; }
+  const p = PR.data.items.find(x => x.id === PR.open); if (!p) { S.tab = 'product'; return vProduct(); }
+  const i = p.info || {}, pr = i.price || {}, cat = PR.data.categories.find(c => c.id === p.cat);
+  const sec = (t, body) => body ? `<div class="card" style="padding:12px 14px"><div class="mut" style="font-weight:700;font-size:12px;margin-bottom:7px">${t}</div>${body}</div>` : '';
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="product">‹ 판매 제품</button><span class="mut" style="margin-left:8px">${esc(cat ? cat.name : '')}</span></div>`;
+  if (p.images.length) h += `<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none">${p.images.map(src => `<img src="${esc(src)}" alt="" data-act="prImg" data-v="${esc(p.id)}" style="width:132px;height:132px;flex:0 0 132px;object-fit:cover;border-radius:14px;background:#f3f2ef;cursor:pointer">`).join('')}</div>`;
+  h += `<div style="font-weight:800;font-size:19px;line-height:1.35;margin:4px 2px">${esc(p.name)}</div>${i.code ? `<div class="mut" style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px;margin:0 2px 10px">${esc(i.code)}</div>` : ''}`;
+  h += sec('💬 세일즈 포인트', i.sales ? `<div style="white-space:pre-wrap;line-height:1.7;font-size:14px">${esc(i.sales)}</div>` : '<div class="mut" style="font-size:13px">준비 중이에요 (매니저 작성 예정)</div>');
+  if (i.tier) h += sec('가격', `<div style="font-size:22px;font-weight:800">${won(i.tier)}원 <span style="font-size:12px;color:var(--dan)">균일가</span></div><div class="mut" style="font-size:13px;margin-top:3px">${pr.list ? `소비자가 ${won(pr.list)}원 · 할인율 ${esc(pr.max)}` : '소비자가 확인 필요'}</div><div class="mut" style="font-size:12px;margin-top:6px">추가 할인 · 구매 선물 · 결제 할인 합산 안 돼요</div>`);
+  else if (pr.store) h += sec('가격', `<div class="row" style="align-items:baseline;gap:8px"><b style="font-size:22px">${won(pr.store)}원</b><span class="mut" style="text-decoration:line-through">${won(pr.list)}원</span><b style="color:var(--dan);margin-left:auto">최대 ${esc(pr.max)}</b></div>
+     <div class="row" style="gap:8px;margin-top:8px;text-align:center"><div class="grow" style="background:var(--soft);border-radius:10px;padding:7px 0"><div class="mut" style="font-size:11px">10만원↑ 10%</div><b>${won(pr.p10)}</b></div><div class="grow" style="background:var(--soft);border-radius:10px;padding:7px 0"><div class="mut" style="font-size:11px">20만원↑ 15%</div><b>${won(pr.p20)}</b></div></div>${i.note ? `<div class="mut" style="font-size:11.5px;margin-top:6px">※ ${esc(i.note)}</div>` : ''}`);
+  h += sec('추천 체형', (prTypesHtml(i) || '') + (i.typenote ? `<div class="mut" style="font-size:12px;margin-top:7px">${esc(i.typenote)}</div>` : '') + (i.types ? '<div class="mut" style="font-size:11px;margin-top:6px">검정 = 추천 · 점선(◐) = 조건부 · 흐림 = 비추천</div>' : ''));
+  h += sec('특징', (i.feat || []).length ? (i.feat.map(f => `<div class="rb-li" style="color:inherit">${esc(f)}</div>`).join('')) : '');
+  h += sec('같은 라인 하의', i.line ? `<div style="font-weight:650">${esc(i.line)}</div>` : '');
+  h += sec('컬러 · 사이즈', (p.colors.length || p.sizes.length) ? `${p.colors.length ? `<div style="font-size:13.5px;line-height:1.7"><span class="mut">컬러</span> ${p.colors.map(esc).join(' · ')}</div>` : ''}${p.sizes.length ? `<div style="font-size:13.5px;line-height:1.7"><span class="mut">사이즈</span> ${p.sizes.map(esc).join(' · ')}</div>` : ''}` : '');
+  h += sec('진열 위치', i.display ? `<div style="font-weight:650">${esc(i.display)}</div>` : '');
+  h += `<div class="mut" style="text-align:center;font-size:11px;margin-top:8px">${esc(PR.data.infoSource || '')}</div>`;
+  return h;
 }
 function vProduct() {
   if (!PR.data && !PR.loading && !PR.err) prLoad();
@@ -972,7 +1010,7 @@ function vProduct() {
   if (PR.err) return h + `<div class="warn">${esc(PR.err)}</div><button class="btn" style="width:100%" data-act="prReload">다시 불러오기</button>`;
   if (!PR.data) return h + '<div class="card empty">불러오는 중…</div>';
   const d = PR.data;
-  h += `<input type="text" id="prQ" value="${esc(PR.q)}" placeholder="제품명 · 컬러 · 사이즈 검색" autocomplete="off">`;
+  h += `<input type="text" id="prQ" value="${esc(PR.q)}" placeholder="제품명 · 컬러 · 사이즈 · 체형 검색" autocomplete="off">`;
   h += `<div style="display:flex;gap:6px;overflow-x:auto;margin:10px -2px 0;padding:0 2px 2px;scrollbar-width:none">${[{id:'all', name:'전체'}, ...d.categories].map(c => `<button class="pill ${PR.cat === c.id ? 'on' : ''}" style="flex:0 0 auto" data-act="prCat" data-v="${c.id}">${esc(c.name)} <span style="opacity:.6">${c.id === 'all' ? d.items.length : d.items.filter(p => p.cat === c.id).length}</span></button>`).join('')}</div>`;
   h += `<div id="plist">${prList()}</div>`;
   if (d.source) h += `<div class="mut" style="text-align:center;margin-top:10px;font-size:11px">${esc(d.source)}</div>`;
@@ -1455,7 +1493,7 @@ function render() {
   $('bars').innerHTML = bars;
   if (!S.ready && !D.config) { $('view').innerHTML = `<div class="card empty">${S.offline ? '로그인이 필요해요.' : '불러오는 중…'}</div>`; return; }
   const tbl = $('mtbl') || $('dtbl'), keep = tbl ? [tbl.id, tbl.scrollLeft, tbl.scrollTop] : null;
-  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog, product:vProduct, todo:vTodo, stock:vStock, qtlog:vQtLog, consult:vConsult, rcpt:vRcpt})[S.tab]();
+  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog, product:vProduct, todo:vTodo, stock:vStock, qtlog:vQtLog, consult:vConsult, rcpt:vRcpt, pdetail:vPDetail})[S.tab]();
   $('foot').innerHTML = (D.updated ? '마지막 업데이트 ' + esc(D.updated) : '');
   $('saveBar').style.display = adm && S.dirty ? 'flex' : 'none';
   $('saveBar').innerHTML = `<span class="grow">저장 안 된 변경 ${S.dirty}건</span><button class="btn sm" data-act="discardAll" style="background:transparent;color:inherit;border-color:#fff6">되돌리기</button><button class="btn sm" data-act="saveAll" style="background:var(--rev);color:var(--acc);border:0" ${S.saving ? 'disabled' : ''}>${S.saving ? '저장 중…' : '저장'}</button>`;
@@ -1504,6 +1542,7 @@ document.addEventListener('click', async e => {
     case 'skAdd': stockSheet(null, v); return;
     case 'skMove': stockMoveSheet(); return;
     case 'prLoc': SK.q = ''; SK.mode = 'prod'; SK.open = v; S.tab = 'stock'; scrollTo(0, 0); break;
+    case 'prOpen': PR.open = v; S.tab = 'pdetail'; scrollTo(0, 0); break;
     case 'prCat': PR.cat = v; break;
     case 'prReload': PR.err = ''; prLoad(); break;
     case 'prImg': { const p = PR.data && PR.data.items.find(x => x.id === v); if (p) viewer({title:p.name, images:p.images, small:1}); return; }
