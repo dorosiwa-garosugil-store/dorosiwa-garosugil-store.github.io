@@ -13,6 +13,8 @@
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 button{border:0;background:none;padding:0;cursor:pointer}
+.vmg{display:block}
+@media (min-width:900px){.vmg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}.vmL{position:sticky;top:12px}.vmL svg{max-height:calc(100vh - 300px)}.vmR #vmCard{margin-top:0}}
 .wrap{max-width:640px;margin:0 auto;padding:0 14px calc(140px + var(--sb))}
 header{padding:calc(var(--st) + 14px) 2px 6px;display:flex;align-items:center;gap:8px}
 header .t{flex:1;min-width:0}
@@ -285,7 +287,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-14';
+const APP_VER = '2026.11.24-15';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1309,11 +1311,12 @@ function vVmd() {
   if (!f) return h + '<div class="card empty">준비 중이에요.</div>';
   h += `<div class="seg">${V.floors.map(x => `<button data-act="vmF" data-v="${esc(x.id)}" class="${x.id === f.id ? 'on' : ''}">${esc(x.name)}</button>`).join('')}</div>`;
   if (!f.zones.length) return h + `<div class="card empty">${esc(f.name)} 지도는 준비 중이에요.<br><span style="font-size:12px">사진 받으면 추가할게요</span></div>`;
-  h += `<div class="mut" style="font-size:12px;margin:2px 2px 6px">캐셔에서 바라본 방향 · 위쪽이 길가 쇼윈도 · 번호를 누르면 사진과 제품이 나와요</div><div class="card" style="padding:6px">${vmMap(f)}</div>`;
+  h += `<div class="vmg"><div class="vmL"><div class="mut" style="font-size:12px;margin:2px 2px 6px">캐셔에서 바라본 방향 · 위쪽이 길가 쇼윈도 · 번호를 누르면 사진과 제품이 나와요</div><div class="card" style="padding:6px">${vmMap(f)}</div>`;
+  if (f.all && f.all.length) h += `<button class="btn" style="width:100%;margin-top:4px" data-act="vmAll">📷 ${esc(f.name)} 전체 사진 보기 (${f.all.length})</button>`;
+  h += `</div><div class="vmR">`;
   const z = f.zones.find(x => x.id === VM.z); if (z) h += vmZone(z);
   h += `<div class="card" style="padding:4px 14px">${[...f.zones].sort((a, b) => (a.n ?? 99) - (b.n ?? 99)).map(x => `<button class="row" style="width:100%;text-align:left;padding:9px 0;gap:10px;${x.n !== 1 ? 'border-top:1px solid var(--edge)' : ''}" data-act="vmZ" data-v="${esc(x.id)}"><span style="flex:0 0 22px;height:22px;border-radius:50%;background:${x.n == null ? 'var(--soft)' : x.id === VM.z ? 'var(--dan)' : 'var(--ink)'};color:${x.n == null ? 'var(--mut)' : 'var(--bg)'};font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center">${x.n ?? '·'}</span><span class="grow"><b style="font-size:14px">${esc(x.name)}</b><br><span class="mut" style="font-size:12px">${esc(x.sub || '')}</span></span>${x.check ? '<span title="확인 필요" style="font-size:11px">🔍</span>' : ''}<span class="mut">›</span></button>`).join('')}</div>`;
-  if (f.all && f.all.length) h += `<button class="btn" style="width:100%;margin-top:4px" data-act="vmAll">📷 ${esc(f.name)} 전체 사진 보기 (${f.all.length})</button>`;
-  h += `<div class="mut" style="text-align:center;font-size:11px;margin:10px 0 20px">🔍 = 확인 필요 · 진열이 바뀌면 사진 보내주세요 · ${esc(V.updated || '')} 기준</div>`;
+  h += `<div class="mut" style="text-align:center;font-size:11px;margin:10px 0 20px">🔍 = 확인 필요 · 진열이 바뀌면 사진 보내주세요 · ${esc(V.updated || '')} 기준</div></div></div>`;
   return h;
 }
 /* ───────── 컨설팅 예약 (data.json consults: [{id,date,time,who,people?,memo}] · 관리자만 작성) ───────── */
