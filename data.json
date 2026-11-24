@@ -639,22 +639,31 @@
        "id": "f1-w2",
        "n": 7,
        "name": "월 ② (가운데)",
-       "sub": "체크 파자마 세트",
+       "sub": "헤리티지 체크 파자마 세트",
        "kind": "wall",
        "x": 272,
        "y": 154,
        "w": 56,
        "h": 60,
        "photo": [
-        "vmd/1f-06.jpg",
-        "vmd/1f-11.jpg"
+        "vmd/1f-w2.jpg"
        ],
-       "pids": [
-        "p25"
-       ],
-       "desc": "- 체크 파자마 세트 2컬러 (라이트 체크 · 브라운 체크)",
-       "check": "헤리티지 체크 파자마로 추정 — 확인 필요",
-       "short": "월 ②"
+       "pids": [],
+       "desc": "- 월 ① 옆 행거 2개\n- 맨 위 선반: 수납 박스",
+       "short": "월 ②",
+       "dir": "오른쪽부터",
+       "line": [
+        {
+         "pid": "p25",
+         "name": "Minimal Garments Heritage Check Pajama Set",
+         "color": "소프트브라운"
+        },
+        {
+         "pid": "p25",
+         "name": "Minimal Garments Heritage Check Pajama Set",
+         "color": "소프트그레이"
+        }
+       ]
       },
       {
        "id": "f1-w3",
@@ -816,6 +825,7 @@
      ],
      "all": [
       "vmd/1f-w1.jpg",
+      "vmd/1f-w2.jpg",
       "vmd/1f-r1.jpg",
       "vmd/1f-r2.jpg",
       "vmd/1f-r3.jpg",

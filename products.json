@@ -1587,7 +1587,17 @@
    "images": [
     "products/p25-1.jpg",
     "products/p25-2.jpg"
-   ]
+   ],
+   "info": {
+    "price": {
+     "list": 73000,
+     "store": 58000,
+     "p10": 52200,
+     "p20": 49300,
+     "max": "32.5%"
+    },
+    "sales": ""
+   }
   },
   {
    "id": "p26",
