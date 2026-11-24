@@ -285,7 +285,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-13';
+const APP_VER = '2026.11.24-14';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1295,6 +1295,8 @@ function vmZone(z) {
   if (z.photo && z.photo.length) h += `<div style="display:flex;gap:6px;overflow-x:auto;margin-top:10px;scrollbar-width:none">${z.photo.map((src, i) => `<img src="${esc(src)}" alt="" data-act="vmImg" data-v="${esc(z.id)}" loading="lazy" style="height:150px;flex:0 0 auto;max-width:${i ? 140 : 230}px;object-fit:cover;border-radius:10px;background:var(--soft);cursor:pointer">`).join('')}</div>`;
   if (z.desc) h += `<div style="margin-top:8px">${z.desc.split('\n').map(l => l.startsWith('! ') ? `<div class="rb-em">${esc(l.slice(2))}</div>` : `<div class="rb-li">${esc(l.replace(/^- /, ''))}</div>`).join('')}</div>`;
   if (z.check) h += `<div class="note" style="font-size:12px;margin-top:8px">🔍 ${esc(z.check)}</div>`;
+  if (z.line && z.line.length) h += `<div class="mut" style="font-weight:700;font-size:12px;margin:10px 0 2px">걸린 순서 (왼쪽부터)</div>` + z.line.map((l, i) => { const p = PR.data && l.pid ? PR.data.items.find(x => x.id === l.pid) : null;
+    return `<${p ? `button data-act="vmP" data-v="${esc(p.id)}"` : 'div'} class="row" style="width:100%;text-align:left;padding:8px 0;border-top:1px solid var(--edge);gap:8px"><span class="mut" style="flex:0 0 16px;font-weight:800;font-size:12px">${i + 1}</span>${p && p.images[0] ? `<img src="${esc(p.images[0])}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:0 0 40px">` : '<span style="width:40px;height:40px;flex:0 0 40px;border-radius:8px;background:var(--soft)"></span>'}<span class="grow"><span style="font-size:13.5px;font-weight:650">${esc(l.name)}</span>${l.color ? `<br><span class="mut" style="font-size:12px">${esc(l.color)}</span>` : ''}</span>${p ? '<span class="mut">›</span>' : ''}</${p ? 'button' : 'div'}>`; }).join('');
   if (items.length) h += `<div class="mut" style="font-weight:700;font-size:12px;margin:10px 0 2px">이 자리 제품 · 누르면 상세</div>` + items.map(p => `<button class="row" style="width:100%;text-align:left;padding:8px 0;border-top:1px solid var(--edge);gap:8px" data-act="vmP" data-v="${esc(p.id)}">${p.images[0] ? `<img src="${esc(p.images[0])}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:0 0 40px">` : ''}<span class="grow" style="font-size:13.5px;font-weight:650">${esc(p.name)}</span><span class="mut">›</span></button>`).join('');
   if (cats.length) h += `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:10px">${cats.map(c => `<button class="pill" data-act="vmC" data-v="${esc(c.id)}">${esc(c.name)} 제품 보기 ›</button>`).join('')}</div>`;
   return h + '</div>';
