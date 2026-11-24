@@ -574,22 +574,45 @@
        "id": "f1-screen",
        "n": 5,
        "name": "윈도우 VP",
-       "sub": "파자마 코디",
+       "sub": "병풍 5칸 · 파자마 코디",
        "kind": "deco",
        "x": 95,
        "y": 22,
        "w": 150,
        "h": 28,
        "photo": [
-        "vmd/1f-05.jpg",
-        "vmd/1f-11.jpg"
+        "vmd/1f-vp.jpg"
        ],
        "pids": [],
-       "cats": [
-        "pajama"
-       ],
-       "desc": "- 프린트 로브 · 체크 파자마 · 프린트 쇼츠 세트 · 프린트 팬츠 · 브라운 체크 세트",
-       "short": "윈도우 VP"
+       "short": "윈도우 VP",
+       "dir": "왼쪽부터 · 길가에서 볼 때",
+       "line": [
+        {
+         "pid": "p25",
+         "name": "Minimal Garments Heritage Check Pajama Set",
+         "color": "소프트브라운"
+        },
+        {
+         "pid": "p19",
+         "name": "베니벨 2P SET",
+         "color": "화이트"
+        },
+        {
+         "pid": "p20",
+         "name": "베니벨 3P SET (쇼츠)",
+         "color": "웜그레이"
+        },
+        {
+         "pid": "p25",
+         "name": "Minimal Garments Heritage Check Pajama Set",
+         "color": "소프트그레이"
+        },
+        {
+         "pid": "p51",
+         "name": "베니벨 리버시블 샤워 나이트 가운",
+         "color": "화이트"
+        }
+       ]
       },
       {
        "id": "f1-w1",
@@ -889,6 +912,7 @@
       }
      ],
      "all": [
+      "vmd/1f-vp.jpg",
       "vmd/1f-w1.jpg",
       "vmd/1f-w2.jpg",
       "vmd/1f-w3.jpg",
