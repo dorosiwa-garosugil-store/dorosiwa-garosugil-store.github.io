@@ -15,6 +15,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{border:0;background:none;padding:0;cursor:pointer}
 .vmg{display:block}
 @media (min-width:900px){.vmg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}.vmL{position:sticky;top:12px}.vmL svg{max-height:calc(100vh - 300px)}.vmR #vmCard{margin-top:0}}
+.rb-a{color:#2f6fd6;font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .wrap{max-width:640px;margin:0 auto;padding:0 14px calc(140px + var(--sb))}
 header{padding:calc(var(--st) + 14px) 2px 6px;display:flex;align-items:center;gap:8px}
 header .t{flex:1;min-width:0}
@@ -287,7 +288,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-17';
+const APP_VER = '2026.11.24-18';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1466,20 +1467,21 @@ function manualSheet() {
   $('mClose').onclick = closeSheet;
 }
 /* 매뉴얼 본문 서식: ## 섹션(접기) / ### 소제목 / "멘트 / - 설명 / ✕ 하지 말 것 / ! 강조 / * 팁 / Q. 질문 */
+const rbIn = s => esc(s).replace(/\[([^\]]+)\]\(((?:https?:\/\/|tel:)[^\s)]+)\)/g, (m, t, u) => `<a class="rb-a" href="${u}"${u.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${t}</a>`);
 function richBody(t) {
   let h = '', open = false, first = true;
   for (const raw of t.split('\n')) {
     const l = raw.trim(); if (!l) continue;
     if (l.startsWith('## ')) { if (open) h += '</div></details>'; h += `<details class="rb" ${first ? 'open' : ''}><summary>${esc(l.slice(3))}</summary><div class="rbb">`; open = true; first = false; continue; }
     if (l.startsWith('@img ')) h += `<img class="rb-img" src="${esc(l.slice(5).trim())}" alt="" loading="lazy">`;
-    else if (l.startsWith('### ')) h += `<div class="rb-h">${esc(l.slice(4))}</div>`;
-    else if (l.startsWith('Q. ')) h += `<div class="rb-q"><span>Q</span>${esc(l.slice(3))}</div>`;
-    else if (l.startsWith('"')) h += `<div class="rb-say">${esc(l.slice(1).trim())}</div>`;
-    else if (l.startsWith('✕ ')) h += `<div class="rb-no">✕ ${esc(l.slice(2))}</div>`;
-    else if (l.startsWith('! ')) h += `<div class="rb-em">${esc(l.slice(2))}</div>`;
-    else if (l.startsWith('* ')) h += `<div class="rb-tip">💡 ${esc(l.slice(2))}</div>`;
-    else if (l.startsWith('- ')) h += `<div class="rb-li">${esc(l.slice(2))}</div>`;
-    else h += `<div class="rb-p">${esc(l)}</div>`;
+    else if (l.startsWith('### ')) h += `<div class="rb-h">${rbIn(l.slice(4))}</div>`;
+    else if (l.startsWith('Q. ')) h += `<div class="rb-q"><span>Q</span>${rbIn(l.slice(3))}</div>`;
+    else if (l.startsWith('"')) h += `<div class="rb-say">${rbIn(l.slice(1).trim())}</div>`;
+    else if (l.startsWith('✕ ')) h += `<div class="rb-no">✕ ${rbIn(l.slice(2))}</div>`;
+    else if (l.startsWith('! ')) h += `<div class="rb-em">${rbIn(l.slice(2))}</div>`;
+    else if (l.startsWith('* ')) h += `<div class="rb-tip">💡 ${rbIn(l.slice(2))}</div>`;
+    else if (l.startsWith('- ')) h += `<div class="rb-li">${rbIn(l.slice(2))}</div>`;
+    else h += `<div class="rb-p">${rbIn(l)}</div>`;
   }
   return h + (open ? '</div></details>' : '') + `<div class="mut" style="text-align:center;font-size:11px;margin:6px 0 20px">💬 말풍선 = 고객에게 하는 멘트 · ✕ = 하지 말 것</div>`;
 }
