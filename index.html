@@ -284,7 +284,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-5';
+const APP_VER = '2026.11.24-6';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1266,7 +1266,7 @@ function consultSheet(c) {
   if (c) $('csX').onclick = async () => { if (await ask(`${c.date.slice(5)} ${c.time} 예약을 삭제할까요?`, '삭제', true)) { D.consults = D.consults.filter(x => x.id !== c.id); markDirty('예약 삭제됨 · 아래 저장을 눌러 주세요'); } };
 }
 /* ───────── 영수증으로 재고 차감 (사진 → 서버 OCR → 바코드·수량 확인 → 한 번에 차감) ───────── */
-const RC = {items:[], receipt:'', busy:'', msg:'', done:null};
+const RC = {items:[], receipt:'', busy:'', msg:'', done:null, raw:'', err:''};
 const qtByB = b => qtItems().find(i => i.b === b);
 const qtLabel = it => [(it.pid ? pName(it.pid) : it.name), [it.c, it.s].filter(Boolean).join(' · ')];
 function rcParse(text) {
@@ -1296,15 +1296,17 @@ async function rcImage(file) {
 }
 async function rcRun(file) {
   if (!ckUrl()) { toast('서버 연결 후 사용할 수 있어요', true); return; }
-  RC.busy = '사진을 읽는 중… (10초 정도 걸려요)'; RC.msg = ''; RC.done = null; render();
+  RC.busy = '사진을 읽는 중… (10초 정도 걸려요)'; RC.msg = ''; RC.done = null; RC.raw = ''; RC.err = ''; render();
   try {
     const image = await rcImage(file);
     const r = await fetch(ckUrl(), {method:'POST', body:JSON.stringify({kind:'ocr', image, mime:'image/jpeg'})}); const j = await r.json();
     if (!j.ok) throw Error(j.error || '');
+    RC.raw = j.text || '';
     const p = rcParse(j.text);
     RC.receipt = p.receipt; RC.items = p.items;
     RC.msg = p.items.length ? '' : '바코드를 찾지 못했어요. 영수증이 잘 보이게 다시 찍거나, 아래에 바코드를 직접 입력해 주세요.';
   } catch (e) {
+    RC.err = String(e && e.message || e);
     RC.msg = /DRIVE_API_OFF|Drive is not defined/.test(e.message) ? '사진 인식이 아직 꺼져 있어요. 관리자가 Apps Script에서 Drive API를 켜야 해요. 그동안은 아래에 바코드를 직접 입력해서 차감할 수 있어요.' : '사진을 읽지 못했어요. 다시 시도하거나 바코드를 직접 입력해 주세요.';
   }
   RC.busy = ''; render();
@@ -1318,6 +1320,7 @@ function vRcpt() {
   h += `<div class="mut" style="font-size:11.5px;margin:0 2px 8px">영수증을 평평하게, 상품명·바코드 줄이 잘 보이게 찍어 주세요. 인식 결과를 확인한 뒤 차감돼요.</div>`;
   if (RC.busy) return h + `<div class="card empty">${esc(RC.busy)}</div>`;
   if (RC.msg) h += `<div class="warn">${esc(RC.msg)}</div>`;
+  if (RC.err || RC.raw) h += `<details class="card" style="padding:10px 14px;font-size:12px"><summary class="mut" style="cursor:pointer">${RC.err ? '오류 내용 보기' : '인식된 글자 보기'} (캡처해서 보내주세요)</summary><pre style="white-space:pre-wrap;word-break:break-all;margin:8px 0 0;font-size:11.5px">${esc(RC.err || RC.raw)}</pre></details>`;
   h += `<div class="card"><label class="f" style="margin-top:0">영수증 번호 (같은 영수증 두 번 차감 방지)</label><input type="text" id="rcNo" value="${esc(RC.receipt)}" placeholder="예: R2611240200003 (영수증 맨 아래)">`;
   h += `<div style="margin-top:12px;font-weight:750">상품 ${RC.items.length}개</div>`;
   h += RC.items.map((x, i) => { const it = qtByB(x.b); if (!it) return `<div class="row" style="padding:9px 0;border-top:1px solid var(--edge);gap:8px;font-size:13px"><div class="grow"><b style="color:var(--dan)">모르는 바코드</b><div class="mut">${esc(x.b)} · 재고 목록에 없어서 차감 안 돼요</div></div><button class="link" data-act="rcDel" data-v="${i}">빼기</button></div>`;
