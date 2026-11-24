@@ -1337,7 +1337,11 @@
     "S/M",
     "L/XL"
    ],
-   "images": [],
+   "images": [
+    "products/p31-1.jpg",
+    "products/p31-2.jpg",
+    "products/p31-3.jpg"
+   ],
    "info": {
     "code": "카페24 코드 확인 필요 · 이지 117584",
     "display": "1층 서랍장 위 / 2층 서랍장",
