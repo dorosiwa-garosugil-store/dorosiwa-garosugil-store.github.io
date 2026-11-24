@@ -217,3 +217,10 @@ function num_(v) { return v === '' || v == null ? '' : Number(v); }
 function numIn_(v) { v = String(v == null ? '' : v).trim(); return /^\d{1,6}$/.test(v) ? Number(v) : ''; }
 function date_(s) { s = String(s || ''); if (!/^20\d\d-\d\d-\d\d$/.test(s)) throw Error('날짜 오류'); return s; }
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+
+/* 권한 확인용: 편집기에서 이 함수(authorize)를 골라 ▷ 실행 → 승인 창에서 허용 */
+function authorize() {
+  const r = Drive.Files.list({pageSize: 1});
+  Logger.log('드라이브 권한 OK (' + ((r.files || []).length) + ')');
+  Logger.log('문서 권한 OK: ' + typeof DocumentApp.openById);
+}
