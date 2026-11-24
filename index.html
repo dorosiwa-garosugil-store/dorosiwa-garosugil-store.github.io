@@ -285,7 +285,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-8';
+const APP_VER = '2026.11.24-9';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -519,7 +519,7 @@ function vMonth() {
     const d = days.find(x => x.date === S.mDate);
     h += strip(days, S.mDate, 'mDate');
     h += `<div class="card"><h3>${d.day}일 (${d.wd}) · 출근 ${d.on.length}명</h3>${d.on.map(x => `<div class="li ${x.name === S.me ? 'me' : ''}"><div class="grow"><div class="nm">${esc(x.name)}</div><div class="rl">${esc(x.role)}</div></div>${shiftChip(x.v)}</div>`).join('') || '<div class="empty">출근자 없음</div>'}</div>`;
-    if (d.off.length) h += `<div class="card"><h3>휴무</h3><div class="names">${d.off.map(x => `<span>${esc(x.name)} <small>${esc(x.v)}</small></span>`).join('')}</div></div>`;
+    if (d.off.length) h += `<div class="card"><h3>휴무</h3><div class="names">${d.off.map(x => `<span>${esc(x.name)} <small>${esc(String(x.v).replace(/!$/, ' 필수'))}</small></span>`).join('')}</div></div>`;
     if (adm) h += `<div class="mut" style="text-align:center">근무 수정은 <b>전체 표</b>에서 칸을 눌러주세요.</div>`;
   } else if (S.mView === 'mine') {
     if (!S.me) h += needMe();
@@ -615,7 +615,9 @@ function vDaily() {
   const key = S.dDate.slice(0, 7), days = monthDays(key), d = days.find(x => x.date === S.dDate), adm = admin();
   const editing = adm && S.edit && S.edit.date === S.dDate;
   const raw = D.daily[S.dDate], dl = editing ? {assign:S.edit.assign} : adm ? raw : pubDaily(S.dDate);
-  let h = strip(days, S.dDate, 'dDate');
+  const ks = monthKeys(), ki = ks.indexOf(key), [dy, dm] = key.split('-');
+  let h = `<div class="row" style="margin:6px 0"><button class="ib" data-act="dMove" data-v="-1" ${ki <= 0 ? 'disabled style="opacity:.3"' : ''}>‹</button><div class="grow" style="text-align:center"><div class="big" style="font-size:19px">${dy}. ${dm}</div></div><button class="ib" data-act="dMove" data-v="1" ${ki < 0 || ki >= ks.length - 1 ? 'disabled style="opacity:.3"' : ''}>›</button></div>`;
+  h += strip(days, S.dDate, 'dDate');
   const badge = editing ? '<span class="chip" style="--h:38;--s:85%">편집 중</span>' : raw && raw.published ? '<span class="chip" style="--h:150;--s:60%">확정</span>' : raw && adm ? '<span class="chip" style="--h:38;--s:85%">비공개</span>' : '<span class="chip g">미등록</span>';
   h += `<div class="card" style="padding:12px 14px"><div class="row"><b class="grow">${+key.slice(5)}/${d.day} (${d.wd}) · 출근 ${d.on.length}명</b>${badge}</div></div>`;
   if (adm) {
@@ -634,10 +636,10 @@ function vDaily() {
     const mine = d.on.find(x => x.name === S.me);
     if (!S.me) h += needMe();
     else if (!mine) h += `<div class="card empty">${esc(S.me)}님은 이 날 근무가 아니에요.</div>`;
-    else h += `<div class="card"><h3>${esc(S.me)} · ${esc(mine.v)}</h3>${HOURS().filter(x => works(mine, x)).map(x => `<div class="li ${S.dDate === T.date && x === T.hour ? 'me' : ''}"><div style="width:96px"><b>${x}:00</b><span class="mut"> ~${x + 1}:00</span></div><div class="grow"></div>${posChip(posAt(dl, S.me, x) || '미배정')}</div>`).join('')}</div>`;
+    else h += `<div class="card"><h3>${esc(S.me)} · ${esc(String(mine.v).replace(/!$/, ' 필수'))}</h3>${HOURS().filter(x => works(mine, x)).map(x => `<div class="li ${S.dDate === T.date && x === T.hour ? 'me' : ''}"><div style="width:96px"><b>${x}:00</b><span class="mut"> ~${x + 1}:00</span></div><div class="grow"></div>${posChip(posAt(dl, S.me, x) || '미배정')}</div>`).join('')}</div>`;
   } else {
     const opts = ['미배정', ...C().positions.map(p => p.name)];
-    h += `<div class="tbl" id="dtbl"><table><thead><tr><th>시간</th>${d.on.map(x => `<th>${esc(x.name)}<small>${esc(x.v)}</small></th>`).join('')}</tr></thead><tbody>${HOURS().map((hr, hi) => `<tr><td><b>${hr}</b><small>~${hr + 1}시</small></td>${d.on.map(x => {
+    h += `<div class="tbl" id="dtbl"><table><thead><tr><th>시간</th>${d.on.map(x => `<th>${esc(x.name)}<small>${esc(String(x.v).replace(/!$/, ' 필수'))}</small></th>`).join('')}</tr></thead><tbody>${HOURS().map((hr, hi) => `<tr><td><b>${hr}</b><small>~${hr + 1}시</small></td>${d.on.map(x => {
       if (!works(x, hr)) return '<td><span class="chip g">·</span></td>';
       const p = posAt(dl, x.name, hr) || '미배정';
       return editing ? `<td><select data-ed="${esc(x.name)}" data-hi="${hi}" style="${posStyle(p)}">${opts.map(o => `<option ${o === p ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></td>` : `<td>${posChip(p)}</td>`;
@@ -1565,6 +1567,7 @@ document.addEventListener('click', async e => {
     case 'mDate': S.mDate = v; break;
     case 'cell': cellSheet(+a.dataset.i, +v); return;
     case 'staff': staffSheet(); return;
+    case 'dMove': { if (S.edit && !(await ask('편집 중인 조닝을 저장하지 않고 이동할까요?', '이동', true))) return; const ks = monthKeys(), k = ks[ks.indexOf(S.dDate.slice(0, 7)) + +v]; if (!k) return; S.edit = null; S.dHour = null; const ds = monthDays(k); S.dDate = (ds.find(x => x.date === T.date) || ds.find(x => x.on.length) || ds[0]).date; break; }
     case 'dDate': if (S.edit && !(await ask('편집 중인 조닝을 저장하지 않고 이동할까요?', '이동', true))) return; S.edit = null; S.dDate = v; S.dHour = null; break;
     case 'dView': S.dView = v; ls.set('dView2', v); break;
     case 'dHour': S.dHour = +v; break;
