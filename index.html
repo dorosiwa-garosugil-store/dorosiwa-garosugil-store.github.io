@@ -285,7 +285,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-10';
+const APP_VER = '2026.11.24-11';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1269,17 +1269,18 @@ const VM = {floor:'1f', z:''};
 const VMK = {wall:[30,'벽 행거'], rack:[200,'행거'], table:[95,'매대'], deco:[330,'디스플레이'], fit:[260,'피팅룸'], cash:[0,'캐셔']};
 function vmMap(f) {
   const zs = f.zones, door = f.id === '1f';
-  let s = `<svg viewBox="0 0 340 470" style="width:100%;display:block;touch-action:manipulation" font-family="inherit">
+  let s = `<svg viewBox="0 -16 340 486" style="width:100%;display:block;touch-action:manipulation" font-family="inherit">
   <rect x="10" y="10" width="320" height="450" rx="4" style="fill:var(--card)"/>
-  <path d="M10 460V10H330" fill="none" style="stroke:var(--ink)" stroke-width="3"/>`;
-  if (door) s += `<path d="M330 10V108M330 170V460H10" fill="none" stroke="#6fa8dc" stroke-width="3" stroke-dasharray="7 4"/>
-  <path d="M330 108V170" style="stroke:var(--card)" stroke-width="5"/><path d="M330 112L312 128" style="stroke:var(--mut)" stroke-width="1.5"/>
-  <text x="318" y="148" text-anchor="end" font-size="11" font-weight="800" style="fill:var(--dan)">입구 →</text>
-  <text x="236" y="26" font-size="9" style="fill:var(--mut)">프로젝터 영상 벽</text>
-  <text x="170" y="469" text-anchor="middle" font-size="9" style="fill:#6fa8dc">유리창 (가로수길)</text>
-  <text x="337" y="300" font-size="9" style="fill:#6fa8dc" transform="rotate(90 337 300)" text-anchor="middle">유리창</text>
-  <rect x="12" y="424" width="12" height="30" rx="2" fill="#d4b35c"/><text x="28" y="443" font-size="9" style="fill:var(--mut)">금색 거울</text>
-  <path d="M90 14V86" stroke="#9db4c8" stroke-width="3"/>`;
+  <path d="M330 10V460H10" fill="none" style="stroke:var(--ink)" stroke-width="3"/>`;
+  if (door) s += `<path d="M10 460V362M10 300V10H330" fill="none" stroke="#6fa8dc" stroke-width="3" stroke-dasharray="7 4"/>
+  <path d="M10 300V362" style="stroke:var(--card)" stroke-width="5"/><path d="M10 358L28 342" style="stroke:var(--mut)" stroke-width="1.5"/>
+  <text x="22" y="324" font-size="11" font-weight="800" style="fill:var(--dan)">← 입구</text>
+  <text x="170" y="-3" text-anchor="middle" font-size="10.5" font-weight="800" fill="#4a86c5">▲ 쇼윈도 · 가로수길 길가</text>
+  <text x="5" y="160" font-size="9" fill="#6fa8dc" transform="rotate(-90 5 160)" text-anchor="middle">유리창</text>
+  <text x="14" y="454" font-size="9" style="fill:var(--mut)">프로젝터 영상 벽</text>
+  <text x="170" y="469" text-anchor="middle" font-size="9" style="fill:var(--mut)">▼ 캐셔에서 바라본 방향</text>
+  <rect x="316" y="18" width="12" height="30" rx="2" fill="#d4b35c"/><text x="312" y="37" text-anchor="end" font-size="9" style="fill:var(--mut)">금색 거울</text>
+  <path d="M250 384V456" stroke="#9db4c8" stroke-width="3"/>`;
   for (const z of zs) {
     const [h] = VMK[z.kind] || [0], on = VM.z === z.id, cx = z.x + z.w / 2, cy = z.y + z.h / 2;
     s += `<g data-act="vmZ" data-v="${esc(z.id)}" style="cursor:pointer">
@@ -1308,7 +1309,7 @@ function vVmd() {
   if (!f) return h + '<div class="card empty">준비 중이에요.</div>';
   h += `<div class="seg">${V.floors.map(x => `<button data-act="vmF" data-v="${esc(x.id)}" class="${x.id === f.id ? 'on' : ''}">${esc(x.name)}</button>`).join('')}</div>`;
   if (!f.zones.length) return h + `<div class="card empty">${esc(f.name)} 지도는 준비 중이에요.<br><span style="font-size:12px">사진 받으면 추가할게요</span></div>`;
-  h += `<div class="mut" style="font-size:12px;margin:2px 2px 6px">번호를 누르면 그 자리 사진과 제품이 나와요 · 위쪽이 캐셔</div><div class="card" style="padding:6px">${vmMap(f)}</div>`;
+  h += `<div class="mut" style="font-size:12px;margin:2px 2px 6px">캐셔에서 바라본 방향 · 위쪽이 길가 쇼윈도 · 번호를 누르면 사진과 제품이 나와요</div><div class="card" style="padding:6px">${vmMap(f)}</div>`;
   const z = f.zones.find(x => x.id === VM.z); if (z) h += vmZone(z);
   h += `<div class="card" style="padding:4px 14px">${[...f.zones].sort((a, b) => a.n - b.n).map(x => `<button class="row" style="width:100%;text-align:left;padding:9px 0;gap:10px;${x.n > 1 ? 'border-top:1px solid var(--edge)' : ''}" data-act="vmZ" data-v="${esc(x.id)}"><span style="flex:0 0 22px;height:22px;border-radius:50%;background:${x.id === VM.z ? 'var(--dan)' : 'var(--ink)'};color:var(--bg);font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center">${x.n}</span><span class="grow"><b style="font-size:14px">${esc(x.name)}</b><br><span class="mut" style="font-size:12px">${esc(x.sub || '')}</span></span>${x.check ? '<span title="확인 필요" style="font-size:11px">🔍</span>' : ''}<span class="mut">›</span></button>`).join('')}</div>`;
   if (f.all && f.all.length) h += `<button class="btn" style="width:100%;margin-top:4px" data-act="vmAll">📷 ${esc(f.name)} 전체 사진 보기 (${f.all.length})</button>`;
