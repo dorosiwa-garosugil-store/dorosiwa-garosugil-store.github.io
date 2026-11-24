@@ -285,7 +285,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-12';
+const APP_VER = '2026.11.24-13';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1278,8 +1278,7 @@ function vmMap(f) {
   <text x="170" y="-3" text-anchor="middle" font-size="10.5" font-weight="800" fill="#4a86c5">▲ 쇼윈도 · 가로수길 길가</text>
   <text x="5" y="160" font-size="9" fill="#6fa8dc" transform="rotate(-90 5 160)" text-anchor="middle">유리창</text>
   <text x="14" y="454" font-size="9" style="fill:var(--mut)">프로젝터 영상 벽</text>
-  <text x="170" y="469" text-anchor="middle" font-size="9" style="fill:var(--mut)">▼ 캐셔에서 바라본 방향</text>
-  <path d="M250 384V456" stroke="#9db4c8" stroke-width="3"/>`;
+  <text x="170" y="469" text-anchor="middle" font-size="9" style="fill:var(--mut)">▼ 캐셔에서 바라본 방향</text>`;
   for (const z of zs) {
     const [h] = VMK[z.kind] || [0], on = VM.z === z.id, cx = z.x + z.w / 2, cy = z.y + z.h / 2;
     s += `<g data-act="vmZ" data-v="${esc(z.id)}" style="cursor:pointer">
