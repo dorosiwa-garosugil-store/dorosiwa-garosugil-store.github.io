@@ -27,7 +27,7 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - months["YYYY-MM"][직원이름][날짜] = "11~20" | "11~20!"(끝에 ! = 필수 출근, 진한 색 칩, shiftPresets에 있음) | "휴" | "요청휴무" | "연차" ...
 - daily["YYYY-MM-DD"] = { published: true, assign: { 직원이름: [open시부터 1시간 단위 포지션, 근무 외는 null] } }
 - notices = [{ id, title, body, pinned, date: "YYYY-MM-DD", images?: ["manual/01.jpg", ...] }] (images = 자료 보기 뷰어로 보여줄 사진, 저장소에 파일로 올림)
-- 공지 읽음 표시는 각 기기 localStorage(dsh_readNotices)에 공지 id로 저장 → 새 공지는 새 id로 만들어야 빨간 점이 뜸
+- 공지 읽음 표시는 각 기기 localStorage(dsh_readNotices)에 공지 id(수정된 공지는 id@ed)로 저장 → 새 공지는 새 id로 만들어야 빨간 점이 뜸. 공지·할 일을 수정하면 ed(수정 표시, 아무 새 값)를 바꿔야 다시 빨간 점 + '수정됨' (사이트 수정은 자동, Claude가 내용 고칠 때도 ed를 새 값으로)
 
 ## 화면 업데이트
 - index.html을 고치면 index.html의 APP_VER와 data.json의 appVersion을 같은 새 값으로 올린다 → 직원 폰이 옛 화면(캐시)을 쓰고 있으면 자동으로 새로 불러옴.
