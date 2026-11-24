@@ -689,7 +689,11 @@
     "S/M",
     "L/XL"
    ],
-   "images": [],
+   "images": [
+    "products/p38-1.jpg",
+    "products/p38-2.jpg",
+    "products/p38-3.jpg"
+   ],
    "info": {
     "code": "카페24 코드 확인 필요 · 이지 117598",
     "display": "1층 벽쪽 행거 / 2층 브라 행거",
