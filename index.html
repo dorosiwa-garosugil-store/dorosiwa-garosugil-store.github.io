@@ -284,7 +284,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-3';
+const APP_VER = '2026.11.24-4';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -492,14 +492,13 @@ function vToday() {
   const tiles = [
     ['month', '먼슬리', '월간 근무 스케줄', 'go:month'],
     ['daily', '데일리 조닝', dl ? '오늘 조닝 확정' : '시간별 배치', 'go:daily'],
-    ['notice', '공지사항', unreadCount() ? `읽지 않은 공지 ${unreadCount()}건` : nCount ? `공지 ${nCount}건` : '새 공지 확인', 'go:notice'],
-    ['guide', '업무 매뉴얼', '본사 지침 · 응대 가이드 · 캐셔', 'guide'],
     ['check', '체크리스트', ckSummary(), 'go:check'],
     ['log', '매장 기록', '유동인구 · 외국인 고객', 'go:log'],
+    ['product', '판매 제품', '카테고리별 컬러 · 사이즈', 'go:product'],
+    ['stock', '판매 재고', '랙 위치 · 제품별 검색', 'go:stock'],
+    ['guide', '업무 매뉴얼', '본사 지침 · 응대 가이드 · 캐셔', 'guide'],
     ['todo', '해야 할 일', todoSub(), 'go:todo'],
     ['consult', '컨설팅 예약', csSub(), 'go:consult'],
-    ['product', '판매 제품', '카테고리별 컬러 · 사이즈', 'go:product'],
-    ['stock', '재고 위치', '랙 위치 · 제품별 검색', 'go:stock'],
     ['vmd', 'VMD', '추후 오픈', '']
   ];
   h += `<div class="hub">${tiles.map(([k, t, sub, act]) => { const [a, v] = act.split(':'); return `<button class="tile ${act ? '' : 'off'}" ${act ? `data-act="${a}" ${v ? `data-v="${v}"` : ''}` : 'disabled'}>${k === 'notice' && unreadCount() ? `<span class="tdot">${unreadCount()}</span>` : ''}${k === 'todo' && tdUnreadCount() ? `<span class="tdot">${tdUnreadCount()}</span>` : ''}${k === 'consult' && csToday().length ? `<span class="tdot">${csToday().length}</span>` : ''}${ico(k)}<b>${t}</b><small>${sub}</small></button>`; }).join('')}</div>`;
@@ -1075,7 +1074,7 @@ function idleSheet() {
     D.config = {...C(), idle}; closeSheet(); markDirty('한가할 때 할 일 변경됨 · 아래 저장을 눌러 주세요');
   };
 }
-/* ───────── 재고 위치 (data.json stock: [{id,pid,loc,size,colors[],qty?}] · 관리자 수정) ───────── */
+/* ───────── 판매 재고 (data.json stock: [{id,pid,loc,size,colors[],qty?}] · 관리자 수정) ───────── */
 const SK = {q:'', mode:'prod', open:null, low:false};
 const locInfo = c => { const m = String(c || '').match(/^SG(\d)-(\d+)-(\d+)(?:\((\d+)\))?$/); return m ? `${m[1]}층 · ${+m[2]}번 랙 · ${+m[3]}단${m[4] ? ` · 왼쪽 ${+m[4]}번째 박스` : ''}` : ''; };
 const locSort = (a, b) => String(a.loc).localeCompare(String(b.loc)) || String(a.size).localeCompare(String(b.size));
@@ -1134,7 +1133,7 @@ async function qtLogLoad() {
   QT.logLoading = false; if (S.tab === 'qtlog') render();
 }
 function vQtLog() {
-  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="stock">‹ 재고 위치</button><b style="font-size:18px;margin-left:6px" class="grow">수량 수정 기록</b></div><div class="mut" style="margin-bottom:8px">최근 90일 · 누가 언제 몇 개로 고쳤는지</div>`;
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="stock">‹ 판매 재고</button><b style="font-size:18px;margin-left:6px" class="grow">수량 수정 기록</b></div><div class="mut" style="margin-bottom:8px">최근 90일 · 누가 언제 몇 개로 고쳤는지</div>`;
   if (!admin()) return h + '<div class="card empty">관리자만 볼 수 있어요.</div>';
   if (QT.logLoading || !QT.log) { if (!QT.logLoading && QT.log === null && !QT.logTried) { QT.logTried = true; qtLogLoad(); } return h + `<div class="card empty">${QT.logLoading ? '불러오는 중…' : '기록이 없어요.'}</div>`; }
   if (!QT.log.length) return h + '<div class="card empty">아직 수정 기록이 없어요.</div>';
@@ -1175,7 +1174,7 @@ function vStock() {
   if (!PR.data && !PR.loading && !PR.err) prLoad();
   qtLoad();
   const adm = admin();
-  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">재고 위치</b><span class="mut">${(D.stock || []).length}칸</span></div>`;
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">판매 재고</b><span class="mut">${(D.stock || []).length}칸</span></div>`;
   if (!PR.data) return h + `<div class="card empty">${PR.err ? esc(PR.err) : '불러오는 중…'}</div>`;
   h += `<input type="text" id="skQ" value="${esc(SK.q)}" placeholder="제품명 · 위치(SG1-03) · 사이즈 · 컬러 검색" autocomplete="off">`;
   h += `<div class="seg" style="margin-top:10px">${[['prod', '제품별'], ['loc', '위치별 (랙 순서)']].map(([k, l]) => `<button data-act="skMode" data-v="${k}" class="${SK.mode === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
