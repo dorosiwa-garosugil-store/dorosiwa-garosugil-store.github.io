@@ -282,8 +282,8 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.22-6';
-function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; }
+const APP_VER = '2026.11.24-1';
+function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
   if (manual) $('refBtn').classList.add('spin');
@@ -329,7 +329,7 @@ async function saveAll() {
     const cur = await ghGet();
     if (S.sha && cur.sha !== S.sha && !(await ask('다른 곳에서 먼저 바뀐 내용이 있어요. 내 변경사항으로 덮어쓸까요?', '덮어쓰기', true))) { S.saving = false; render(); return; }
     const t = now().date.replace(/-/g, '.');
-    const body = {updated:t, appVersion:D.appVersion || APP_VER, config:D.config, months:D.months, daily:D.daily, notices:D.notices, todos:D.todos || []};
+    const body = {updated:t, appVersion:D.appVersion || APP_VER, config:D.config, months:D.months, daily:D.daily, notices:D.notices, todos:D.todos || [], stock:D.stock || []};
     const r = await fetch(GH_URL, {method:'PUT', headers:{...ghHeaders(), 'Content-Type':'application/json'}, body:JSON.stringify({message:`사이트에서 수정 (${t})`, content:b64enc(JSON.stringify(body, null, 1) + '\n'), sha:cur.sha, branch:GH.branch})});
     if (!r.ok) throw Error(r.status === 409 ? '동시에 수정됐어요. 새로고침 후 다시 해주세요.' : '저장 실패 (' + r.status + ')');
     const j = await r.json(); S.sha = j.content.sha; D.updated = t; S.dirty = 0; saveCache();
@@ -466,6 +466,7 @@ const ICON = {
   product:'<path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/>',
   guide:'<path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4M8.5 12h7M8.5 16h5"/>',
   log:'<path d="M4 20h16"/><path d="M7 16V10M12 16V6M17 16v-4"/>',
+  stock:'<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',
   vmd:'<path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/>'
 };
 const ico = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
@@ -494,6 +495,7 @@ function vToday() {
     ['log', '매장 기록', '유동인구 · 외국인 고객', 'go:log'],
     ['todo', '해야 할 일', todoSub(), 'go:todo'],
     ['product', '판매 제품', '카테고리별 컬러 · 사이즈', 'go:product'],
+    ['stock', '재고 위치', '랙 위치 · 제품별 검색', 'go:stock'],
     ['vmd', 'VMD', '추후 오픈', '']
   ];
   h += `<div class="hub">${tiles.map(([k, t, sub, act]) => { const [a, v] = act.split(':'); return `<button class="tile ${act ? '' : 'off'}" ${act ? `data-act="${a}" ${v ? `data-v="${v}"` : ''}` : 'disabled'}>${k === 'notice' && unreadCount() ? `<span class="tdot">${unreadCount()}</span>` : ''}${k === 'todo' && tdUnreadCount() ? `<span class="tdot">${tdUnreadCount()}</span>` : ''}${ico(k)}<b>${t}</b><small>${sub}</small></button>`; }).join('')}</div>`;
@@ -664,7 +666,7 @@ async function edSave(pub) {
   D.daily[date] = body; if (pub) S.edit = null; render();
   write(() => S.db.doc('daily/' + date).set(body), pub ? '조닝 공개로 바뀜' : '조닝 비공개로 보관');
 }
-document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.tdc) { TD.draft[e.target.dataset.tdc] = e.target.value; return; } if (e.target.id === 'prQ') { PR.q = e.target.value; const l = $('plist'); if (l) l.innerHTML = prList(); return; } const k = e.target.dataset && e.target.dataset.lg; if (k == null) return; if (!LG.draft || LG.draft.date !== LG.date) LG.draft = {date:LG.date}; LG.draft[k] = e.target.value; });
+document.addEventListener('input', e => { if (e.target.id === 'skQ') { SK.q = e.target.value; const l = $('sklist'); if (l) l.innerHTML = skList(); return; } if (e.target.dataset && e.target.dataset.tdc) { TD.draft[e.target.dataset.tdc] = e.target.value; return; } if (e.target.id === 'prQ') { PR.q = e.target.value; const l = $('plist'); if (l) l.innerHTML = prList(); return; } const k = e.target.dataset && e.target.dataset.lg; if (k == null) return; if (!LG.draft || LG.draft.date !== LG.date) LG.draft = {date:LG.date}; LG.draft[k] = e.target.value; });
 document.addEventListener('change', e => {
   const t = e.target;
   if (t.dataset.ed != null && S.edit) { S.edit.assign[t.dataset.ed][+t.dataset.hi] = t.value; t.setAttribute('style', posStyle(t.value)); const w = $('warns'); if (w) w.innerHTML = warnHtml(dayInfo(S.dDate)); }
@@ -942,7 +944,7 @@ async function prLoad() {
   if (PR.loading) return; PR.loading = true; PR.err = '';
   try { const r = await fetch('products.json?v=' + APP_VER + '&t=' + Date.now()); if (!r.ok) throw Error(r.status); PR.data = await r.json(); }
   catch (e) { PR.err = '제품 목록을 불러오지 못했어요.'; }
-  finally { PR.loading = false; if (S.tab === 'product') render(); }
+  finally { PR.loading = false; if (S.tab === 'product' || S.tab === 'stock') render(); }
 }
 function prList() {
   const d = PR.data, q = PR.q.trim().toLowerCase().replace(/\s+/g, '');
@@ -956,7 +958,7 @@ function prList() {
       ${p.images.length ? `<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none">${p.images.map((src, i) => `<img src="${esc(src)}" loading="lazy" alt="" data-act="prImg" data-v="${esc(p.id)}" style="width:78px;height:78px;flex:0 0 78px;object-fit:cover;border-radius:10px;background:#f3f2ef;cursor:pointer">`).join('')}</div>` : `<div class="mut" style="font-size:11px;margin-bottom:6px">사진 준비 중</div>`}
       <div style="font-weight:700;font-size:14.5px;line-height:1.35">${esc(p.name)}</div>
       <div class="row" style="align-items:flex-start;gap:8px;margin-top:8px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">컬러 ${p.colors.length}</span><span class="grow" style="line-height:1.6">${p.colors.map(esc).join(' · ')}</span></div>
-      <div class="row" style="align-items:flex-start;gap:8px;margin-top:4px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">사이즈</span><span class="grow" style="line-height:1.6">${p.sizes.map(esc).join(' · ')}</span></div></div>`).join('');
+      <div class="row" style="align-items:flex-start;gap:8px;margin-top:4px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">사이즈</span><span class="grow" style="line-height:1.6">${p.sizes.map(esc).join(' · ')}</span></div>${stockOf(p.id).length ? `<button class="row" style="gap:8px;margin-top:6px;font-size:12.5px;width:100%;text-align:left" data-act="prLoc" data-v="${esc(p.id)}"><span class="mut" style="flex:0 0 38px">위치</span><span class="grow" style="font-weight:650">📍 ${esc(locSummary(p.id))}</span><span class="mut">›</span></button>` : ''}</div>`).join('');
   }
   return h || '<div class="card empty">찾는 제품이 없어요.</div>';
 }
@@ -1068,6 +1070,84 @@ function idleSheet() {
     D.config = {...C(), idle}; closeSheet(); markDirty('한가할 때 할 일 변경됨 · 아래 저장을 눌러 주세요');
   };
 }
+/* ───────── 재고 위치 (data.json stock: [{id,pid,loc,size,colors[],qty?}] · 관리자 수정) ───────── */
+const SK = {q:'', mode:'prod', open:null};
+const locInfo = c => { const m = String(c || '').match(/^SG(\d)-(\d+)-(\d+)(?:\((\d+)\))?$/); return m ? `${m[1]}층 · ${+m[2]}번 랙 · ${+m[3]}단${m[4] ? ` · 왼쪽 ${+m[4]}번째 박스` : ''}` : ''; };
+const locSort = (a, b) => String(a.loc).localeCompare(String(b.loc)) || String(a.size).localeCompare(String(b.size));
+const stockOf = pid => (D.stock || []).filter(s => s.pid === pid);
+const pName = pid => { const p = PR.data && PR.data.items.find(x => x.id === pid); return p ? p.name : pid; };
+function locSummary(pid) { const l = [...new Set(stockOf(pid).map(s => s.loc.replace(/\(\d+\)$/, '')))].sort(); return l.length > 3 ? `${l[0]} ~ ${l[l.length - 1]}` : l.join(', '); }
+function skHit(s, q) { if (!q) return true; return (pName(s.pid) + s.loc + s.size + s.colors.join('') + locInfo(s.loc)).toLowerCase().replace(/\s+/g, '').includes(q); }
+function skList() {
+  const q = SK.q.trim().toLowerCase().replace(/\s+/g, ''), adm = admin(), all = D.stock || [];
+  const row = s => `<div class="row" style="padding:7px 0;border-top:1px solid var(--edge);gap:8px;align-items:flex-start;font-size:13px${adm ? ';cursor:pointer' : ''}" ${adm ? `data-act="skEdit" data-v="${esc(s.id)}"` : ''}>
+      <div style="flex:0 0 104px"><b style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--soft);border-radius:6px;padding:2px 6px">${esc(s.loc)}</b><div class="mut" style="font-size:10.5px;margin-top:3px">${esc(locInfo(s.loc))}</div></div>
+      <b style="flex:0 0 62px">${esc(s.size)}</b><span class="grow" style="line-height:1.5">${s.colors.map(esc).join(' · ')}</span>${s.qty !== undefined && s.qty !== '' ? `<b style="flex:0 0 auto">${esc(String(s.qty))}개</b>` : ''}</div>`;
+  if (SK.mode === 'loc') {
+    const list = all.filter(s => skHit(s, q)).sort(locSort); if (!list.length) return '<div class="card empty">찾는 위치가 없어요.</div>';
+    const g = {}; list.forEach(s => { const k = s.loc.slice(0, 6); (g[k] = g[k] || []).push(s); });
+    return Object.entries(g).map(([k, l]) => { const m = k.match(/SG(\d)-(\d+)/); return `<div class="card" style="padding:10px 14px"><div style="font-weight:750;margin-bottom:4px">${m ? `${m[1]}층 · ${+m[2]}번 랙` : esc(k)} <span class="mut" style="font-weight:500">${l.length}</span></div>${l.map(s => `<div class="row" style="padding:7px 0;border-top:1px solid var(--edge);gap:8px;font-size:13px;align-items:flex-start${adm ? ';cursor:pointer' : ''}" ${adm ? `data-act="skEdit" data-v="${esc(s.id)}"` : ''}><b style="flex:0 0 96px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">${esc(s.loc)}</b><div class="grow"><div style="font-weight:650">${esc(pName(s.pid))}</div><div class="mut" style="font-size:12px">${esc(s.size)} · ${s.colors.map(esc).join(' · ')}</div></div></div>`).join('')}</div>`; }).join('');
+  }
+  let h = '';
+  for (const c of PR.data.categories) {
+    const ps = PR.data.items.filter(p => p.cat === c.id).map(p => ({p, rows:stockOf(p.id).filter(s => skHit(s, q) || (q && p.name.toLowerCase().replace(/\s+/g, '').includes(q))).sort(locSort)})).filter(x => x.rows.length || (adm && !q && !stockOf(x.p.id).length));
+    if (!ps.length) continue;
+    h += `<div style="font-weight:750;font-size:15px;margin:14px 2px 8px">${esc(c.name)}</div>`;
+    h += ps.map(({p, rows}) => { const open = !!q || SK.open === p.id;
+      return `<div class="card" style="padding:0;overflow:hidden"><button class="row" style="width:100%;text-align:left;padding:11px 14px;gap:10px" data-act="skOpen" data-v="${esc(p.id)}">${p.images[0] ? `<img src="${esc(p.images[0])}" alt="" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex:0 0 42px;background:#f3f2ef">` : '<span style="width:42px;height:42px;flex:0 0 42px;border-radius:8px;background:var(--soft)"></span>'}<div class="grow"><div style="font-weight:700;font-size:14px;line-height:1.3">${esc(p.name)}</div><div class="mut" style="font-size:12px;margin-top:2px">📍 ${esc(locSummary(p.id) || '위치 미등록')}</div></div><span class="mut">${open ? '⌃' : '⌄'}</span></button>
+        ${open ? `<div style="padding:0 14px 10px">${rows.map(row).join('')}${adm ? `<button class="btn sm" style="margin-top:8px" data-act="skAdd" data-v="${esc(p.id)}">+ 위치 추가</button>` : ''}</div>` : ''}</div>`; }).join('');
+  }
+  return h || '<div class="card empty">찾는 제품이 없어요.</div>';
+}
+function vStock() {
+  if (!PR.data && !PR.loading && !PR.err) prLoad();
+  const adm = admin();
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">재고 위치</b><span class="mut">${(D.stock || []).length}칸</span></div>`;
+  if (!PR.data) return h + `<div class="card empty">${PR.err ? esc(PR.err) : '불러오는 중…'}</div>`;
+  h += `<input type="text" id="skQ" value="${esc(SK.q)}" placeholder="제품명 · 위치(SG1-03) · 사이즈 · 컬러 검색" autocomplete="off">`;
+  h += `<div class="seg" style="margin-top:10px">${[['prod', '제품별'], ['loc', '위치별 (랙 순서)']].map(([k, l]) => `<button data-act="skMode" data-v="${k}" class="${SK.mode === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  h += `<div class="mut" style="font-size:11.5px;margin:2px 2px 4px">SG1-03-05 = 1층 · 3번 랙 · 5단 / (03) = 왼쪽에서 3번째 박스${adm ? ' · 줄을 누르면 수정' : ''}</div>`;
+  if (adm) h += `<button class="btn" style="width:100%;margin:4px 0" data-act="skMove">📦 칸 통째로 이동</button>`;
+  h += `<div id="sklist">${skList()}</div>`;
+  h += `<div class="mut" style="text-align:center;margin-top:10px;font-size:11px">기준: 가로수길 매장 상품 안내서 (2026-11-13) · 수량은 다울포스 연동 후 표시 예정</div>`;
+  return h;
+}
+function stockSheet(s, pid) {
+  const p = PR.data.items.find(x => x.id === (s ? s.pid : pid)), o = s || {loc:'', size:'', colors:[]};
+  sheet(`<h2>${s ? '위치 수정' : '위치 추가'}</h2><div class="mut">${esc(p ? p.name : '')}</div>
+   <label class="f">위치 (예: SG1-03-05, 박스는 SG1-09-02(03))</label><input type="text" id="skL" value="${esc(o.loc)}" autocapitalize="characters" placeholder="SG1-03-05">
+   <label class="f">사이즈</label><div class="row" style="flex-wrap:wrap;gap:5px">${(p ? p.sizes : []).map(z => `<button class="pill ${z === o.size ? 'on' : ''}" data-skz="${esc(z)}">${esc(z)}</button>`).join('')}</div><input type="text" id="skS" value="${esc(o.size)}" style="margin-top:6px">
+   <label class="f">컬러 (해당 칸에 있는 컬러만 선택)</label><div class="row" style="flex-wrap:wrap;gap:5px">${(p ? p.colors : []).map(c => `<button class="pill ${o.colors.includes(c) || !s ? 'on' : ''}" data-skc="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+   <div class="row" style="margin-top:16px">${s ? '<button class="btn dan" id="skX">삭제</button>' : ''}<button class="btn grow" id="skC">취소</button><button class="btn pri grow" id="skOk">${s ? '수정' : '추가'}</button></div>`);
+  document.querySelectorAll('[data-skz]').forEach(b => b.onclick = () => { $('skS').value = b.dataset.skz; document.querySelectorAll('[data-skz]').forEach(x => x.classList.toggle('on', x === b)); });
+  document.querySelectorAll('[data-skc]').forEach(b => b.onclick = () => b.classList.toggle('on'));
+  $('skC').onclick = closeSheet;
+  $('skOk').onclick = () => {
+    const loc = $('skL').value.trim().toUpperCase().replace(/\s+/g, ''), size = $('skS').value.trim(), colors = [...document.querySelectorAll('[data-skc].on')].map(b => b.dataset.skc);
+    if (!/^SG\d-\d{2}-\d{2}(\(\d{2}\))?$/.test(loc)) { toast('위치 형식을 확인해 주세요 (예: SG1-03-05)', true); return; }
+    if (!size) { toast('사이즈를 골라 주세요', true); return; }
+    D.stock = D.stock || [];
+    if (s) Object.assign(D.stock.find(x => x.id === s.id), {loc, size, colors});
+    else D.stock.push({id:'s' + Date.now().toString(36), pid:p.id, loc, size, colors});
+    closeSheet(); SK.open = p.id; markDirty('위치 변경됨 · 아래 저장을 눌러 주세요');
+  };
+  if (s) $('skX').onclick = async () => { if (await ask(`${s.loc} · ${s.size} 위치를 삭제할까요?`, '삭제', true)) { D.stock = D.stock.filter(x => x.id !== s.id); markDirty('위치 삭제됨 · 아래 저장을 눌러 주세요'); } };
+}
+function stockMoveSheet() {
+  sheet(`<h2>칸 통째로 이동</h2><div class="mut">한 칸에 있는 상품 전부를 다른 칸으로 옮겨요.</div>
+   <label class="f">지금 위치</label><input type="text" id="mvA" placeholder="SG1-03-05" autocapitalize="characters"><div id="mvInfo" class="mut" style="font-size:12px;margin-top:6px"></div>
+   <label class="f">옮길 위치</label><input type="text" id="mvB" placeholder="SG1-04-01" autocapitalize="characters">
+   <div class="row" style="margin-top:16px"><button class="btn grow" id="mvC">취소</button><button class="btn pri grow" id="mvOk">이동</button></div>`);
+  const norm = v => v.trim().toUpperCase().replace(/\s+/g, '');
+  $('mvA').oninput = () => { const a = norm($('mvA').value), l = (D.stock || []).filter(s => s.loc === a); $('mvInfo').innerHTML = l.length ? l.map(s => `· ${esc(pName(s.pid))} ${esc(s.size)}`).join('<br>') : (a ? '이 위치에 등록된 상품이 없어요.' : ''); };
+  $('mvC').onclick = closeSheet;
+  $('mvOk').onclick = () => {
+    const a = norm($('mvA').value), b = norm($('mvB').value), l = (D.stock || []).filter(s => s.loc === a);
+    if (!l.length) { toast('지금 위치에 상품이 없어요', true); return; }
+    if (!/^SG\d-\d{2}-\d{2}(\(\d{2}\))?$/.test(b)) { toast('옮길 위치 형식을 확인해 주세요', true); return; }
+    l.forEach(s => s.loc = b); closeSheet(); markDirty(`${l.length}개 줄을 ${b}로 옮겼어요 · 아래 저장을 눌러 주세요`);
+  };
+}
 function vManual() {
   const list = C().manuals || [];
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px">업무 매뉴얼</b></div>`;
@@ -1177,7 +1257,7 @@ function render() {
   $('bars').innerHTML = bars;
   if (!S.ready && !D.config) { $('view').innerHTML = `<div class="card empty">${S.offline ? '로그인이 필요해요.' : '불러오는 중…'}</div>`; return; }
   const tbl = $('mtbl') || $('dtbl'), keep = tbl ? [tbl.id, tbl.scrollLeft, tbl.scrollTop] : null;
-  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog, product:vProduct, todo:vTodo})[S.tab]();
+  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog, product:vProduct, todo:vTodo, stock:vStock})[S.tab]();
   $('foot').innerHTML = (D.updated ? '마지막 업데이트 ' + esc(D.updated) : '');
   $('saveBar').style.display = adm && S.dirty ? 'flex' : 'none';
   $('saveBar').innerHTML = `<span class="grow">저장 안 된 변경 ${S.dirty}건</span><button class="btn sm" data-act="discardAll" style="background:transparent;color:inherit;border-color:#fff6">되돌리기</button><button class="btn sm" data-act="saveAll" style="background:var(--rev);color:var(--acc);border:0" ${S.saving ? 'disabled' : ''}>${S.saving ? '저장 중…' : '저장'}</button>`;
@@ -1210,6 +1290,12 @@ document.addEventListener('click', async e => {
     case 'ckHistFrom': S.ckBack = v; CKH.data = null; S.tab = 'ckhist'; scrollTo(0, 0); break;
     case 'idleEdit': idleSheet(); return;
     case 'idleToggle': S.idleOpen = !S.idleOpen; break;
+    case 'skMode': SK.mode = v; break;
+    case 'skOpen': SK.open = SK.open === v ? null : v; break;
+    case 'skEdit': { const it = (D.stock || []).find(x => x.id === v); if (it) stockSheet(it); return; }
+    case 'skAdd': stockSheet(null, v); return;
+    case 'skMove': stockMoveSheet(); return;
+    case 'prLoc': SK.q = ''; SK.mode = 'prod'; SK.open = v; S.tab = 'stock'; scrollTo(0, 0); break;
     case 'prCat': PR.cat = v; break;
     case 'prReload': PR.err = ''; prLoad(); break;
     case 'prImg': { const p = PR.data && PR.data.items.find(x => x.id === v); if (p) viewer({title:p.name, images:p.images, small:1}); return; }
