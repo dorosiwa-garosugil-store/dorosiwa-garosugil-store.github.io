@@ -199,6 +199,10 @@
        "note": "실내 온도 보고 조절"
       },
       {
+       "id": "o1-torso",
+       "text": "토르소 점검 (기존 그대로 전개돼 있는지)"
+      },
+      {
        "head": "청소"
       },
       {
@@ -238,6 +242,14 @@
        "id": "o2-hvac",
        "text": "냉·난방기 켜기",
        "note": "실내 온도 보고 조절"
+      },
+      {
+       "id": "o2-torso",
+       "text": "토르소 점검 (기존 그대로 전개돼 있는지)"
+      },
+      {
+       "id": "o2-drink",
+       "text": "음료 보관대 아웃"
       },
       {
        "head": "청소"
@@ -286,6 +298,10 @@
        "text": "냉·난방기 끄기"
       },
       {
+       "id": "c1-stairdoor",
+       "text": "계단문 잠그기"
+      },
+      {
        "head": "청소"
       },
       {
@@ -326,6 +342,10 @@
        "text": "냉·난방기 끄기"
       },
       {
+       "id": "c2-drink",
+       "text": "음료 보관대 인"
+      },
+      {
        "head": "청소"
       },
       {
@@ -355,24 +375,36 @@
   "checkUrl": "https://script.google.com/macros/s/AKfycbz7AR2_ykbeGKGxd9lHB79GRBUONLQBjRFHk_mkTvYdjC7ZgSQki-Kz9mE73P3IPgaR/exec",
   "idle": [
    {
-    "id": "idle-fitting",
-    "text": "피팅룸 정리 (남은 상품·옷걸이 회수)"
+    "id": "idle-pop",
+    "text": "가격 · POP · 가격택 점검"
    },
    {
-    "id": "idle-size",
-    "text": "행거 상품 사이즈 순서 정리"
+    "id": "idle-set",
+    "text": "세트 상품 점검"
    },
    {
-    "id": "idle-drawer",
-    "text": "시착 서랍 빈 사이즈 채우기"
+    "id": "idle-bag",
+    "text": "쇼핑백 리필 (쇼핑백 수량 체크 겸)"
    },
    {
-    "id": "idle-fold",
-    "text": "테이블 상품 개기 · 각 맞추기"
+    "id": "idle-quality",
+    "text": "상품 체크 (보풀 · 먼지 · 버튼)"
    },
    {
-    "id": "idle-mirror",
-    "text": "거울 · 유리 손자국 닦기"
+    "id": "idle-refill",
+    "text": "상품 리필 체크 (리빙박스 · 기프트)"
+   },
+   {
+    "id": "idle-drawer-size",
+    "text": "서랍 상품 사이징"
+   },
+   {
+    "id": "idle-analysis",
+    "text": "판매 분석 (고객 문의 · 판매 부진 아이템)"
+   },
+   {
+    "id": "idle-supply",
+    "text": "비품 체크 (거의 다 쓴 비품 보고)"
    }
   ],
   "monthStaff": {
