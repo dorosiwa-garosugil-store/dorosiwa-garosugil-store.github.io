@@ -1462,7 +1462,17 @@
     "products/p18-4.jpg",
     "products/p18-5.jpg",
     "products/p18-6.jpg"
-   ]
+   ],
+   "info": {
+    "price": {
+     "list": 108000,
+     "store": 64000,
+     "p10": 57600,
+     "p20": 54400,
+     "max": "49.6%"
+    },
+    "sales": ""
+   }
   },
   {
    "id": "p19",
