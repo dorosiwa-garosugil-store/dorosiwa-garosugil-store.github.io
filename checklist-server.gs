@@ -3,6 +3,7 @@
    - 체크리스트·한가할 때 할 일: 날짜별로 누가 어떤 항목을 언제 체크했는지 저장 (사이트 화면은 최근 60일)
      + 모든 체크·해제 기록을 구글 시트 '체크 기록' 탭에 계속 남김
    - 해야 할 일: 할 일마다 완료 체크(누가·언제)와 직원 댓글 저장 (계속 보관)
+   - 영수증 차감: 영수증 사진 글자 인식(구글 드라이브 OCR — Apps Script 왼쪽 '서비스'에서 Drive API 추가 필요) → 확인 후 여러 상품 한 번에 차감, 같은 영수증 두 번 차감 방지
    - 재고 수량: 직원이 고친 수량을 시트 '재고 수량' 탭에, 수정 기록(누가·언제·이전→변경)을 '재고 수정 기록' 탭에 저장 (기록은 90일 보관)
    - 매장 기록: 유동인구·외국인 고객 기록을 구글 시트 "도로시와 가로수길점 매장 기록"에 저장 (계속 보관)
      시트는 처음 기록할 때 내 구글 드라이브에 자동으로 만들어집니다.
@@ -28,6 +29,10 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  try {
+    const raw = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (raw.kind === 'ocr') return out_(ocr_(raw));
+  } catch (err) { return out_({ok: false, error: String(err.message || err)}); }
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -36,6 +41,7 @@ function doPost(e) {
     if (b.kind === 'foreign') return out_(saveForeign_(b));
     if (b.kind === 'todo') return out_(saveTodo_(b));
     if (b.kind === 'qty') return out_(saveQty_(b));
+    if (b.kind === 'qtybatch') return out_(saveQtyBatch_(b));
     const date = date_(b.date), key = 'CK_' + date;
     const id = String(b.id || '');
     if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) throw Error('항목 오류');
@@ -89,7 +95,7 @@ function saveTodo_(b) {
 
 /* ── 재고 수량 (직원 수정 · 90일 기록) ── */
 const Q_HEAD = ['바코드', '수량', '직원', '수정 시각', '상품', '컬러-사이즈'];
-const QL_HEAD = ['시각', 'ISO', '직원', '바코드', '상품', '컬러-사이즈', '이전', '변경'];
+const QL_HEAD = ['시각', 'ISO', '직원', '바코드', '상품', '컬러-사이즈', '이전', '변경', '메모'];
 function sheet_(name, head, textCols) {
   const ss = book_(); let sh = ss.getSheetByName(name);
   if (!sh) { sh = ss.insertSheet(name); setup_(sh, head, textCols); }
@@ -100,7 +106,25 @@ function qtyAll_() {
   v.forEach(function (r) { if (r[0] !== '') q[String(r[0])] = {qty: Number(r[1]), by: String(r[2] || ''), at: r[3] instanceof Date ? r[3].toISOString() : String(r[3] || '')}; });
   return {ok: true, q: q};
 }
-function saveQty_(b) {
+function ocr_(b) {
+  if (typeof Drive === 'undefined') throw Error('DRIVE_API_OFF');
+  const blob = Utilities.newBlob(Utilities.base64Decode(String(b.image || '')), String(b.mime || 'image/jpeg'), 'receipt.jpg');
+  const f = Drive.Files.create({name: 'receipt-ocr-tmp', mimeType: 'application/vnd.google-apps.document'}, blob, {ocrLanguage: 'ko'});
+  let text = '';
+  try { text = DocumentApp.openById(f.id).getBody().getText(); } finally { try { Drive.Files.remove(f.id); } catch (e) {} }
+  return {ok: true, text: text};
+}
+function saveQtyBatch_(b) {
+  const rc = s_(b.receipt, 40).trim(), items = (b.items || []).slice(0, 60);
+  if (!items.length) throw Error('상품 없음');
+  const rs = sheet_('영수증 차감', ['영수증 번호', '시각', '직원', '상품 수'], 'A:B');
+  if (rc) { const used = rs.getDataRange().getValues().slice(1).some(function (r) { return String(r[0]) === rc; }); if (used) throw Error('USED_RECEIPT'); }
+  items.forEach(function (it) { saveQty_({barcode: it.barcode, qty: it.qty, prev: it.prev, by: b.by, name: it.name, spec: it.spec, memo: b.memo}, true); });
+  qtyCleanup_(sheet_('재고 수정 기록', QL_HEAD, 'A:B'));
+  rs.appendRow([rc || '(번호 없음)', Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss'), s_(b.by, 20), items.length]);
+  return qtyAll_();
+}
+function saveQty_(b, inBatch) {
   const bc = String(b.barcode || '');
   if (!/^[0-9A-Za-z-]{4,30}$/.test(bc)) throw Error('바코드 오류');
   const qty = Number(b.qty);
@@ -110,7 +134,9 @@ function saveQty_(b) {
   const i = v.findIndex(function (r, k) { return k > 0 && String(r[0]) === bc; });
   if (i > 0) sh.getRange(i + 1, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
   const lg = sheet_('재고 수정 기록', QL_HEAD, 'A:B');
-  lg.appendRow([Utilities.formatDate(now, 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss'), now.toISOString(), s_(b.by, 20), bc, s_(b.name, 80), s_(b.spec, 40), b.prev === '' || b.prev == null ? '' : Number(b.prev), qty]);
+  if (lg.getLastColumn() < 9) lg.getRange(1, 9).setValue('메모').setFontWeight('bold').setBackground('#f1f1ef');
+  lg.appendRow([Utilities.formatDate(now, 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss'), now.toISOString(), s_(b.by, 20), bc, s_(b.name, 80), s_(b.spec, 40), b.prev === '' || b.prev == null ? '' : Number(b.prev), qty, s_(b.memo, 60)]);
+  if (inBatch) return;
   qtyCleanup_(lg);
   return qtyAll_();
 }
@@ -123,7 +149,7 @@ function qtyCleanup_(lg) {
 }
 function qtyLog_() {
   const v = sheet_('재고 수정 기록', QL_HEAD, 'A:B').getDataRange().getValues().slice(1);
-  return {ok: true, log: v.map(function (r) { return {t: String(r[0]), at: String(r[1]), by: String(r[2]), b: String(r[3]), name: String(r[4]), spec: String(r[5]), prev: r[6], qty: r[7]}; }).reverse().slice(0, 2000)};
+  return {ok: true, log: v.map(function (r) { return {t: String(r[0]), at: String(r[1]), by: String(r[2]), b: String(r[3]), name: String(r[4]), spec: String(r[5]), prev: r[6], qty: r[7], memo: String(r[8] || '')}; }).reverse().slice(0, 2000)};
 }
 
 /* ── 매장 기록 (구글 시트) ── */
