@@ -745,23 +745,43 @@
        "id": "f1-mq",
        "n": 10,
        "name": "마네킹 2",
-       "sub": "파자마 + 브라 코디",
+       "sub": "베니벨 화이트 · 헤리티지 체크 + 레이스",
        "kind": "deco",
        "x": 272,
        "y": 342,
        "w": 54,
        "h": 36,
        "photo": [
-        "vmd/1f-09.jpg",
-        "vmd/1f-10.jpg",
-        "vmd/1f-11.jpg"
+        "vmd/1f-mq.jpg"
        ],
        "pids": [],
        "cats": [
         "pajama"
        ],
-       "desc": "- 화이트 프린트 파자마\n- 브라운 체크 파자마 + 브라운 레이스 브라 레이어드",
-       "short": "마네킹"
+       "desc": "- 왼쪽 마네킹: 베니벨 3P 세트 (가디건 + 나시 + 팬츠) 화이트\n- 오른쪽 마네킹: 헤리티지 체크 파자마 소프트브라운 + 소프트터치 레이스 브라렛·팬티",
+       "short": "마네킹",
+       "dir": "왼쪽부터",
+       "line": [
+        {
+         "tag": "왼쪽 마네킹",
+         "pid": "p21",
+         "name": "베니벨 3P SET (팬츠)",
+         "color": "화이트"
+        },
+        {
+         "tag": "오른쪽 마네킹",
+         "pid": "p25",
+         "name": "Minimal Garments Heritage Check Pajama Set",
+         "color": "소프트브라운"
+        },
+        {
+         "tag": "오른쪽 마네킹 안쪽",
+         "pid": "p38",
+         "name": "소프트터치 레이스 브라렛",
+         "color": "초콜릿브라운"
+        }
+       ],
+       "check": "사진 보고 추정 — 오른쪽 마네킹 레이스 팬티가 쇼티인지 치키인지 확인 필요"
       },
       {
        "id": "f1-color",
@@ -876,6 +896,7 @@
       "vmd/1f-w2.jpg",
       "vmd/1f-w3.jpg",
       "vmd/1f-w4.jpg",
+      "vmd/1f-mq.jpg",
       "vmd/1f-r1.jpg",
       "vmd/1f-r2.jpg",
       "vmd/1f-r3.jpg",
