@@ -405,6 +405,22 @@
    {
     "id": "idle-supply",
     "text": "비품 체크 (거의 다 쓴 비품 보고)"
+   },
+   {
+    "id": "idle-size",
+    "text": "행거 상품 사이즈 순서 정리"
+   },
+   {
+    "id": "idle-drawer",
+    "text": "시착 서랍 빈 사이즈 채우기"
+   },
+   {
+    "id": "idle-fold",
+    "text": "테이블 상품 개기 · 각 맞추기"
+   },
+   {
+    "id": "idle-mirror",
+    "text": "거울 · 유리 손자국 닦기"
    }
   ],
   "monthStaff": {
