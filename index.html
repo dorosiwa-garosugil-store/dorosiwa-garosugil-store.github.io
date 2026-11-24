@@ -288,7 +288,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-18';
+const APP_VER = '2026.11.24-19';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -490,7 +490,7 @@ function vToday() {
     else { const p = dl && works(mine, T.hour) ? posAt(dl, S.me, T.hour) : null; me = `${shiftChip(mine.v)}${p ? posChip(p) + '<span class="mut">지금</span>' : ''}`; }
   }
   let h = `<div class="card sum"><div class="row"><div class="grow"><div class="mut">${label}</div><div style="font-size:17px;font-weight:750;margin-top:2px">출근 ${d.on.length}명</div></div>
-    ${S.me ? `<div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${me}</div>` : '<button class="pill on" data-act="pickMe">내 이름 선택</button>'}</div>${csToday().length ? `<button class="row" style="width:100%;text-align:left;margin-top:10px;padding-top:10px;border-top:1px solid var(--edge);gap:8px" data-act="go" data-v="consult"><span style="font-weight:750">🗓 오늘 컨설팅</span><span class="grow">${csToday().map(c => `<b>${esc(c.time)}</b>${c.who ? ` ${esc(c.who)}` : ''}`).join(' · ')}</span><span class="mut">›</span></button>` : ''}</div>`;
+    ${S.me ? `<div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${me}</div>` : '<button class="pill on" data-act="pickMe">내 이름 선택</button>'}</div>${csToday().length ? `<button class="row" style="width:100%;text-align:left;margin-top:10px;padding-top:10px;border-top:1px solid var(--edge);gap:8px" data-act="go" data-v="consult"><span style="font-weight:750">🗓 오늘 방문 예약</span><span class="grow">${csToday().map(c => `<b>${esc(c.time)}</b>${c.who ? ` ${esc(c.who)}` : ''}`).join(' · ')}</span><span class="mut">›</span></button>` : ''}</div>`;
   // 업무 메뉴
   const nCount = D.notices.length;
   const tiles = [
@@ -502,7 +502,7 @@ function vToday() {
     ['stock', '판매 재고', '랙 위치 · 제품별 검색', 'go:stock'],
     ['guide', '업무 매뉴얼', '본사 지침 · 응대 가이드 · 캐셔', 'guide'],
     ['todo', '해야 할 일', todoSub(), 'go:todo'],
-    ['consult', '컨설팅 예약', csSub(), 'go:consult'],
+    ['consult', '방문 예약', csSub(), 'go:consult'],
     ['vmd', 'VMD', '매장 지도 · 진열 위치', 'go:vmd']
   ];
   h += `<div class="hub">${tiles.map(([k, t, sub, act]) => { const [a, v] = act.split(':'); return `<button class="tile ${act ? '' : 'off'}" ${act ? `data-act="${a}" ${v ? `data-v="${v}"` : ''}` : 'disabled'}>${k === 'notice' && unreadCount() ? `<span class="tdot">${unreadCount()}</span>` : ''}${k === 'todo' && tdUnreadCount() ? `<span class="tdot">${tdUnreadCount()}</span>` : ''}${k === 'consult' && csToday().length ? `<span class="tdot">${csToday().length}</span>` : ''}${ico(k)}<b>${t}</b><small>${sub}</small></button>`; }).join('')}</div>`;
@@ -1320,8 +1320,11 @@ function vVmd() {
   h += `<div class="mut" style="text-align:center;font-size:11px;margin:10px 0 20px">🔍 = 확인 필요 · 진열이 바뀌면 사진 보내주세요 · ${esc(V.updated || '')} 기준</div></div></div>`;
   return h;
 }
-/* ───────── 컨설팅 예약 (data.json consults: [{id,date,time,who,people?,memo}] · 관리자만 작성) ───────── */
+/* ───────── 방문 예약 (data.json consults: [{id,date,time,who,people?,memo,kind?,plat?,gift?}] · 관리자만 작성) ───────── */
 const CS = {past:false};
+const CS_KIND = {consult:['컨설팅', 275], visit:['체험단 · 매장 방문형', 200], infc:['체험단 · 컨설팅형', 330], etc:['기타 방문', 0]};
+const csKind = c => CS_KIND[c.kind] || CS_KIND.consult;
+const csIsInf = c => c.kind === 'visit' || c.kind === 'infc';
 const csList = () => [...(D.consults || [])].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 const csUpcoming = () => csList().filter(c => c.date >= T.date);
 const csToday = () => csList().filter(c => c.date === T.date);
@@ -1330,32 +1333,37 @@ function csCard(c) {
   const today = c.date === T.date, adm = admin();
   return `<div class="card" style="padding:12px 14px;${today ? 'border:2px solid var(--ink)' : ''}${c.date < T.date ? ';opacity:.55' : ''}"><div class="row" style="align-items:flex-start;gap:12px">
     <div style="flex:0 0 58px;text-align:center;border-right:1px solid var(--edge);padding-right:10px"><div style="font-size:20px;font-weight:800;line-height:1.1">${esc(c.time || '--:--')}</div>${today ? '<div style="font-size:11px;font-weight:750;color:var(--dan);margin-top:3px">오늘</div>' : ''}</div>
-    <div class="grow"><div style="font-weight:750;font-size:15px">${esc(c.who || '예약 고객')}${c.people ? ` <span class="mut" style="font-weight:500;font-size:13px">${esc(c.people)}명</span>` : ''}</div>${c.memo ? `<div style="font-size:13px;line-height:1.55;white-space:pre-wrap;margin-top:3px">${esc(c.memo)}</div>` : ''}</div>
+    <div class="grow"><div class="row" style="gap:5px;flex-wrap:wrap;margin-bottom:4px"><span style="font-size:11.5px;font-weight:750;border-radius:999px;padding:2px 9px;background:hsl(${csKind(c)[1]} 55% var(--cl));color:hsl(${csKind(c)[1]} 45% var(--cd))">${csKind(c)[0]}</span>${c.plat ? `<span style="font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid var(--edge)">${esc(c.plat)}</span>` : ''}</div><div style="font-weight:750;font-size:15px">${esc(c.who || '예약 고객')}${c.people ? ` <span class="mut" style="font-weight:500;font-size:13px">${esc(c.people)}명</span>` : ''}</div>${c.memo ? `<div style="font-size:13px;line-height:1.55;white-space:pre-wrap;margin-top:3px">${esc(c.memo)}</div>` : ''}${c.gift ? `<div style="font-size:12.5px;margin-top:5px">🎁 <b>증정품</b> ${esc(c.gift)}</div>` : ''}${csIsInf(c) ? `<button class="link" style="margin-top:6px;font-size:12.5px" data-act="manOpen" data-v="influencer">체험단 응대 가이드 보기 ›</button>` : ''}</div>
     ${adm ? `<button class="link" data-act="csEdit" data-v="${esc(c.id)}">수정</button>` : ''}</div></div>`;
 }
 function vConsult() {
   const adm = admin(), up = csUpcoming(), past = csList().filter(c => c.date < T.date).reverse();
-  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">컨설팅 예약</b></div>`;
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">방문 예약</b></div>`;
+  const vs = C().visitSheet;
+  h += `<div class="row" style="gap:6px;margin-bottom:8px">${vs ? `<a class="btn grow" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit" href="${esc(vs)}" target="_blank" rel="noopener">📋 체험단 방문 명단</a>` : ''}<button class="btn grow" data-act="manOpen" data-v="influencer">📖 체험단 응대 가이드</button></div>`;
   if (adm) h += `<button class="btn pri" style="width:100%;margin-bottom:8px" data-act="csNew">+ 예약 추가</button>`;
-  if (!up.length) h += '<div class="card empty">예정된 컨설팅이 없어요.</div>';
+  if (!up.length) h += '<div class="card empty">예정된 방문 예약이 없어요.</div>';
   const g = {}; up.forEach(c => (g[c.date] = g[c.date] || []).push(c));
   for (const [d, l] of Object.entries(g)) h += `<div style="font-weight:750;font-size:14px;margin:14px 2px 6px">${esc(dLabel(d))}${d === T.date ? ' <span style="color:var(--dan)">· 오늘</span>' : ''} <span class="mut" style="font-weight:500">${l.length}건</span></div>` + l.map(csCard).join('');
   if (past.length) { h += `<button class="pill" style="margin:14px 0 6px" data-act="csPast">${CS.past ? '지난 예약 숨기기' : `지난 예약 보기 (${past.length})`}</button>`; if (CS.past) h += past.slice(0, 60).map(c => `<div class="mut" style="font-size:12px;margin:8px 2px 2px">${esc(dLabel(c.date))}</div>` + csCard(c)).join(''); }
   return h;
 }
 function consultSheet(c) {
-  const o = c || {date:T.date, time:'', who:'', people:'', memo:''};
+  const o = c || {date:T.date, time:'', who:'', people:'', memo:'', kind:'consult', plat:'', gift:''};
   sheet(`<h2>${c ? '예약 수정' : '예약 추가'}</h2>
+   <label class="f">유형</label><select id="csK" style="width:100%;border:1px solid var(--edge);background:var(--card);border-radius:11px;padding:10px;font-size:16px;color:inherit">${Object.entries(CS_KIND).map(([k, [l]]) => `<option value="${k}" ${(o.kind || 'consult') === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+   <label class="f">플랫폼 (체험단일 때)</label><div class="row" style="gap:6px;flex-wrap:wrap">${['', '포포몬', '브랜더진', '샤오홍슈'].map(p => `<label class="pill" style="display:inline-flex;gap:4px;align-items:center"><input type="radio" name="csPl" value="${p}" ${(o.plat || '') === p ? 'checked' : ''}>${p || '없음'}</label>`).join('')}</div>
    <div class="row" style="gap:8px"><div class="grow"><label class="f">날짜</label><input type="date" id="csD" value="${esc(o.date)}" style="width:100%;border:1px solid var(--edge);background:var(--card);border-radius:11px;padding:10px;font-size:16px;color:inherit"></div><div style="width:130px"><label class="f">시간</label><input type="time" id="csT" value="${esc(o.time)}" style="width:100%;border:1px solid var(--edge);background:var(--card);border-radius:11px;padding:10px;font-size:16px;color:inherit"></div></div>
    <label class="f">고객 (성 + 님 정도만)</label><input type="text" id="csW" maxlength="30" value="${esc(o.who)}" placeholder="예: 김○○ 님 / 네이버 예약">
    <label class="f">인원</label><input type="number" inputmode="numeric" id="csP" min="1" value="${esc(String(o.people || ''))}" placeholder="1" style="width:100px">
+   <label class="f">증정품 (체험단일 때)</label><input type="text" id="csG" maxlength="80" value="${esc(o.gift || '')}" placeholder="예: 쿨샷 컴포트 1 + 삼각팬티 1">
    <label class="f">메모 (직원들이 알아야 할 것)</label><textarea id="csM" maxlength="500" style="min-height:80px" placeholder="예: 2층 피팅룸 1번 비워두기, 컨설팅 패드 충전">${esc(o.memo || '')}</textarea>
    <div class="mut" style="font-size:11.5px;margin-top:8px">⚠️ 전화번호·전체 이름 등 고객 개인정보는 적지 마세요 (사이트 데이터는 공개 저장소에 있어요)</div>
    <div class="row" style="margin-top:14px">${c ? '<button class="btn dan" id="csX">삭제</button>' : ''}<button class="btn grow" id="csC">취소</button><button class="btn pri grow" id="csS">${c ? '수정' : '추가'}</button></div>`);
   $('csC').onclick = closeSheet;
   $('csS').onclick = () => {
     const date = $('csD').value, time = $('csT').value; if (!date || !time) { toast('날짜와 시간을 입력해 주세요', true); return; }
-    const v = {date, time, who:$('csW').value.trim(), people:$('csP').value.trim(), memo:$('csM').value.trim()};
+    const pl = document.querySelector('input[name=csPl]:checked'); const v = {date, time, who:$('csW').value.trim(), people:$('csP').value.trim(), memo:$('csM').value.trim(), kind:$('csK').value, plat:pl ? pl.value : '', gift:$('csG').value.trim()};
     D.consults = D.consults || [];
     if (c) Object.assign(D.consults.find(x => x.id === c.id), v); else D.consults.push({id:'c' + Date.now().toString(36), ...v});
     closeSheet(); markDirty('예약 저장됨 · 아래 저장을 눌러 주세요');
