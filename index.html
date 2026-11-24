@@ -124,6 +124,8 @@ details.rb{background:var(--card);border:1px solid var(--edge);border-radius:16p
 details.rb>summary{list-style:none;cursor:pointer;padding:15px 16px;font-weight:750;font-size:15.5px;display:flex;align-items:center}
 details.rb>summary::-webkit-details-marker{display:none}details.rb>summary::after{content:'⌄';margin-left:auto;color:var(--mut)}details.rb[open]>summary::after{content:'⌃'}
 .rbb{padding:0 16px 14px;font-size:14px;line-height:1.6}.rb-h{font-weight:750;margin:14px 0 6px;padding-left:8px;border-left:3px solid var(--ink)}.rbb>.rb-h:first-child{margin-top:2px}
+.qc{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--edge);background:var(--card);border-radius:8px;padding:3px 7px;font-size:12px;color:inherit;cursor:pointer}.qc b{font-weight:800}.qc.qz{background:rgba(214,58,58,.12);border-color:rgba(214,58,58,.45);color:var(--dan)}.qc.ql{background:rgba(232,140,0,.13);border-color:rgba(232,140,0,.5);color:#b86e00}
+.qbad{font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px}.qbad.qz{background:rgba(214,58,58,.12);color:var(--dan)}.qbad.ql{background:rgba(232,140,0,.13);color:#b86e00}
 .rb-img{display:block;width:100%;border-radius:10px;margin:2px 0 12px;border:1px solid var(--edge)}.rb-say{background:var(--soft);border-radius:4px 14px 14px 14px;padding:8px 12px;margin:6px 0}.rb-li{padding-left:14px;position:relative;margin:4px 0;color:var(--mut)}.rb-li::before{content:'•';position:absolute;left:2px}
 .rb-no{color:var(--dan);font-weight:650;margin:5px 0}.rb-em{color:var(--dan);font-weight:700;margin:4px 0}.rb-tip{background:rgba(52,120,246,.1);color:#2f6fe0;border-radius:10px;padding:8px 12px;margin:8px 0;font-weight:600}
 .rb-q{font-weight:750;margin:16px 0 6px;display:flex;gap:8px;align-items:flex-start}.rbb>.rb-q:first-child{margin-top:2px}.rb-q span{flex:0 0 22px;height:22px;border-radius:7px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-size:12px}
@@ -282,7 +284,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-1';
+const APP_VER = '2026.11.24-2';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -440,7 +442,7 @@ function closeSheet() { $('sheet').classList.remove('open'); $('scrim').classLis
 $('scrim').onclick = closeSheet;
 function ask(text, ok, danger) {
   return new Promise(r => { let d = false;
-    sheet(`<h2>${esc(text)}</h2><div class="row" style="margin-top:16px"><button class="btn grow" id="aN">취소</button><button class="btn pri grow" id="aY" style="${danger ? 'background:var(--dan);border-color:var(--dan);color:#fff' : ''}">${esc(ok)}</button></div>`, () => { if (!d) r(false); });
+    sheet(`<h2 style="white-space:pre-line">${esc(text)}</h2><div class="row" style="margin-top:16px"><button class="btn grow" id="aN">취소</button><button class="btn pri grow" id="aY" style="${danger ? 'background:var(--dan);border-color:var(--dan);color:#fff' : ''}">${esc(ok)}</button></div>`, () => { if (!d) r(false); });
     $('aN').onclick = closeSheet; $('aY').onclick = () => { d = true; closeSheet(); r(true); }; });
 }
 function strip(days, sel, act) {
@@ -958,12 +960,13 @@ function prList() {
       ${p.images.length ? `<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none">${p.images.map((src, i) => `<img src="${esc(src)}" loading="lazy" alt="" data-act="prImg" data-v="${esc(p.id)}" style="width:78px;height:78px;flex:0 0 78px;object-fit:cover;border-radius:10px;background:#f3f2ef;cursor:pointer">`).join('')}</div>` : `<div class="mut" style="font-size:11px;margin-bottom:6px">사진 준비 중</div>`}
       <div style="font-weight:700;font-size:14.5px;line-height:1.35">${esc(p.name)}</div>
       <div class="row" style="align-items:flex-start;gap:8px;margin-top:8px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">컬러 ${p.colors.length}</span><span class="grow" style="line-height:1.6">${p.colors.map(esc).join(' · ')}</span></div>
-      <div class="row" style="align-items:flex-start;gap:8px;margin-top:4px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">사이즈</span><span class="grow" style="line-height:1.6">${p.sizes.map(esc).join(' · ')}</span></div>${stockOf(p.id).length ? `<button class="row" style="gap:8px;margin-top:6px;font-size:12.5px;width:100%;text-align:left" data-act="prLoc" data-v="${esc(p.id)}"><span class="mut" style="flex:0 0 38px">위치</span><span class="grow" style="font-weight:650">📍 ${esc(locSummary(p.id))}</span><span class="mut">›</span></button>` : ''}</div>`).join('');
+      <div class="row" style="align-items:flex-start;gap:8px;margin-top:4px;font-size:12.5px"><span class="mut" style="flex:0 0 38px">사이즈</span><span class="grow" style="line-height:1.6">${p.sizes.map(esc).join(' · ')}</span></div>${stockOf(p.id).length ? `<button class="row" style="gap:8px;margin-top:6px;font-size:12.5px;width:100%;text-align:left" data-act="prLoc" data-v="${esc(p.id)}"><span class="mut" style="flex:0 0 38px">위치</span><span class="grow" style="font-weight:650">📍 ${esc(locSummary(p.id))}</span>${qtSumBadge(p.id)}<span class="mut">›</span></button>` : ''}</div>`).join('');
   }
   return h || '<div class="card empty">찾는 제품이 없어요.</div>';
 }
 function vProduct() {
   if (!PR.data && !PR.loading && !PR.err) prLoad();
+  qtLoad();
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">판매 제품</b>${PR.data ? `<span class="mut">${PR.data.items.length}종</span>` : ''}</div>`;
   if (PR.err) return h + `<div class="warn">${esc(PR.err)}</div><button class="btn" style="width:100%" data-act="prReload">다시 불러오기</button>`;
   if (!PR.data) return h + '<div class="card empty">불러오는 중…</div>';
@@ -1071,45 +1074,115 @@ function idleSheet() {
   };
 }
 /* ───────── 재고 위치 (data.json stock: [{id,pid,loc,size,colors[],qty?}] · 관리자 수정) ───────── */
-const SK = {q:'', mode:'prod', open:null};
+const SK = {q:'', mode:'prod', open:null, low:false};
 const locInfo = c => { const m = String(c || '').match(/^SG(\d)-(\d+)-(\d+)(?:\((\d+)\))?$/); return m ? `${m[1]}층 · ${+m[2]}번 랙 · ${+m[3]}단${m[4] ? ` · 왼쪽 ${+m[4]}번째 박스` : ''}` : ''; };
 const locSort = (a, b) => String(a.loc).localeCompare(String(b.loc)) || String(a.size).localeCompare(String(b.size));
 const stockOf = pid => (D.stock || []).filter(s => s.pid === pid);
 const pName = pid => { const p = PR.data && PR.data.items.find(x => x.id === pid); return p ? p.name : pid; };
 function locSummary(pid) { const l = [...new Set(stockOf(pid).map(s => s.loc.replace(/\(\d+\)$/, '')))].sort(); return l.length > 3 ? `${l[0]} ~ ${l[l.length - 1]}` : l.join(', '); }
 function skHit(s, q) { if (!q) return true; return (pName(s.pid) + s.loc + s.size + s.colors.join('') + locInfo(s.loc)).toLowerCase().replace(/\s+/g, '').includes(q); }
+/* 재고 수량: 기준 = stock-qty.json (다울포스 엑셀) / 직원 수정 = 서버 '재고 수량' 시트 (기준 시각 이후 수정만 반영) */
+const QT = {base:null, over:{}, loading:false, at:0, err:'', log:null, logLoading:false};
+async function qtLoad(force) {
+  if (QT.loading) return; if (!force && QT.base && Date.now() - QT.at < 20000) return;
+  QT.loading = true;
+  try {
+    if (!QT.base) { const r = await fetch('stock-qty.json?v=' + APP_VER + '&t=' + Date.now()); if (r.ok) QT.base = await r.json(); }
+    if (ckUrl()) { const r = await fetch(ckUrl() + '?qty=1&t=' + Date.now()); const j = await r.json(); if (j.ok) QT.over = j.q || {}; }
+    QT.err = '';
+  } catch (e) { QT.err = '수량을 불러오지 못했어요.'; }
+  finally { QT.at = Date.now(); QT.loading = false; if ((S.tab === 'stock' || S.tab === 'product') && !typing()) render(); }
+}
+const qtItems = () => (QT.base && QT.base.items) || [];
+const qtAsOf = () => QT.base ? new Date(QT.base.asof).getTime() : 0;
+function qtOf(it) { const o = QT.over[it.b]; return o && new Date(o.at).getTime() > qtAsOf() ? {qty:o.qty, by:o.by, at:o.at} : {qty:it.q}; }
+const qtFind = (pid, c, s) => qtItems().find(i => i.pid === pid && i.c === c && i.s === s);
+const qtLevel = n => n <= 0 ? 'z' : n <= 3 ? 'l' : 'ok';
+const qtSum = pid => { let t = 0, z = 0, l = 0, any = false; qtItems().filter(i => i.pid === pid).forEach(i => { const n = qtOf(i).qty; any = true; t += Math.max(0, n); if (n <= 0) z++; else if (n <= 3) l++; }); return any ? {t, z, l} : null; };
+function qtChip(it, label) {
+  if (!it) return `<span class="qc">${esc(label)}</span>`;
+  const n = qtOf(it).qty, lv = qtLevel(n);
+  return `<button class="qc q${lv}" data-act="qtEdit" data-v="${esc(it.b)}">${esc(label)} <b>${n}</b></button>`;
+}
+function qtSumBadge(pid) { const s = qtSum(pid); if (!s) return ''; return `<span style="font-size:12px;font-weight:700;white-space:nowrap">재고 ${s.t}</span>${s.z ? `<span class="qbad qz">품절 ${s.z}</span>` : ''}${s.l ? `<span class="qbad ql">부족 ${s.l}</span>` : ''}`; }
+function qtEditSheet(b) {
+  const it = qtItems().find(i => i.b === b); if (!it) return;
+  if (!ckUrl()) { toast('서버 연결 후 수정할 수 있어요', true); return; }
+  if (needName()) return;
+  const cur = qtOf(it), name = it.pid ? pName(it.pid) : it.name, spec = [it.c, it.s].filter(Boolean).join(' · ');
+  const locs = it.pid ? (D.stock || []).filter(s => s.pid === it.pid && s.size === it.s && s.colors.includes(it.c)).map(s => s.loc) : [];
+  sheet(`<h2>수량 수정</h2><div style="font-weight:700;margin-top:4px">${esc(name)}</div><div class="mut">${esc(spec)}${locs.length ? ` · 📍 ${locs.map(esc).join(', ')}` : ''}</div>
+   <div class="mut" style="font-size:12px;margin-top:6px">현재 ${cur.qty}개${cur.by ? ` · ${esc(cur.by)} ${new Date(cur.at).toLocaleString('ko-KR', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false})} 수정` : ' · 다울포스 기준'}</div>
+   <div class="row" style="gap:10px;margin:16px 0 4px;justify-content:center"><button class="btn" id="qm" style="width:56px;font-size:22px">−</button><input type="number" inputmode="numeric" id="qv" value="${cur.qty}" style="width:110px;text-align:center;font-size:24px;font-weight:800"><button class="btn" id="qp" style="width:56px;font-size:22px">+</button></div>
+   <div class="row" style="margin-top:16px"><button class="btn grow" id="qc">취소</button><button class="btn pri grow" id="qs">수정하기</button></div>`);
+  const v = $('qv'); $('qm').onclick = () => v.value = Math.max(0, (+v.value || 0) - 1); $('qp').onclick = () => v.value = (+v.value || 0) + 1; $('qc').onclick = closeSheet;
+  $('qs').onclick = async () => {
+    const n = String(v.value).trim(); if (!/^-?\d{1,5}$/.test(n)) { toast('숫자를 입력해 주세요', true); return; }
+    if (+n === cur.qty) { closeSheet(); return; }
+    if (!(await ask(`${name}\n${spec}\n\n수량을 ${cur.qty}개 → ${+n}개로 정말 수정할까요?`, '수정'))) { qtEditSheet(b); return; }
+    try {
+      const r = await fetch(ckUrl(), {method:'POST', body:JSON.stringify({kind:'qty', barcode:b, qty:+n, prev:cur.qty, by:S.me, name, spec})}); const j = await r.json(); if (!j.ok) throw Error(j.error);
+      QT.over = j.q || QT.over; QT.at = Date.now(); toast(`${spec} ${+n}개로 수정했어요`); render();
+    } catch (e) { toast('수정하지 못했어요. 다시 해 주세요.', true); }
+  };
+}
+async function qtLogLoad() {
+  QT.logLoading = true; render();
+  try { const r = await fetch(ckUrl() + '?qtylog=1&t=' + Date.now()); const j = await r.json(); if (!j.ok) throw Error(j.error); QT.log = j.log || []; } catch (e) { QT.log = null; toast('기록을 불러오지 못했어요 (서버 코드 새 버전 배포 필요)', true); }
+  QT.logLoading = false; if (S.tab === 'qtlog') render();
+}
+function vQtLog() {
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="stock">‹ 재고 위치</button><b style="font-size:18px;margin-left:6px" class="grow">수량 수정 기록</b></div><div class="mut" style="margin-bottom:8px">최근 90일 · 누가 언제 몇 개로 고쳤는지</div>`;
+  if (!admin()) return h + '<div class="card empty">관리자만 볼 수 있어요.</div>';
+  if (QT.logLoading || !QT.log) { if (!QT.logLoading && QT.log === null && !QT.logTried) { QT.logTried = true; qtLogLoad(); } return h + `<div class="card empty">${QT.logLoading ? '불러오는 중…' : '기록이 없어요.'}</div>`; }
+  if (!QT.log.length) return h + '<div class="card empty">아직 수정 기록이 없어요.</div>';
+  const g = {}; QT.log.forEach(x => { const d = x.t.slice(0, 10); (g[d] = g[d] || []).push(x); });
+  return h + Object.entries(g).map(([d, l]) => `<div class="card" style="padding:10px 14px"><div style="font-weight:750;margin-bottom:4px">${esc(dLabel(d))} <span class="mut" style="font-weight:500">${l.length}건</span></div>${l.map(x => `<div style="padding:7px 0;border-top:1px solid var(--edge);font-size:13px"><div class="row"><b class="grow">${esc(x.by)} <span class="mut" style="font-weight:500">${esc(x.t.slice(11, 16))}</span></b><b>${x.prev === '' ? '?' : esc(String(x.prev))} → ${esc(String(x.qty))}</b></div><div class="mut" style="font-size:12px">${esc(x.name)} · ${esc(x.spec)}</div></div>`).join('')}</div>`).join('');
+}
 function skList() {
-  const q = SK.q.trim().toLowerCase().replace(/\s+/g, ''), adm = admin(), all = D.stock || [];
-  const row = s => `<div class="row" style="padding:7px 0;border-top:1px solid var(--edge);gap:8px;align-items:flex-start;font-size:13px${adm ? ';cursor:pointer' : ''}" ${adm ? `data-act="skEdit" data-v="${esc(s.id)}"` : ''}>
-      <div style="flex:0 0 104px"><b style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--soft);border-radius:6px;padding:2px 6px">${esc(s.loc)}</b><div class="mut" style="font-size:10.5px;margin-top:3px">${esc(locInfo(s.loc))}</div></div>
-      <b style="flex:0 0 62px">${esc(s.size)}</b><span class="grow" style="line-height:1.5">${s.colors.map(esc).join(' · ')}</span>${s.qty !== undefined && s.qty !== '' ? `<b style="flex:0 0 auto">${esc(String(s.qty))}개</b>` : ''}</div>`;
+  const q = SK.q.trim().toLowerCase().replace(/\s+/g, ''), adm = admin(), all = D.stock || [], low = SK.low;
+  const lowRow = s => s.colors.some(c => { const it = qtFind(s.pid, c, s.size); return it && qtOf(it).qty <= 3; });
+  const row = s => `<div class="row" style="padding:8px 0;border-top:1px solid var(--edge);gap:8px;align-items:flex-start;font-size:13px">
+      <div style="flex:0 0 96px${adm ? ';cursor:pointer' : ''}" ${adm ? `data-act="skEdit" data-v="${esc(s.id)}"` : ''}><b style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--soft);border-radius:6px;padding:2px 6px">${esc(s.loc)}</b><div class="mut" style="font-size:10.5px;margin-top:3px">${esc(locInfo(s.loc))}</div></div>
+      <div class="grow"><b style="display:block;margin-bottom:4px">${esc(s.size)}</b><div style="display:flex;flex-wrap:wrap;gap:4px">${s.colors.filter(c => !low || (qtFind(s.pid, c, s.size) && qtOf(qtFind(s.pid, c, s.size)).qty <= 3)).map(c => qtChip(qtFind(s.pid, c, s.size), c)).join('')}</div></div></div>`;
   if (SK.mode === 'loc') {
-    const list = all.filter(s => skHit(s, q)).sort(locSort); if (!list.length) return '<div class="card empty">찾는 위치가 없어요.</div>';
+    const list = all.filter(s => skHit(s, q) && (!low || lowRow(s))).sort(locSort); if (!list.length) return '<div class="card empty">찾는 위치가 없어요.</div>';
     const g = {}; list.forEach(s => { const k = s.loc.slice(0, 6); (g[k] = g[k] || []).push(s); });
-    return Object.entries(g).map(([k, l]) => { const m = k.match(/SG(\d)-(\d+)/); return `<div class="card" style="padding:10px 14px"><div style="font-weight:750;margin-bottom:4px">${m ? `${m[1]}층 · ${+m[2]}번 랙` : esc(k)} <span class="mut" style="font-weight:500">${l.length}</span></div>${l.map(s => `<div class="row" style="padding:7px 0;border-top:1px solid var(--edge);gap:8px;font-size:13px;align-items:flex-start${adm ? ';cursor:pointer' : ''}" ${adm ? `data-act="skEdit" data-v="${esc(s.id)}"` : ''}><b style="flex:0 0 96px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">${esc(s.loc)}</b><div class="grow"><div style="font-weight:650">${esc(pName(s.pid))}</div><div class="mut" style="font-size:12px">${esc(s.size)} · ${s.colors.map(esc).join(' · ')}</div></div></div>`).join('')}</div>`; }).join('');
+    return Object.entries(g).map(([k, l]) => { const m = k.match(/SG(\d)-(\d+)/); return `<div class="card" style="padding:10px 14px"><div style="font-weight:750;margin-bottom:4px">${m ? `${m[1]}층 · ${+m[2]}번 랙` : esc(k)} <span class="mut" style="font-weight:500">${l.length}</span></div>${l.map(s => `<div style="padding:8px 0;border-top:1px solid var(--edge);font-size:13px"><div class="row" style="gap:8px;align-items:flex-start"><b style="flex:0 0 96px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px${adm ? ';cursor:pointer' : ''}" ${adm ? `data-act="skEdit" data-v="${esc(s.id)}"` : ''}>${esc(s.loc)}</b><div class="grow"><div style="font-weight:650">${esc(pName(s.pid))} · ${esc(s.size)}</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">${s.colors.map(c => qtChip(qtFind(s.pid, c, s.size), c)).join('')}</div></div></div></div>`).join('')}</div>`; }).join('');
   }
   let h = '';
   for (const c of PR.data.categories) {
-    const ps = PR.data.items.filter(p => p.cat === c.id).map(p => ({p, rows:stockOf(p.id).filter(s => skHit(s, q) || (q && p.name.toLowerCase().replace(/\s+/g, '').includes(q))).sort(locSort)})).filter(x => x.rows.length || (adm && !q && !stockOf(x.p.id).length));
+    const ps = PR.data.items.filter(p => p.cat === c.id).map(p => ({p, rows:stockOf(p.id).filter(s => (skHit(s, q) || (q && p.name.toLowerCase().replace(/\s+/g, '').includes(q))) && (!low || lowRow(s))).sort(locSort)})).filter(x => x.rows.length || (adm && !q && !low && !stockOf(x.p.id).length));
     if (!ps.length) continue;
     h += `<div style="font-weight:750;font-size:15px;margin:14px 2px 8px">${esc(c.name)}</div>`;
-    h += ps.map(({p, rows}) => { const open = !!q || SK.open === p.id;
-      return `<div class="card" style="padding:0;overflow:hidden"><button class="row" style="width:100%;text-align:left;padding:11px 14px;gap:10px" data-act="skOpen" data-v="${esc(p.id)}">${p.images[0] ? `<img src="${esc(p.images[0])}" alt="" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex:0 0 42px;background:#f3f2ef">` : '<span style="width:42px;height:42px;flex:0 0 42px;border-radius:8px;background:var(--soft)"></span>'}<div class="grow"><div style="font-weight:700;font-size:14px;line-height:1.3">${esc(p.name)}</div><div class="mut" style="font-size:12px;margin-top:2px">📍 ${esc(locSummary(p.id) || '위치 미등록')}</div></div><span class="mut">${open ? '⌃' : '⌄'}</span></button>
+    h += ps.map(({p, rows}) => { const open = !!q || low || SK.open === p.id;
+      return `<div class="card" style="padding:0;overflow:hidden"><button class="row" style="width:100%;text-align:left;padding:11px 14px;gap:10px" data-act="skOpen" data-v="${esc(p.id)}">${p.images[0] ? `<img src="${esc(p.images[0])}" alt="" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex:0 0 42px;background:#f3f2ef">` : '<span style="width:42px;height:42px;flex:0 0 42px;border-radius:8px;background:var(--soft)"></span>'}<div class="grow"><div style="font-weight:700;font-size:14px;line-height:1.3">${esc(p.name)}</div><div class="mut" style="font-size:12px;margin-top:2px">📍 ${esc(locSummary(p.id) || '위치 미등록')}</div><div style="display:flex;gap:5px;align-items:center;margin-top:3px">${qtSumBadge(p.id)}</div></div><span class="mut">${open ? '⌃' : '⌄'}</span></button>
         ${open ? `<div style="padding:0 14px 10px">${rows.map(row).join('')}${adm ? `<button class="btn sm" style="margin-top:8px" data-act="skAdd" data-v="${esc(p.id)}">+ 위치 추가</button>` : ''}</div>` : ''}</div>`; }).join('');
   }
-  return h || '<div class="card empty">찾는 제품이 없어요.</div>';
+  /* 안내서에 없는 상품 (다울포스 재고에만 있음) */
+  const ex = {}; qtItems().filter(i => !i.pid).forEach(i => (ex[i.name] = ex[i.name] || []).push(i));
+  const exl = Object.entries(ex).filter(([n, l]) => (!q || (n + l.map(i => i.c + i.s).join('')).toLowerCase().replace(/\s+/g, '').includes(q)) && (!low || l.some(i => qtOf(i).qty <= 3)));
+  if (exl.length) {
+    h += `<div style="font-weight:750;font-size:15px;margin:14px 2px 8px">안내서 외 상품 <span class="mut" style="font-weight:500;font-size:12px">위치 미등록</span></div>`;
+    h += exl.map(([n, l]) => { const key = 'x:' + n, open = !!q || low || SK.open === key, t = l.reduce((a, i) => a + Math.max(0, qtOf(i).qty), 0), z = l.filter(i => qtOf(i).qty <= 0).length;
+      return `<div class="card" style="padding:0;overflow:hidden"><button class="row" style="width:100%;text-align:left;padding:11px 14px;gap:10px" data-act="skOpen" data-v="${esc(key)}"><div class="grow"><div style="font-weight:700;font-size:14px">${esc(n)}</div><div style="display:flex;gap:5px;margin-top:3px"><span style="font-size:12px;font-weight:700">재고 ${t}</span>${z ? `<span class="qbad qz">품절 ${z}</span>` : ''}</div></div><span class="mut">${open ? '⌃' : '⌄'}</span></button>${open ? `<div style="padding:0 14px 12px;display:flex;flex-wrap:wrap;gap:4px">${l.filter(i => !low || qtOf(i).qty <= 3).map(i => qtChip(i, [i.c, i.s].filter(Boolean).join('-') || '기본')).join('')}</div>` : ''}</div>`; }).join('');
+  }
+  return h || `<div class="card empty">${low ? '품절·부족 상품이 없어요.' : '찾는 제품이 없어요.'}</div>`;
 }
 function vStock() {
   if (!PR.data && !PR.loading && !PR.err) prLoad();
+  qtLoad();
   const adm = admin();
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">재고 위치</b><span class="mut">${(D.stock || []).length}칸</span></div>`;
   if (!PR.data) return h + `<div class="card empty">${PR.err ? esc(PR.err) : '불러오는 중…'}</div>`;
   h += `<input type="text" id="skQ" value="${esc(SK.q)}" placeholder="제품명 · 위치(SG1-03) · 사이즈 · 컬러 검색" autocomplete="off">`;
   h += `<div class="seg" style="margin-top:10px">${[['prod', '제품별'], ['loc', '위치별 (랙 순서)']].map(([k, l]) => `<button data-act="skMode" data-v="${k}" class="${SK.mode === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-  h += `<div class="mut" style="font-size:11.5px;margin:2px 2px 4px">SG1-03-05 = 1층 · 3번 랙 · 5단 / (03) = 왼쪽에서 3번째 박스${adm ? ' · 줄을 누르면 수정' : ''}</div>`;
-  if (adm) h += `<button class="btn" style="width:100%;margin:4px 0" data-act="skMove">📦 칸 통째로 이동</button>`;
+  h += `<div class="row" style="gap:6px;margin:2px 0 6px"><button class="pill ${SK.low ? 'on' : ''}" data-act="skLow">⚠️ 품절·부족만 보기</button><span class="grow"></span><span class="qc qz" style="font-size:11px">0 품절</span><span class="qc ql" style="font-size:11px">1~3 부족</span></div>`;
+  h += `<div class="mut" style="font-size:11.5px;margin:0 2px 4px">SG1-03-05 = 1층 · 3번 랙 · 5단 / (03) = 왼쪽에서 3번째 박스 · 컬러를 누르면 수량 수정${adm ? ' · 위치 코드를 누르면 위치 수정' : ''}</div>`;
+  if (adm) h += `<div class="row" style="gap:6px;margin:4px 0"><button class="btn grow" data-act="skMove">📦 칸 통째로 이동</button><button class="btn grow" data-act="qtLog">📋 수량 수정 기록</button></div>`;
+  if (QT.err) h += `<div class="warn">${esc(QT.err)}</div>`;
   h += `<div id="sklist">${skList()}</div>`;
-  h += `<div class="mut" style="text-align:center;margin-top:10px;font-size:11px">기준: 가로수길 매장 상품 안내서 (2026-11-13) · 수량은 다울포스 연동 후 표시 예정</div>`;
+  h += `<div class="mut" style="text-align:center;margin-top:10px;font-size:11px">위치: 상품 안내서 (2026-11-13) · 수량: ${QT.base ? esc(QT.base.src) : '불러오는 중'} + 이후 직원 수정</div>`;
   return h;
 }
 function stockSheet(s, pid) {
@@ -1257,7 +1330,7 @@ function render() {
   $('bars').innerHTML = bars;
   if (!S.ready && !D.config) { $('view').innerHTML = `<div class="card empty">${S.offline ? '로그인이 필요해요.' : '불러오는 중…'}</div>`; return; }
   const tbl = $('mtbl') || $('dtbl'), keep = tbl ? [tbl.id, tbl.scrollLeft, tbl.scrollTop] : null;
-  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog, product:vProduct, todo:vTodo, stock:vStock})[S.tab]();
+  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog, product:vProduct, todo:vTodo, stock:vStock, qtlog:vQtLog})[S.tab]();
   $('foot').innerHTML = (D.updated ? '마지막 업데이트 ' + esc(D.updated) : '');
   $('saveBar').style.display = adm && S.dirty ? 'flex' : 'none';
   $('saveBar').innerHTML = `<span class="grow">저장 안 된 변경 ${S.dirty}건</span><button class="btn sm" data-act="discardAll" style="background:transparent;color:inherit;border-color:#fff6">되돌리기</button><button class="btn sm" data-act="saveAll" style="background:var(--rev);color:var(--acc);border:0" ${S.saving ? 'disabled' : ''}>${S.saving ? '저장 중…' : '저장'}</button>`;
@@ -1291,6 +1364,9 @@ document.addEventListener('click', async e => {
     case 'idleEdit': idleSheet(); return;
     case 'idleToggle': S.idleOpen = !S.idleOpen; break;
     case 'skMode': SK.mode = v; break;
+    case 'skLow': SK.low = !SK.low; break;
+    case 'qtEdit': qtEditSheet(v); return;
+    case 'qtLog': QT.log = null; QT.logTried = false; S.tab = 'qtlog'; scrollTo(0, 0); break;
     case 'skOpen': SK.open = SK.open === v ? null : v; break;
     case 'skEdit': { const it = (D.stock || []).find(x => x.id === v); if (it) stockSheet(it); return; }
     case 'skAdd': stockSheet(null, v); return;

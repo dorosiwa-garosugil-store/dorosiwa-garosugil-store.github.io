@@ -3,6 +3,7 @@
    - 체크리스트·한가할 때 할 일: 날짜별로 누가 어떤 항목을 언제 체크했는지 저장 (사이트 화면은 최근 60일)
      + 모든 체크·해제 기록을 구글 시트 '체크 기록' 탭에 계속 남김
    - 해야 할 일: 할 일마다 완료 체크(누가·언제)와 직원 댓글 저장 (계속 보관)
+   - 재고 수량: 직원이 고친 수량을 시트 '재고 수량' 탭에, 수정 기록(누가·언제·이전→변경)을 '재고 수정 기록' 탭에 저장 (기록은 90일 보관)
    - 매장 기록: 유동인구·외국인 고객 기록을 구글 시트 "도로시와 가로수길점 매장 기록"에 저장 (계속 보관)
      시트는 처음 기록할 때 내 구글 드라이브에 자동으로 만들어집니다.
 */
@@ -18,6 +19,8 @@ function doGet(e) {
     if (q.history) return out_(history_());
     if (q.log) return out_({ok: true, log: dayLog_(date_(q.log))});
     if (q.todos) return out_(todos_());
+    if (q.qty) return out_(qtyAll_());
+    if (q.qtylog) return out_(qtyLog_());
     if (q.logs) return out_(rangeLog_(date_(q.from), date_(q.to)));
     return out_(read_(q.date));
   }
@@ -32,6 +35,7 @@ function doPost(e) {
     if (b.kind === 'traffic') return out_(saveTraffic_(b));
     if (b.kind === 'foreign') return out_(saveForeign_(b));
     if (b.kind === 'todo') return out_(saveTodo_(b));
+    if (b.kind === 'qty') return out_(saveQty_(b));
     const date = date_(b.date), key = 'CK_' + date;
     const id = String(b.id || '');
     if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) throw Error('항목 오류');
@@ -81,6 +85,45 @@ function saveTodo_(b) {
   else throw Error('동작 오류');
   P.setProperty(key, JSON.stringify(d));
   return todos_();
+}
+
+/* ── 재고 수량 (직원 수정 · 90일 기록) ── */
+const Q_HEAD = ['바코드', '수량', '직원', '수정 시각', '상품', '컬러-사이즈'];
+const QL_HEAD = ['시각', 'ISO', '직원', '바코드', '상품', '컬러-사이즈', '이전', '변경'];
+function sheet_(name, head, textCols) {
+  const ss = book_(); let sh = ss.getSheetByName(name);
+  if (!sh) { sh = ss.insertSheet(name); setup_(sh, head, textCols); }
+  return sh;
+}
+function qtyAll_() {
+  const v = sheet_('재고 수량', Q_HEAD, 'A:D').getDataRange().getValues().slice(1), q = {};
+  v.forEach(function (r) { if (r[0] !== '') q[String(r[0])] = {qty: Number(r[1]), by: String(r[2] || ''), at: r[3] instanceof Date ? r[3].toISOString() : String(r[3] || '')}; });
+  return {ok: true, q: q};
+}
+function saveQty_(b) {
+  const bc = String(b.barcode || '');
+  if (!/^[0-9A-Za-z-]{4,30}$/.test(bc)) throw Error('바코드 오류');
+  const qty = Number(b.qty);
+  if (!isFinite(qty) || Math.abs(qty) > 99999 || Math.floor(qty) !== qty) throw Error('수량 오류');
+  const sh = sheet_('재고 수량', Q_HEAD, 'A:D'), v = sh.getDataRange().getValues();
+  const now = new Date(), row = [bc, qty, s_(b.by, 20), now.toISOString(), s_(b.name, 80), s_(b.spec, 40)];
+  const i = v.findIndex(function (r, k) { return k > 0 && String(r[0]) === bc; });
+  if (i > 0) sh.getRange(i + 1, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
+  const lg = sheet_('재고 수정 기록', QL_HEAD, 'A:B');
+  lg.appendRow([Utilities.formatDate(now, 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss'), now.toISOString(), s_(b.by, 20), bc, s_(b.name, 80), s_(b.spec, 40), b.prev === '' || b.prev == null ? '' : Number(b.prev), qty]);
+  qtyCleanup_(lg);
+  return qtyAll_();
+}
+function qtyCleanup_(lg) {
+  const limit = new Date(Date.now() - 90 * 864e5).toISOString(), n = lg.getLastRow();
+  if (n < 2) return;
+  const iso = lg.getRange(2, 2, n - 1, 1).getValues();
+  let k = 0; while (k < iso.length && String(iso[k][0]) < limit) k++;
+  if (k > 0) lg.deleteRows(2, k);
+}
+function qtyLog_() {
+  const v = sheet_('재고 수정 기록', QL_HEAD, 'A:B').getDataRange().getValues().slice(1);
+  return {ok: true, log: v.map(function (r) { return {t: String(r[0]), at: String(r[1]), by: String(r[2]), b: String(r[3]), name: String(r[4]), spec: String(r[5]), prev: r[6], qty: r[7]}; }).reverse().slice(0, 2000)};
 }
 
 /* ── 매장 기록 (구글 시트) ── */
