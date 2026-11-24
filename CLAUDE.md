@@ -23,7 +23,7 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - todos = [{id, date, title, body}] : 해야 할 일 목록 (화면 정렬: 미완료 먼저 날짜 빠른 순, 완료는 맨 아래. 관리자만 작성 — 사이트에서 '+ 할 일 작성' 또는 Claude가 직접). 각 할 일의 완료 체크(누가·언제)와 직원 댓글은 서버 TD_<id>에 저장(계속 보관). 새 할 일·새 댓글은 빨간 점 (각 폰 localStorage dsh_todoSeen {id: 본 댓글 수}) — 새 할 일은 새 id로
 - stock = [{id, pid(products.json id), loc('SG1-03-05' 또는 'SG1-09-02(03)'), size, colors[], qty?}] : 홈 '재고 위치' 화면 (제품별 / 위치별 랙 순서, 검색). 처음 데이터는 상품 안내서 PDF(2026-11-13) 로케이션 159줄. 관리자만 수정(줄 누르기, + 위치 추가, 칸 통째로 이동) → 사이트 저장으로 data.json에 들어감. 판매 제품 카드에 '위치' 줄로도 표시. 수량(qty)은 다울포스 연동(API 확인 중) 후 채울 예정. 물류팀장님이 만든 garosu-store.pages.dev 로케이션 사이트를 대체하는 용도
 - consults = [{id, date, time, who, people?, memo}] : 홈 '컨설팅 예약' (관리자만 작성, 직원은 보기만). 오늘 예약은 홈 요약 카드와 타일 빨간 숫자로 표시, 지난 예약은 접어 둠. 고객은 '성 + 님' 정도만 (공개 저장소)
-- months["YYYY-MM"][직원이름][날짜] = "11~20" | "휴" | "요청휴무" | "연차" ...
+- months["YYYY-MM"][직원이름][날짜] = "11~20" | "11~20!"(끝에 ! = 필수 출근, 진한 색 칩, shiftPresets에 있음) | "휴" | "요청휴무" | "연차" ...
 - daily["YYYY-MM-DD"] = { published: true, assign: { 직원이름: [open시부터 1시간 단위 포지션, 근무 외는 null] } }
 - notices = [{ id, title, body, pinned, date: "YYYY-MM-DD", images?: ["manual/01.jpg", ...] }] (images = 자료 보기 뷰어로 보여줄 사진, 저장소에 파일로 올림)
 - 공지 읽음 표시는 각 기기 localStorage(dsh_readNotices)에 공지 id로 저장 → 새 공지는 새 id로 만들어야 빨간 점이 뜸

@@ -214,7 +214,7 @@ const ls = { get(k, d) { try { const v = localStorage.getItem('dsh_' + k); retur
 const WD = ['일','월','화','수','목','금','토'], pad = n => String(n).padStart(2, '0');
 const clone = o => JSON.parse(JSON.stringify(o));
 function now() { const p = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', hourCycle:'h23'}).formatToParts(new Date()); const g = t => p.find(x => x.type === t).value; return {date:`${g('year')}-${g('month')}-${g('day')}`, hour:+g('hour') % 24}; }
-const shift = v => { const m = String(v || '').trim().match(/^(\d{1,2})(?::(\d{2}))?\s*[~\-–]\s*(\d{1,2})(?::(\d{2}))?$/); if (!m) return null; const s = +m[1] + (+(m[2] || 0)) / 60, e = +m[3] + (+(m[4] || 0)) / 60; return s < e ? {s, e} : null; };
+const shift = v => { const m = String(v || '').trim().match(/^(\d{1,2})(?::(\d{2}))?\s*[~\-–]\s*(\d{1,2})(?::(\d{2}))?\s*!?$/); if (!m) return null; const s = +m[1] + (+(m[2] || 0)) / 60, e = +m[3] + (+(m[4] || 0)) / 60; return s < e ? {s, e} : null; };
 const normShift = v => String(v || '').trim().replace(/\s+/g, '').replace(/[–-]/g, '~');
 
 /* ───────── 상태 ───────── */
@@ -239,7 +239,8 @@ function shiftChip(v, short) {
   v = String(v || '').trim();
   if (!v) return `<span class="chip g">${short ? '·' : '-'}</span>`;
   let h = 0, s = 0, txt = v;
-  if (shift(v)) { const pr = C().shiftPresets; let i = pr.indexOf(normShift(v)); if (i < 0) { let x = 0; for (const c of v) x = (x * 31 + c.charCodeAt(0)) >>> 0; i = x; } h = HUES[i % HUES.length]; s = 70; }
+  if (shift(v)) { const must = /!$/.test(v), pr = C().shiftPresets.filter(x => !/!$/.test(x)); let i = pr.indexOf(normShift(v).replace(/!$/, '')); if (i < 0) { let x = 0; for (const c of v) x = (x * 31 + c.charCodeAt(0)) >>> 0; i = x; } h = HUES[i % HUES.length]; s = 70;
+    if (must) return `<span class="chip" style="background:hsl(${h} 62% 40%);color:#fff" title="필수 출근">${esc(v.replace(/\s*!$/, ''))}</span>`; }
   else if (v === '요청휴무') { h = 38; s = 85; if (short) txt = '요휴'; }
   else if (ALT.includes(v)) { h = 168; s = 55; if (short) txt = '대휴'; }
   else if (v !== '휴') { h = 275; s = 55; if (short) txt = v.slice(0, 2); }
@@ -284,7 +285,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-7';
+const APP_VER = '2026.11.24-8';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -532,7 +533,7 @@ function vMonth() {
     h += staffFor(S.month).map((st, si) => `<tr class="${st.name === S.me ? 'me' : ''}"><td ${adm ? 'class="tap" data-act="staff"' : ''}>${esc(st.name)}<small>${esc(st.role)}</small></td>${days.map(x => `<td class="${x.date === T.date ? 'tc' : ''} ${adm ? 'tap' : ''}" ${adm ? `data-act="cell" data-i="${si}" data-v="${x.day}"` : ''}>${shiftChip((md[st.name] || {})[x.day], true)}</td>`).join('')}${adm ? statCells(md[st.name] || {}, days) : statCells(md[st.name] || {}, days, true)}</tr>`).join('');
     h += `<tr class="tot"><td>출근</td>${days.map(x => `<td>${x.on.length}</td>`).join('')}${adm ? '<td class="sr sr0"></td><td class="sr sr1"></td><td class="sr sr2"></td><td class="sr sr3"></td><td class="sr sr4"></td>' : '<td class="sr sr3 srl"></td><td class="sr sr4"></td>'}</tr></tbody></table></div>`;
     if (adm) { const rq = needOff(days); h += `<div class="mut" style="margin-top:8px">이번 달 필요 휴무 <b>${rq.weekend}일</b> (주말) · 대체휴무 <b>${rq.hol}일</b>${rq.names.length ? ` (${rq.names.map(esc).join(', ')})` : ' (평일 공휴일 없음)'}<br>휴무 = ${C().restTypes.filter(v => !ALT.includes(v)).map(esc).join('·')} · 대체 칸 = 쓴 대체휴무/필요 · 연차 등은 기타</div>`; }
-    h += `<div class="row" style="flex-wrap:wrap;gap:5px;margin-top:10px">${C().shiftPresets.map(v => shiftChip(v)).join('')}${shiftChip('휴')}${shiftChip('요청휴무')}${shiftChip('대체휴무')}</div>`;
+    h += `<div class="row" style="flex-wrap:wrap;gap:5px;margin-top:10px">${C().shiftPresets.map(v => /!$/.test(v) ? `<span class="row" style="gap:3px">${shiftChip(v)}<span class="mut" style="font-size:11px">필수 출근</span></span>` : shiftChip(v)).join('')}${shiftChip('휴')}${shiftChip('요청휴무')}${shiftChip('대체휴무')}</div>`;
     if (adm) h += `<div class="row" style="margin-top:12px"><button class="btn grow" data-act="staff">직원 추가·수정</button></div><div class="mut" style="margin-top:8px">칸을 눌러 고친 뒤 아래 <b>저장</b>을 누르면 직원 화면에 반영돼요.</div>`;
   }
   return h;
@@ -561,7 +562,7 @@ function cellSheet(si, day) {
   const [y, m] = key.split('-').map(Number), wd = WD[new Date(y, m - 1, day).getDay()], n = new Date(y, m, 0).getDate();
   const opts = [...C().shiftPresets, ...C().absences];
   sheet(`<h2>${esc(st.name)} · ${m}/${day}(${wd})</h2><div class="mut">현재: ${cur ? esc(cur) : '비어 있음'}</div>
-   <div class="pick">${opts.map(v => { const sty = (shiftChip(v).match(/style="([^"]*)"/) || [, '--s:0%'])[1]; return `<button data-pick="${esc(v)}" class="${v === cur ? 'sel' : ''}" style="${sty};background:hsl(var(--h,0) var(--s,0%) var(--cl));color:hsl(var(--h,0) calc(var(--s,0%)*.8) var(--cd))">${esc(v)}</button>`; }).join('')}<button data-pick="" class="${cur ? '' : 'sel'}">비우기</button></div>
+   <div class="pick">${opts.map(v => { if (/!$/.test(v)) { const st2 = (shiftChip(v).match(/style="([^"]*)"/) || [, ''])[1]; return `<button data-pick="${esc(v)}" class="${v === cur ? 'sel' : ''}" style="${st2}">${esc(v.replace(/!$/, ''))} 필수</button>`; } const sty = (shiftChip(v).match(/style="([^"]*)"/) || [, '--s:0%'])[1]; return `<button data-pick="${esc(v)}" class="${v === cur ? 'sel' : ''}" style="${sty};background:hsl(var(--h,0) var(--s,0%) var(--cl));color:hsl(var(--h,0) calc(var(--s,0%)*.8) var(--cd))">${esc(v)}</button>`; }).join('')}<button data-pick="" class="${cur ? '' : 'sel'}">비우기</button></div>
    <label class="f">직접 입력 (예: 12~20)</label><div class="row"><input type="text" id="cv" placeholder="12~20 또는 휴무명" value="${opts.includes(cur) ? '' : esc(cur)}"><button class="btn pri" id="cvOk">적용</button></div>
    <label class="row" style="margin-top:14px;gap:8px;font-size:13px"><input type="checkbox" id="nx" style="width:20px;height:20px" ${ls.get('nx', false) ? 'checked' : ''}> 적용 후 다음 날로 이동</label>`);
   const apply = v => {
