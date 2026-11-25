@@ -288,7 +288,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.24-20';
+const APP_VER = '2026.11.25-1';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1142,6 +1142,17 @@ async function qtLoad(force) {
 const qtItems = () => (QT.base && QT.base.items) || [];
 const qtAsOf = () => QT.base ? new Date(QT.base.asof).getTime() : 0;
 function qtOf(it) { const o = QT.over[it.b]; return o && new Date(o.at).getTime() > qtAsOf() ? {qty:o.qty, by:o.by, at:o.at} : {qty:it.q}; }
+async function qtExport() {
+  toast('최신 수량 불러오는 중…'); await qtLoad(true);
+  if (!qtItems().length) { toast('재고 데이터를 불러오지 못했어요', true); return; }
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const rows = qtItems().map(it => { const [nm] = qtLabel(it); return [nm, it.c || '', it.s || '', it.b, qtOf(it).qty]; })
+    .sort((a, b) => a[0].localeCompare(b[0], 'ko') || a[1].localeCompare(b[1], 'ko') || String(a[2]).localeCompare(String(b[2])));
+  const csv = '\ufeff' + [['제품명', '컬러', '사이즈', '바코드', '수량'].map(q).join(','), ...rows.map(r => [q(r[0]), q(r[1]), q(r[2]), '="' + r[3] + '"', r[4]].join(','))].join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+  a.download = `가로수길점_현재고_${T.date}.csv`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast(`${rows.length}줄 저장했어요`);
+}
 const qtFind = (pid, c, s) => qtItems().find(i => i.pid === pid && i.c === c && i.s === s);
 const qtLevel = n => n <= 0 ? 'z' : n <= 3 ? 'l' : 'ok';
 const qtSum = pid => { let t = 0, z = 0, l = 0, any = false; qtItems().filter(i => i.pid === pid).forEach(i => { const n = qtOf(i).qty; any = true; t += Math.max(0, n); if (n <= 0) z++; else if (n <= 3) l++; }); return any ? {t, z, l} : null; };
@@ -1226,7 +1237,7 @@ function vStock() {
   h += `<button class="btn" style="width:100%;margin:2px 0 8px" data-act="rcOpen">🧾 영수증으로 재고 차감</button>`;
   h += `<div class="row" style="gap:6px;margin:2px 0 6px"><button class="pill ${SK.low ? 'on' : ''}" data-act="skLow">⚠️ 품절·부족만 보기</button><span class="grow"></span><span class="qc qz" style="font-size:11px">0 품절</span><span class="qc ql" style="font-size:11px">1~3 부족</span></div>`;
   h += `<div class="mut" style="font-size:11.5px;margin:0 2px 4px">SG1-03-05 = 1층 · 3번 랙 · 5단 / (03) = 왼쪽에서 3번째 박스 · 컬러를 누르면 수량 수정${adm ? ' · 위치 코드를 누르면 위치 수정' : ''}</div>`;
-  if (adm) h += `<div class="row" style="gap:6px;margin:4px 0"><button class="btn grow" data-act="skMove">📦 칸 통째로 이동</button><button class="btn grow" data-act="qtLog">📋 수량 수정 기록</button></div>`;
+  if (adm) h += `<div class="row" style="gap:6px;margin:4px 0"><button class="btn grow" data-act="skMove">📦 칸 통째로 이동</button><button class="btn grow" data-act="qtLog">📋 수량 수정 기록</button></div><button class="btn" style="width:100%;margin:4px 0" data-act="qtXls">⬇️ 현재 재고 엑셀로 받기</button>`;
   if (QT.err) h += `<div class="warn">${esc(QT.err)}</div>`;
   h += `<div id="sklist">${skList()}</div>`;
   h += `<div class="mut" style="text-align:center;margin-top:10px;font-size:11px">위치: 상품 안내서 (2026-11-13) · 수량: ${QT.base ? esc(QT.base.src) : '불러오는 중'} + 이후 직원 수정</div>`;
@@ -1614,6 +1625,7 @@ document.addEventListener('click', async e => {
     case 'rcDel': RC.items.splice(+v, 1); break;
     case 'rcAdd': { const b = ($('rcAddB').value || '').replace(/\D/g, ''); if (b.length !== 13) { toast('바코드 13자리를 입력해 주세요', true); return; } RC.receipt = $('rcNo').value.trim(); const ex = RC.items.find(x => x.b === b); if (ex) ex.n = (+ex.n || 0) + 1; else RC.items.push({b, n:1}); if (!qtByB(b)) toast('재고 목록에 없는 바코드예요', true); break; }
     case 'rcGo': rcGo(); return;
+    case 'qtXls': qtExport(); return;
     case 'qtLog': QT.log = null; QT.logTried = false; S.tab = 'qtlog'; scrollTo(0, 0); break;
     case 'skOpen': SK.open = SK.open === v ? null : v; break;
     case 'skEdit': { const it = (D.stock || []).find(x => x.id === v); if (it) stockSheet(it); return; }
