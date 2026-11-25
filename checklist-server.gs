@@ -268,7 +268,7 @@ function dpRead_() {
   const o = sheet_('DP 제외', DO_HEAD, 'A:L').getDataRange().getValues().slice(1).filter(function (r) { return r[0] !== ''; }).map(function (r) { return dpObj_(DO_KEYS, r); });
   return {dp: a, dpOut: o};
 }
-function dpAll_() { const x = dpRead_(); return {ok: true, dp: x.dp, dpOut: x.dpOut, seeded: P.getProperty('DP_SEEDED') === '1'}; }
+function dpAll_() { const x = dpRead_(); return {ok: true, dp: x.dp, dpOut: x.dpOut, seeded: P.getProperty('DP_SEEDED') === '1', batches: JSON.parse(P.getProperty('DP_BATCHES') || '[]')}; }
 function dpRow_(keys, o, by) { return keys.map(function (k) { return k === 'by' ? s_(by, 20) : k === 'at' ? new Date().toISOString() : k === 'qty' ? Math.max(0, Math.round(Number(o.qty) || 0)) : s_(o[k], 80); }); }
 function dpFind_(sh, id) { const v = sh.getDataRange().getValues(); for (let i = 1; i < v.length; i++) if (String(v[i][0]) === String(id)) return {i: i + 1, r: v[i]}; return null; }
 function dpLog_(by, act, txt) { sheet_('DP 수정 기록', DL_HEAD, 'A:D').appendRow([Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm'), s_(by, 20), act, s_(txt, 300)]); }
@@ -280,6 +280,13 @@ function saveDp_(b) {
     (b.dp || []).forEach(function (o) { sa.appendRow(dpRow_(DP_KEYS, o, o.by || '')); });
     (b.dpOut || []).forEach(function (o) { so.appendRow(dpRow_(DO_KEYS, o, o.by || '')); });
     P.setProperty('DP_SEEDED', '1');
+    return dpAll_();
+  }
+  if (b.act === 'batch') {   // Claude가 사이트 파일(dp-pending.json)에 준비한 변경 묶음 — 한 번만 반영
+    const done = JSON.parse(P.getProperty('DP_BATCHES') || '[]');
+    if (!b.bid || done.indexOf(b.bid) >= 0) return dpAll_();
+    (b.ops || []).forEach(function (op) { try { saveDp_(Object.assign({}, op, {by: s_(by, 12) + '(Claude 준비)'})); } catch (e) {} });
+    done.push(b.bid); P.setProperty('DP_BATCHES', JSON.stringify(done.slice(-200)));
     return dpAll_();
   }
   const it = b.item || {};

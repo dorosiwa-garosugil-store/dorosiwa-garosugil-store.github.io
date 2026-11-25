@@ -289,7 +289,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.25-9';
+const APP_VER = '2026.11.25-10';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; D.dp = j.dp || []; D.dpOut = j.dpOut || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1400,21 +1400,22 @@ function consultSheet(c) {
 /* ───────── DP · 로스 관리 (data.json dp[] · dpOut[] 관리자 / 도난·불량은 서버 '도난·불량' 시트, 전 직원 신고) ───────── */
 const DP = {tab:'stock', floor:'1f', out:'all', lt:'all', lok:'all'};
 const LS = {list:[], loaded:false, loading:false, at:0};
-const DPS = {loaded:false, loading:false, at:0, err:''};
+const DPS = {loaded:false, loading:false, at:0, err:'', batches:[], pend:null};
 async function dpLoad(force) {
   if (!ckUrl() || DPS.loading) return; if (!force && DPS.loaded && Date.now() - DPS.at < 20000) return;
   DPS.loading = true;
   try {
     const r = await fetch(ckUrl() + '?dp=1&t=' + Date.now()); let j = await r.json(); if (!j.ok) throw Error(j.error);
     if (!j.seeded) { const r2 = await fetch(ckUrl(), {method:'POST', body:JSON.stringify({kind:'dp', act:'seed', by:'초기 데이터', dp:D.dp || [], dpOut:D.dpOut || []})}); j = await r2.json(); if (!j.ok) throw Error(j.error); }
-    D.dp = j.dp || []; D.dpOut = j.dpOut || []; DPS.err = '';
+    D.dp = j.dp || []; D.dpOut = j.dpOut || []; DPS.batches = j.batches || []; DPS.err = '';
+    try { const p = await (await fetch('dp-pending.json?t=' + Date.now())).json(); DPS.pend = p && p.bid && (p.ops || []).length ? p : null; } catch (e) { DPS.pend = null; }
   } catch (e) { DPS.err = '서버에서 DP를 불러오지 못했어요 (서버 코드 새 버전 배포가 필요할 수 있어요)'; }
   finally { DPS.loaded = true; DPS.at = Date.now(); DPS.loading = false; if ((S.tab === 'dp' || S.tab === 'vmd') && !typing()) render(); }
 }
 async function dpPost(body, okMsg) {
   if (needName()) throw Error('name');
   const r = await fetch(ckUrl(), {method:'POST', body:JSON.stringify({kind:'dp', by:S.me, ...body})}); const j = await r.json();
-  if (!j.ok) throw Error(j.error); D.dp = j.dp || []; D.dpOut = j.dpOut || []; DPS.at = Date.now(); if (okMsg) toast(okMsg); render();
+  if (!j.ok) throw Error(j.error); D.dp = j.dp || []; D.dpOut = j.dpOut || []; if (j.batches) DPS.batches = j.batches; DPS.at = Date.now(); if (okMsg) toast(okMsg); render();
 }
 const dpErr = e => { if (e.message !== 'name') toast(e.message && e.message.length < 40 ? e.message : '저장하지 못했어요', true); };
 const DP_ST = {wait:['반품 대기', 25], hold:['보류 · 창고 보관', 210], done:['반품 완료', 140]};
@@ -1565,10 +1566,11 @@ function vDp() {
   const wq = dpOutList().filter(x => x.status === 'wait').length, lw = lsWait();
   h += `<div class="seg">${[['stock', 'DP 재고'], ['out', `DP 제외 · 반품${wq ? ` ${wq}` : ''}`], ['loss', `도난 · 불량${lw ? ` <span style="color:var(--dan)">${lw}</span>` : ''}`]].map(([k, l]) => `<button data-act="dpTab" data-v="${k}" class="${DP.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   if (DP.tab === 'stock') {
-    h += `<div class="row" style="gap:6px;margin-bottom:8px">${vmFloors().map(f => `<button class="pill ${DP.floor === f.id ? 'on' : ''}" data-act="dpFl" data-v="${f.id}">${esc(f.name)}</button>`).join('')}<span class="grow"></span>${DP.floor === '1f' ? '<button class="pill on" data-act="dpNew">+ DP 등록</button>' : ''}</div>`;
+    h += `<div class="row" style="gap:6px;margin-bottom:8px">${vmFloors().map(f => `<button class="pill ${DP.floor === f.id ? 'on' : ''}" data-act="dpFl" data-v="${f.id}">${esc(f.name)}</button>`).join('')}<span class="grow"></span>${dpZones(DP.floor).length ? '<button class="pill on" data-act="dpNew">+ DP 등록</button>' : ''}</div>`;
+    if (DPS.pend && !DPS.batches.includes(DPS.pend.bid)) h += `<div class="card" style="border:2px solid var(--ink);padding:12px 14px"><b>🤖 Claude가 준비한 DP 변경 ${DPS.pend.ops.length}건</b><div class="mut" style="font-size:12.5px;margin:3px 0 8px">${esc(DPS.pend.note || '')}</div><button class="btn pri" style="width:100%" data-act="dpBatch">반영하기</button></div>`;
     if (DPS.err) h += `<div class="note">${esc(DPS.err)}</div>`; else if (!DPS.loaded) h += '<div class="mut" style="font-size:12px;margin:0 2px 6px">최신 DP 불러오는 중…</div>';
     const zs = dpZones(DP.floor), all = dpList().filter(x => x.fl === DP.floor);
-    if (DP.floor !== '1f' || !zs.length) return h + `<div class="card empty">${esc((vmFloors().find(f => f.id === DP.floor) || {}).name || '')} DP는 준비 중이에요.<br><span style="font-size:12px">VMD 지도가 올라가면 같이 채울게요</span></div>`;
+    if (!zs.length) return h + `<div class="card empty">${esc((vmFloors().find(f => f.id === DP.floor) || {}).name || '')} DP는 준비 중이에요.<br><span style="font-size:12px">VMD 지도가 올라가면 같이 채울게요</span></div>`;
     const tot = all.reduce((a, x) => a + (+x.qty || 0), 0), noSize = all.filter(x => !x.size).length;
     h += `<div class="mut" style="font-size:12.5px;margin:0 2px 8px">전체 <b style="color:var(--ink)">${tot}개</b> · ${all.length}줄${noSize ? ` · <span style="color:#b86e00">사이즈 미입력 ${noSize}줄</span>` : ''} · 줄을 누르면 수정 · DP 제외 · 도난·불량 신고</div>`;
     for (const z of [...zs].sort((a, b) => (a.n ?? 99) - (b.n ?? 99))) {
@@ -1851,6 +1853,7 @@ document.addEventListener('click', async e => {
     case 'prLoc': SK.q = ''; SK.mode = 'prod'; SK.open = v; S.tab = 'stock'; scrollTo(0, 0); break;
     case 'dpTab': DP.tab = v; if (v === 'loss') lsLoad(true); else dpLoad(true); break;
     case 'dpFl': DP.floor = v; break;
+    case 'dpBatch': (async () => { const p = DPS.pend; if (!p || !(await ask(`Claude가 준비한 DP 변경 ${p.ops.length}건을 반영할까요?\n${p.note || ''}`, '반영'))) return; try { await dpPost({act:'batch', bid:p.bid, ops:p.ops}, '반영했어요'); } catch (e) { dpErr(e); } })(); return;
     case 'dpNew': if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } dpSheet(null, v || ''); return;
     case 'dpEdit': { const x = dpList().find(y => y.id === v); if (!x) return; if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } dpSheet(x); return; }
     case 'dpOutF': DP.out = v; break;
