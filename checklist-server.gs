@@ -6,6 +6,7 @@
    - 영수증 차감: 영수증 사진 글자 인식(구글 드라이브 OCR — Apps Script 왼쪽 '서비스'에서 Drive API 추가 필요) → 확인 후 여러 상품 한 번에 차감, 같은 영수증 두 번 차감 방지
    - 재고 수량: 직원이 고친 수량을 시트 '재고 수량' 탭에, 수정 기록(누가·언제·이전→변경)을 '재고 수정 기록' 탭에 저장 (기록은 90일 보관)
    - 도난·불량: 직원 신고(날짜·유형·DP/판매·제품·컬러·사이즈·수량·메모)와 관리자 최종 확인을 시트 '도난·불량' 탭에 저장 (계속 보관)
+   - DP 재고·DP 제외: 전 직원이 등록·수정·삭제·제외 (시트 'DP 재고'·'DP 제외' 탭, 수정 기록은 'DP 수정 기록' 탭, 계속 보관)
    - 매장 기록: 유동인구·외국인 고객 기록을 구글 시트 "도로시와 가로수길점 매장 기록"에 저장 (계속 보관)
      시트는 처음 기록할 때 내 구글 드라이브에 자동으로 만들어집니다.
 */
@@ -24,6 +25,7 @@ function doGet(e) {
     if (q.qty) return out_(qtyAll_());
     if (q.qtylog) return out_(qtyLog_());
     if (q.loss) return out_(lossAll_());
+    if (q.dp) return out_(dpAll_());
     if (q.logs) return out_(rangeLog_(date_(q.from), date_(q.to)));
     return out_(read_(q.date));
   }
@@ -45,6 +47,7 @@ function doPost(e) {
     if (b.kind === 'qty') return out_(saveQty_(b));
     if (b.kind === 'qtybatch') return out_(saveQtyBatch_(b));
     if (b.kind === 'loss') return out_(saveLoss_(b));
+    if (b.kind === 'dp') return out_(saveDp_(b));
     const date = date_(b.date), key = 'CK_' + date;
     const id = String(b.id || '');
     if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) throw Error('항목 오류');
@@ -251,4 +254,60 @@ function saveLoss_(b) {
     sh.deleteRow(i + 1);
   } else throw Error('알 수 없는 요청');
   return lossAll_();
+}
+
+/* ── DP 재고 · DP 제외 (시트 'DP 재고' · 'DP 제외' · 'DP 수정 기록', 전 직원 수정) ── */
+const DP_KEYS = ['id', 'fl', 'zone', 'pid', 'name', 'color', 'size', 'qty', 'tag', 'by', 'at'];
+const DO_KEYS = ['id', 'date', 'pid', 'name', 'color', 'size', 'qty', 'status', 'from', 'doneDate', 'by', 'at'];
+const DP_HEAD = ['ID', '층', '구역', 'pid', '제품', '컬러', '사이즈', '수량', '표시', '수정자', '수정 시각'];
+const DO_HEAD = ['ID', '제외일', 'pid', '제품', '컬러', '사이즈', '수량', '상태', '빠진 위치', '반품 완료일', '수정자', '수정 시각'];
+const DL_HEAD = ['시각', '직원', '작업', '내용'];
+function dpObj_(keys, r) { const o = {}; keys.forEach(function (k, i) { const v = r[i]; o[k] = k === 'qty' ? (Number(v) || 0) : (v instanceof Date ? (k === 'at' ? v.toISOString() : d_(v)) : String(v == null ? '' : v)); }); return o; }
+function dpRead_() {
+  const a = sheet_('DP 재고', DP_HEAD, 'A:K').getDataRange().getValues().slice(1).filter(function (r) { return r[0] !== ''; }).map(function (r) { return dpObj_(DP_KEYS, r); });
+  const o = sheet_('DP 제외', DO_HEAD, 'A:L').getDataRange().getValues().slice(1).filter(function (r) { return r[0] !== ''; }).map(function (r) { return dpObj_(DO_KEYS, r); });
+  return {dp: a, dpOut: o};
+}
+function dpAll_() { const x = dpRead_(); return {ok: true, dp: x.dp, dpOut: x.dpOut, seeded: P.getProperty('DP_SEEDED') === '1'}; }
+function dpRow_(keys, o, by) { return keys.map(function (k) { return k === 'by' ? s_(by, 20) : k === 'at' ? new Date().toISOString() : k === 'qty' ? Math.max(0, Math.round(Number(o.qty) || 0)) : s_(o[k], 80); }); }
+function dpFind_(sh, id) { const v = sh.getDataRange().getValues(); for (let i = 1; i < v.length; i++) if (String(v[i][0]) === String(id)) return {i: i + 1, r: v[i]}; return null; }
+function dpLog_(by, act, txt) { sheet_('DP 수정 기록', DL_HEAD, 'A:D').appendRow([Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm'), s_(by, 20), act, s_(txt, 300)]); }
+function dpDesc_(o) { return [o.name, o.color, o.size].filter(String).join(' ') + ' ' + o.qty + '개'; }
+function saveDp_(b) {
+  const sa = sheet_('DP 재고', DP_HEAD, 'A:K'), so = sheet_('DP 제외', DO_HEAD, 'A:L'), by = b.by || '';
+  if (b.act === 'seed') {
+    if (P.getProperty('DP_SEEDED') === '1') return dpAll_();
+    (b.dp || []).forEach(function (o) { sa.appendRow(dpRow_(DP_KEYS, o, o.by || '')); });
+    (b.dpOut || []).forEach(function (o) { so.appendRow(dpRow_(DO_KEYS, o, o.by || '')); });
+    P.setProperty('DP_SEEDED', '1');
+    return dpAll_();
+  }
+  const it = b.item || {};
+  if (b.act === 'add') {
+    if (!it.id || !it.name) throw Error('입력 오류');
+    sa.appendRow(dpRow_(DP_KEYS, it, by)); dpLog_(by, '등록', dpDesc_(it) + ' · ' + (b.where || ''));
+  } else if (b.act === 'edit') {
+    const f = dpFind_(sa, it.id); if (!f) throw Error('없는 DP예요 · 새로고침해 주세요');
+    const old = dpObj_(DP_KEYS, f.r);
+    sa.getRange(f.i, 1, 1, DP_KEYS.length).setValues([dpRow_(DP_KEYS, it, by)]);
+    dpLog_(by, '수정', dpDesc_(old) + ' → ' + dpDesc_(it));
+  } else if (b.act === 'del') {
+    const f = dpFind_(sa, b.id); if (!f) throw Error('없는 DP예요 · 새로고침해 주세요');
+    dpLog_(by, '삭제', dpDesc_(dpObj_(DP_KEYS, f.r))); sa.deleteRow(f.i);
+  } else if (b.act === 'out') {
+    const f = dpFind_(sa, b.id); if (!f) throw Error('없는 DP예요 · 새로고침해 주세요');
+    const o = dpObj_(DP_KEYS, f.r), q = Math.min(o.qty, Math.max(1, Math.round(Number(b.qty) || 1)));
+    const rec = {id: 'o' + Date.now().toString(36), date: date_(b.date), pid: o.pid, name: o.name, color: o.color, size: o.size, qty: q, status: s_(b.status || 'wait', 10), from: s_(b.from, 40), doneDate: ''};
+    so.appendRow(dpRow_(DO_KEYS, rec, by));
+    if (q >= o.qty) sa.deleteRow(f.i); else sa.getRange(f.i, 8, 1, 4).setValues([[o.qty - q, o.tag, s_(by, 20), new Date().toISOString()]]);
+    dpLog_(by, 'DP 제외', dpDesc_(rec) + ' · ' + rec.status);
+  } else if (b.act === 'ostat') {
+    const f = dpFind_(so, b.id); if (!f) throw Error('없는 기록이에요');
+    const o = dpObj_(DO_KEYS, f.r); o.status = s_(b.status, 10); if (o.status === 'done' && !o.doneDate) o.doneDate = date_(b.date);
+    so.getRange(f.i, 1, 1, DO_KEYS.length).setValues([dpRow_(DO_KEYS, o, by)]); dpLog_(by, '반품 상태', dpDesc_(o) + ' → ' + o.status);
+  } else if (b.act === 'odel') {
+    const f = dpFind_(so, b.id); if (!f) throw Error('없는 기록이에요');
+    dpLog_(by, '제외 기록 삭제', dpDesc_(dpObj_(DO_KEYS, f.r))); so.deleteRow(f.i);
+  } else throw Error('알 수 없는 요청');
+  return dpAll_();
 }
