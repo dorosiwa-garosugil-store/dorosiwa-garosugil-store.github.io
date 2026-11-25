@@ -26,7 +26,7 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - dp = [{id, fl:'1f'|'2f', zone(config.vmd 구역 id), pid?, name, color, size, qty, tag?}] : 홈 'DP · 로스 관리' → DP 재고 탭 (매장에 걸린 DP 전체, 판매 재고와 별도). 관리자만 등록·수정(사이트 저장). VMD 구역 화면의 '걸린 순서'는 이 목록을 그대로 보여줌(dp 없으면 zone.line). 처음 1층 63줄은 VMD 사진 기준 컬러당 1개·사이즈 미입력 → 매장에서 세서 채움. 2층은 준비 중
 - dpOut = [{id, date, pid?, name, color, size, qty, status wait 반품 대기|hold 보류·창고 보관|done 반품 완료, from 빠진 위치, doneDate?}] : DP 제외·반품 탭. DP 재고 줄 → 'DP 제외' 로 이동. 반품 대기 목록 텍스트 복사·엑셀
 - 도난·불량 : 서버 시트 '도난·불량' 탭(checklist-server.gs kind:'loss' add/ok/unok/del, GET ?loss=1). 전 직원 신고(날짜·도난/불량·DP/판매·제품·컬러·사이즈·수량·메모), 관리자 최종 확인(확인 시 DP 상품이면 DP 재고에서 빼기 제안), 본사 보고(기간 요약 텍스트·엑셀). 홈 타일 빨간 숫자 = 확인 대기(관리자만)
-- consults = [{id, date, time, who, people?, memo, kind(consult 컨설팅|visit 체험단 매장 방문형|infc 체험단 컨설팅형|interview 면접(이름은 성○○ 님만)|etc), plat(포포몬|브랜더진|샤오홍슈), gift 증정품}] : 홈 '방문 예약' (관리자만 작성, 직원은 보기만. 위에 체험단 명단 시트(config.visitSheet)·응대 가이드 버튼, 체험단 카드엔 가이드 링크). 오늘 예약은 홈 요약 카드와 타일 빨간 숫자로 표시, 지난 예약은 접어 둠. 고객은 '성 + 님' 정도만 (공개 저장소)
+- consults = [{id, date, time, who, people?, memo, kind(consult 컨설팅|visit 체험단 매장 방문형|infc 체험단 컨설팅형|interview 면접(사장님 요청으로 이름 전체)|etc), plat(포포몬|브랜더진|샤오홍슈), gift 증정품}] : 홈 '방문 예약' (관리자만 작성, 직원은 보기만. 위에 체험단 명단 시트(config.visitSheet)·응대 가이드 버튼, 체험단 카드엔 가이드 링크). 오늘 예약은 홈 요약 카드와 타일 빨간 숫자로 표시, 지난 예약은 접어 둠. 고객은 '성 + 님' 정도만 (공개 저장소)
 - months["YYYY-MM"][직원이름][날짜] = "11~20" | "11~20!"(끝에 ! = 필수 출근, 진한 색 칩, shiftPresets에 있음) | "휴" | "요청휴무" | "연차" ...
 - daily["YYYY-MM-DD"] = { published: true, assign: { 직원이름: [open시부터 1시간 단위 포지션, 근무 외는 null] } }
 - notices = [{ id, title, body, pinned, date: "YYYY-MM-DD", images?: ["manual/01.jpg", ...] }] (images = 자료 보기 뷰어로 보여줄 사진, 저장소에 파일로 올림)
