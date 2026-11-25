@@ -289,7 +289,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.25-2';
+const APP_VER = '2026.11.25-3';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; D.dp = j.dp || []; D.dpOut = j.dpOut || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1397,6 +1397,7 @@ const dpList = () => D.dp || [];
 const dpOutList = () => D.dpOut || [];
 const vmFloors = () => ((C().vmd || {}).floors) || [];
 const vmZones = fl => ((vmFloors().find(f => f.id === fl) || {}).zones) || [];
+const dpZones = fl => vmZones(fl).filter(z => z.kind !== 'fit' && z.kind !== 'cash');
 const zoneOf = (fl, id) => vmZones(fl).find(z => z.id === id);
 const zoneName = (fl, id) => { const z = zoneOf(fl, id); return z ? (z.n != null ? z.n + '. ' : '') + z.name : (id || '위치 미지정'); };
 const dpSpec = x => [x.color, x.size].filter(Boolean).join(' · ');
@@ -1437,7 +1438,7 @@ function pickVal() {
 /* DP 등록 · 수정 (관리자) */
 function dpSheet(x, zone) {
   const o = x || {fl:DP.floor, zone:zone || '', pid:'', name:'', color:'', size:'', qty:1, tag:''};
-  const zs = vmZones(o.fl || '1f');
+  const zs = dpZones(o.fl || '1f');
   sheet(`<h2>${x ? 'DP 수정' : 'DP 등록'}</h2>
    <label class="f">위치 (VMD 구역)</label><select id="dpZ" class="inp">${zs.map(z => `<option value="${z.id}" ${z.id === o.zone ? 'selected' : ''}>${esc((z.n != null ? z.n + '. ' : '') + z.name)}</option>`).join('')}</select>
    ${pickHtml(o)}
@@ -1540,7 +1541,7 @@ function vDp() {
   h += `<div class="seg">${[['stock', 'DP 재고'], ['out', `DP 제외 · 반품${wq ? ` ${wq}` : ''}`], ['loss', `도난 · 불량${lw ? ` <span style="color:var(--dan)">${lw}</span>` : ''}`]].map(([k, l]) => `<button data-act="dpTab" data-v="${k}" class="${DP.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   if (DP.tab === 'stock') {
     h += `<div class="row" style="gap:6px;margin-bottom:8px">${vmFloors().map(f => `<button class="pill ${DP.floor === f.id ? 'on' : ''}" data-act="dpFl" data-v="${f.id}">${esc(f.name)}</button>`).join('')}<span class="grow"></span>${adm && DP.floor === '1f' ? '<button class="pill on" data-act="dpNew">+ DP 등록</button>' : ''}</div>`;
-    const zs = vmZones(DP.floor), all = dpList().filter(x => x.fl === DP.floor);
+    const zs = dpZones(DP.floor), all = dpList().filter(x => x.fl === DP.floor);
     if (DP.floor !== '1f' || !zs.length) return h + `<div class="card empty">${esc((vmFloors().find(f => f.id === DP.floor) || {}).name || '')} DP는 준비 중이에요.<br><span style="font-size:12px">VMD 지도가 올라가면 같이 채울게요</span></div>`;
     const tot = all.reduce((a, x) => a + (+x.qty || 0), 0), noSize = all.filter(x => !x.size).length;
     h += `<div class="mut" style="font-size:12.5px;margin:0 2px 8px">전체 <b style="color:var(--ink)">${tot}개</b> · ${all.length}줄${noSize ? ` · <span style="color:#b86e00">사이즈 미입력 ${noSize}줄</span>` : ''} · ${adm ? '줄을 누르면 수정 · DP 제외' : '줄을 누르면 도난·불량 신고'}</div>`;
