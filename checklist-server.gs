@@ -5,6 +5,7 @@
    - 해야 할 일: 할 일마다 완료 체크(누가·언제)와 직원 댓글 저장 (계속 보관)
    - 영수증 차감: 영수증 사진 글자 인식(구글 드라이브 OCR — Apps Script 왼쪽 '서비스'에서 Drive API 추가 필요) → 확인 후 여러 상품 한 번에 차감, 같은 영수증 두 번 차감 방지
    - 재고 수량: 직원이 고친 수량을 시트 '재고 수량' 탭에, 수정 기록(누가·언제·이전→변경)을 '재고 수정 기록' 탭에 저장 (기록은 90일 보관)
+   - 도난·불량: 직원 신고(날짜·유형·DP/판매·제품·컬러·사이즈·수량·메모)와 관리자 최종 확인을 시트 '도난·불량' 탭에 저장 (계속 보관)
    - 매장 기록: 유동인구·외국인 고객 기록을 구글 시트 "도로시와 가로수길점 매장 기록"에 저장 (계속 보관)
      시트는 처음 기록할 때 내 구글 드라이브에 자동으로 만들어집니다.
 */
@@ -22,6 +23,7 @@ function doGet(e) {
     if (q.todos) return out_(todos_());
     if (q.qty) return out_(qtyAll_());
     if (q.qtylog) return out_(qtyLog_());
+    if (q.loss) return out_(lossAll_());
     if (q.logs) return out_(rangeLog_(date_(q.from), date_(q.to)));
     return out_(read_(q.date));
   }
@@ -42,6 +44,7 @@ function doPost(e) {
     if (b.kind === 'todo') return out_(saveTodo_(b));
     if (b.kind === 'qty') return out_(saveQty_(b));
     if (b.kind === 'qtybatch') return out_(saveQtyBatch_(b));
+    if (b.kind === 'loss') return out_(saveLoss_(b));
     const date = date_(b.date), key = 'CK_' + date;
     const id = String(b.id || '');
     if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) throw Error('항목 오류');
@@ -223,4 +226,29 @@ function authorize() {
   const r = Drive.Files.list({pageSize: 1});
   Logger.log('드라이브 권한 OK (' + ((r.files || []).length) + ')');
   Logger.log('문서 권한 OK: ' + typeof DocumentApp.openById);
+}
+
+/* ── 도난 · 불량 (시트 '도난·불량' 탭, 계속 보관) ── */
+const L_HEAD = ['ID', '날짜', '유형', '구분', '제품', '컬러', '사이즈', '수량', '메모', '신고자', '신고 시각', '최종 확인', '확인 시각', 'pid'];
+function lossSheet_() { return sheet_('도난·불량', L_HEAD, 'A:N'); }
+function lossObj_(r) { return {id: String(r[0]), date: d_(r[1]), type: String(r[2]), src: String(r[3]), name: String(r[4]), color: String(r[5]), size: String(r[6]), qty: Number(r[7]) || 1, memo: String(r[8] || ''), by: String(r[9] || ''), at: r[10] instanceof Date ? r[10].toISOString() : String(r[10] || ''), okBy: String(r[11] || ''), okAt: r[12] instanceof Date ? r[12].toISOString() : String(r[12] || ''), pid: String(r[13] || '')}; }
+function lossAll_() {
+  const v = lossSheet_().getDataRange().getValues().slice(1).filter(function (r) { return r[0] !== ''; });
+  return {ok: true, loss: v.map(lossObj_)};
+}
+function saveLoss_(b) {
+  const sh = lossSheet_(), v = sh.getDataRange().getValues();
+  const find = function (id) { return v.findIndex(function (r, k) { return k > 0 && String(r[0]) === String(id); }); };
+  if (b.act === 'add') {
+    const qty = Number(b.qty);
+    if (!b.name || !isFinite(qty) || qty < 1 || qty > 9999) throw Error('입력 오류');
+    sh.appendRow(['L' + Date.now().toString(36), date_(b.date), s_(b.type, 10), s_(b.src, 10), s_(b.name, 80), s_(b.color, 30), s_(b.size, 30), qty, s_(b.memo, 300), s_(b.by, 20), new Date().toISOString(), '', '', s_(b.pid, 10)]);
+  } else if (b.act === 'ok' || b.act === 'unok') {
+    const i = find(b.id); if (i < 1) throw Error('없는 기록');
+    sh.getRange(i + 1, 12, 1, 2).setValues([b.act === 'ok' ? [s_(b.by, 20), new Date().toISOString()] : ['', '']]);
+  } else if (b.act === 'del') {
+    const i = find(b.id); if (i < 1) throw Error('없는 기록');
+    sh.deleteRow(i + 1);
+  } else throw Error('알 수 없는 요청');
+  return lossAll_();
 }

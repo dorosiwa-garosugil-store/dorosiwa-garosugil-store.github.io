@@ -15,6 +15,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{border:0;background:none;padding:0;cursor:pointer}
 .vmg{display:block}
 @media (min-width:900px){.vmg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}.vmL{position:sticky;top:12px}.vmL svg{max-height:calc(100vh - 300px)}.vmR #vmCard{margin-top:0}}
+.inp{width:100%;border:1px solid var(--edge);background:var(--card);border-radius:11px;padding:10px;font-size:16px;color:inherit;height:auto}
 .rb-a{color:#2f6fd6;font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .wrap{max-width:640px;margin:0 auto;padding:0 14px calc(140px + var(--sb))}
 header{padding:calc(var(--st) + 14px) 2px 6px;display:flex;align-items:center;gap:8px}
@@ -288,8 +289,8 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.25-1';
-function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; }
+const APP_VER = '2026.11.25-2';
+function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; D.dp = j.dp || []; D.dpOut = j.dpOut || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
   if (manual) $('refBtn').classList.add('spin');
@@ -335,7 +336,7 @@ async function saveAll() {
     const cur = await ghGet();
     if (S.sha && cur.sha !== S.sha && !(await ask('다른 곳에서 먼저 바뀐 내용이 있어요. 내 변경사항으로 덮어쓸까요?', '덮어쓰기', true))) { S.saving = false; render(); return; }
     const t = now().date.replace(/-/g, '.');
-    const body = {updated:t, appVersion:D.appVersion || APP_VER, config:D.config, months:D.months, daily:D.daily, notices:D.notices, todos:D.todos || [], stock:D.stock || [], consults:D.consults || []};
+    const body = {updated:t, appVersion:D.appVersion || APP_VER, config:D.config, months:D.months, daily:D.daily, notices:D.notices, todos:D.todos || [], stock:D.stock || [], consults:D.consults || [], dp:D.dp || [], dpOut:D.dpOut || []};
     const r = await fetch(GH_URL, {method:'PUT', headers:{...ghHeaders(), 'Content-Type':'application/json'}, body:JSON.stringify({message:`사이트에서 수정 (${t})`, content:b64enc(JSON.stringify(body, null, 1) + '\n'), sha:cur.sha, branch:GH.branch})});
     if (!r.ok) throw Error(r.status === 409 ? '동시에 수정됐어요. 새로고침 후 다시 해주세요.' : '저장 실패 (' + r.status + ')');
     const j = await r.json(); S.sha = j.content.sha; D.updated = t; S.dirty = 0; saveCache();
@@ -474,11 +475,13 @@ const ICON = {
   log:'<path d="M4 20h16"/><path d="M7 16V10M12 16V6M17 16v-4"/>',
   stock:'<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',
   consult:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M9 15l2 2 4-4"/>',
-  vmd:'<path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/>'
+  vmd:'<path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/>',
+  dp:'<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>'
 };
 const ico = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
 const todoSub = () => { const n = idleItems().length, d = idleItems().filter(i => CK.checks[i.id] && CK.date === T.date).length, u = tdUnreadCount(), k = (D.todos || []).length; return u ? `새 소식 ${u}건 · 한가할 때 ${d}/${n}` : `한가할 때 ${d}/${n}${k ? ` · 할 일 ${k}건` : ''}`; };
 function vToday() {
+  if (admin()) lsLoad();
   if (ckUrl() && !TD.loading && (!TD.loaded || Date.now() - TD.at > 60000)) tdLoad();
   const d = dayInfo(T.date), dl = pubDaily(T.date);
   const label = new Date(T.date + 'T12:00:00').toLocaleDateString('ko-KR', {month:'long', day:'numeric', weekday:'short'});
@@ -503,9 +506,10 @@ function vToday() {
     ['guide', '업무 매뉴얼', '본사 지침 · 응대 가이드 · 캐셔', 'guide'],
     ['todo', '해야 할 일', todoSub(), 'go:todo'],
     ['consult', '방문 예약', csSub(), 'go:consult'],
-    ['vmd', 'VMD', '매장 지도 · 진열 위치', 'go:vmd']
+    ['vmd', 'VMD', '매장 지도 · 진열 위치', 'go:vmd'],
+    ['dp', 'DP · 로스 관리', dpSub(), 'go:dp']
   ];
-  h += `<div class="hub">${tiles.map(([k, t, sub, act]) => { const [a, v] = act.split(':'); return `<button class="tile ${act ? '' : 'off'}" ${act ? `data-act="${a}" ${v ? `data-v="${v}"` : ''}` : 'disabled'}>${k === 'notice' && unreadCount() ? `<span class="tdot">${unreadCount()}</span>` : ''}${k === 'todo' && tdUnreadCount() ? `<span class="tdot">${tdUnreadCount()}</span>` : ''}${k === 'consult' && csToday().length ? `<span class="tdot">${csToday().length}</span>` : ''}${ico(k)}<b>${t}</b><small>${sub}</small></button>`; }).join('')}</div>`;
+  h += `<div class="hub">${tiles.map(([k, t, sub, act]) => { const [a, v] = act.split(':'); return `<button class="tile ${act ? '' : 'off'}" ${act ? `data-act="${a}" ${v ? `data-v="${v}"` : ''}` : 'disabled'}>${k === 'notice' && unreadCount() ? `<span class="tdot">${unreadCount()}</span>` : ''}${k === 'todo' && tdUnreadCount() ? `<span class="tdot">${tdUnreadCount()}</span>` : ''}${k === 'dp' && admin() && lsWait() ? `<span class="tdot">${lsWait()}</span>` : ''}${k === 'consult' && csToday().length ? `<span class="tdot">${csToday().length}</span>` : ''}${ico(k)}<b>${t}</b><small>${sub}</small></button>`; }).join('')}</div>`;
   const pin = sortedNotices()[0];
   if (pin) h += `<button class="card row" style="width:100%;text-align:left" data-act="go" data-v="notice"><span class="grow"><span class="mut">공지</span><br><b>${pin.pinned ? '📌 ' : ''}${esc(pin.title)}</b></span><span class="mut">›</span></button>`;
   return h;
@@ -954,7 +958,7 @@ async function prLoad() {
   if (PR.loading) return; PR.loading = true; PR.err = '';
   try { const r = await fetch('products.json?v=' + APP_VER + '&t=' + Date.now()); if (!r.ok) throw Error(r.status); PR.data = await r.json(); }
   catch (e) { PR.err = '제품 목록을 불러오지 못했어요.'; }
-  finally { PR.loading = false; if (S.tab === 'product' || S.tab === 'stock' || S.tab === 'pdetail' || S.tab === 'vmd') render(); }
+  finally { PR.loading = false; if (S.tab === 'product' || S.tab === 'stock' || S.tab === 'pdetail' || S.tab === 'vmd' || S.tab === 'dp') render(); }
 }
 const won = n => n == null || n === '' ? '' : Number(n).toLocaleString('ko-KR');
 const TYPES = ['둥근', '벌어진', '처진', '퍼진', '종모양', '비대칭', 'AA·A'];
@@ -1310,8 +1314,11 @@ function vmZone(z) {
   if (z.photo && z.photo.length) h += `<div style="display:flex;gap:6px;overflow-x:auto;margin-top:10px;scrollbar-width:none">${z.photo.map((src, i) => `<img src="${esc(src)}" alt="" data-act="vmImg" data-v="${esc(z.id)}" loading="lazy" style="height:150px;flex:0 0 auto;max-width:${i ? 140 : 230}px;object-fit:cover;border-radius:10px;background:var(--soft);cursor:pointer">`).join('')}</div>`;
   if (z.desc) h += `<div style="margin-top:8px">${z.desc.split('\n').map(l => l.startsWith('! ') ? `<div class="rb-em">${esc(l.slice(2))}</div>` : `<div class="rb-li">${esc(l.replace(/^- /, ''))}</div>`).join('')}</div>`;
   if (z.check) h += `<div class="note" style="font-size:12px;margin-top:8px">🔍 ${esc(z.check)}</div>`;
-  if (z.line && z.line.length) h += `<div class="mut" style="font-weight:700;font-size:12px;margin:10px 0 2px">걸린 순서 (${esc(z.dir || '왼쪽부터')})</div>` + z.line.map((l, i, a) => { const p = PR.data && l.pid ? PR.data.items.find(x => x.id === l.pid) : null;
-    return `<${p ? `button data-act="vmP" data-v="${esc(p.id)}"` : 'div'} class="row" style="width:100%;text-align:left;padding:8px 0;border-top:1px solid var(--edge);gap:8px"><span class="mut" style="flex:0 0 16px;font-weight:800;font-size:12px">${l.tag ? '' : i + 1 - a.slice(0, i).filter(x => x.tag).length}</span>${p && p.images[0] ? `<img src="${esc(p.images[0])}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:0 0 40px">` : '<span style="width:40px;height:40px;flex:0 0 40px;border-radius:8px;background:var(--soft)"></span>'}<span class="grow">${l.tag ? `<span style="font-size:11px;font-weight:750;color:var(--dan)">${esc(l.tag)}</span><br>` : ''}<span style="font-size:13.5px;font-weight:650">${esc(l.name)}</span>${l.color ? `<br><span class="mut" style="font-size:12px">${esc(l.color)}</span>` : ''}</span>${p ? '<span class="mut">›</span>' : ''}</${p ? 'button' : 'div'}>`; }).join('');
+  const dpl = (D.dp || []).filter(x => x.zone === z.id), g = [];
+  dpl.forEach(x => { const k = (x.tag || '') + '|' + (x.pid || x.name); let o = g.find(y => y.k === k); if (!o) g.push(o = {k, tag:x.tag, pid:x.pid, name:x.name, cs:[], qty:0}); if (x.color && !o.cs.includes(x.color)) o.cs.push(x.color); o.qty += +x.qty || 0; });
+  const zl = dpl.length ? g.map(o => ({tag:o.tag, pid:o.pid, name:o.name, color:o.cs.join(' · '), qty:o.qty})) : z.line;
+  if (zl && zl.length) h += `<div class="mut" style="font-weight:700;font-size:12px;margin:10px 0 2px">걸린 순서 (${esc(z.dir || '왼쪽부터')})</div>` + zl.map((l, i, a) => { const p = PR.data && l.pid ? PR.data.items.find(x => x.id === l.pid) : null;
+    return `<${p ? `button data-act="vmP" data-v="${esc(p.id)}"` : 'div'} class="row" style="width:100%;text-align:left;padding:8px 0;border-top:1px solid var(--edge);gap:8px"><span class="mut" style="flex:0 0 16px;font-weight:800;font-size:12px">${l.tag ? '' : i + 1 - a.slice(0, i).filter(x => x.tag).length}</span>${p && p.images[0] ? `<img src="${esc(p.images[0])}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:0 0 40px">` : '<span style="width:40px;height:40px;flex:0 0 40px;border-radius:8px;background:var(--soft)"></span>'}<span class="grow">${l.tag ? `<span style="font-size:11px;font-weight:750;color:var(--dan)">${esc(l.tag)}</span><br>` : ''}<span style="font-size:13.5px;font-weight:650">${esc(l.name)}</span>${l.color || l.qty ? `<br><span class="mut" style="font-size:12px">${esc(l.color || '')}${l.qty ? `${l.color ? ' · ' : ''}DP ${l.qty}개` : ''}</span>` : ''}</span>${p ? '<span class="mut">›</span>' : ''}</${p ? 'button' : 'div'}>`; }).join('');
   if (items.length) h += `<div class="mut" style="font-weight:700;font-size:12px;margin:10px 0 2px">이 자리 제품 · 누르면 상세</div>` + items.map(p => `<button class="row" style="width:100%;text-align:left;padding:8px 0;border-top:1px solid var(--edge);gap:8px" data-act="vmP" data-v="${esc(p.id)}">${p.images[0] ? `<img src="${esc(p.images[0])}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:0 0 40px">` : ''}<span class="grow" style="font-size:13.5px;font-weight:650">${esc(p.name)}</span><span class="mut">›</span></button>`).join('');
   if (cats.length) h += `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:10px">${cats.map(c => `<button class="pill" data-act="vmC" data-v="${esc(c.id)}">${esc(c.name)} 제품 보기 ›</button>`).join('')}</div>`;
   return h + '</div>';
@@ -1381,6 +1388,189 @@ function consultSheet(c) {
     closeSheet(); markDirty('예약 저장됨 · 아래 저장을 눌러 주세요');
   };
   if (c) $('csX').onclick = async () => { if (await ask(`${c.date.slice(5)} ${c.time} 예약을 삭제할까요?`, '삭제', true)) { D.consults = D.consults.filter(x => x.id !== c.id); markDirty('예약 삭제됨 · 아래 저장을 눌러 주세요'); } };
+}
+/* ───────── DP · 로스 관리 (data.json dp[] · dpOut[] 관리자 / 도난·불량은 서버 '도난·불량' 시트, 전 직원 신고) ───────── */
+const DP = {tab:'stock', floor:'1f', out:'all', lt:'all', lok:'all'};
+const LS = {list:[], loaded:false, loading:false, at:0};
+const DP_ST = {wait:['반품 대기', 25], hold:['보류 · 창고 보관', 210], done:['반품 완료', 140]};
+const dpList = () => D.dp || [];
+const dpOutList = () => D.dpOut || [];
+const vmFloors = () => ((C().vmd || {}).floors) || [];
+const vmZones = fl => ((vmFloors().find(f => f.id === fl) || {}).zones) || [];
+const zoneOf = (fl, id) => vmZones(fl).find(z => z.id === id);
+const zoneName = (fl, id) => { const z = zoneOf(fl, id); return z ? (z.n != null ? z.n + '. ' : '') + z.name : (id || '위치 미지정'); };
+const dpSpec = x => [x.color, x.size].filter(Boolean).join(' · ');
+async function lsLoad(force) {
+  if (!ckUrl() || LS.loading) return; if (!force && LS.loaded && Date.now() - LS.at < 30000) return;
+  LS.loading = true;
+  try { const r = await fetch(ckUrl() + '?loss=1&t=' + Date.now()); const j = await r.json(); if (j.ok) LS.list = j.loss || []; }
+  catch (e) {} finally { LS.loaded = true; LS.at = Date.now(); LS.loading = false; if ((S.tab === 'dp' || S.tab === 'today') && !typing()) render(); }
+}
+async function lsPost(body) {
+  const r = await fetch(ckUrl(), {method:'POST', body:JSON.stringify({kind:'loss', by:S.me, ...body})}); const j = await r.json();
+  if (!j.ok) throw Error(j.error); LS.list = j.loss || []; LS.at = Date.now();
+}
+const lsWait = () => LS.list.filter(x => !x.okBy).length;
+function dpSub() { const n = dpList().reduce((a, x) => a + (+x.qty || 0), 0), w = dpOutList().filter(x => x.status === 'wait').reduce((a, x) => a + (+x.qty || 0), 0); return `DP ${n}개${w ? ` · 반품 대기 ${w}` : ''}`; }
+/* 제품 고르기 (판매 제품 목록 + 직접 입력) */
+function pickHtml(o) {
+  const items = PR.data ? PR.data.items : [], cats = PR.data ? PR.data.categories : [];
+  const p = o.pid ? items.find(x => x.id === o.pid) : null;
+  return `<label class="f">제품</label><select id="pkP" class="inp">${'<option value="">직접 입력</option>' + cats.map(c => `<optgroup label="${esc(c.name)}">${items.filter(i => i.cat === c.id).map(i => `<option value="${i.id}" ${i.id === o.pid ? 'selected' : ''}>${esc(i.name)}</option>`).join('')}</optgroup>`).join('')}</select>
+   <input type="text" id="pkN" maxlength="80" value="${esc(p ? '' : o.name || '')}" placeholder="제품명 직접 입력" style="margin-top:6px;${p ? 'display:none' : ''}">
+   <div class="row" style="gap:8px"><div class="grow"><label class="f">컬러</label><div id="pkCw"></div></div><div class="grow"><label class="f">사이즈</label><div id="pkSw"></div></div></div>`;
+}
+function pickBind(o) {
+  const fill = (keep) => {
+    const p = PR.data && PR.data.items.find(x => x.id === $('pkP').value);
+    $('pkN').style.display = p ? 'none' : '';
+    const opt = (id, list, cur, ph) => list && list.length ? `<select id="${id}" class="inp"><option value="">${ph}</option>${list.map(v => `<option ${v === cur ? 'selected' : ''}>${esc(v)}</option>`).join('')}${cur && !list.includes(cur) ? `<option selected>${esc(cur)}</option>` : ''}</select>` : `<input type="text" id="${id}" maxlength="30" value="${esc(cur || '')}" placeholder="${ph}">`;
+    $('pkCw').innerHTML = opt('pkC', p && p.colors, keep ? o.color : '', '선택');
+    $('pkSw').innerHTML = opt('pkS', p && p.sizes, keep ? o.size : '', '미입력');
+  };
+  fill(true); $('pkP').onchange = () => fill(false);
+}
+function pickVal() {
+  const pid = $('pkP').value, p = PR.data && PR.data.items.find(x => x.id === pid);
+  return {pid:p ? pid : '', name:p ? p.name : $('pkN').value.trim(), color:$('pkC').value.trim(), size:$('pkS').value.trim()};
+}
+/* DP 등록 · 수정 (관리자) */
+function dpSheet(x, zone) {
+  const o = x || {fl:DP.floor, zone:zone || '', pid:'', name:'', color:'', size:'', qty:1, tag:''};
+  const zs = vmZones(o.fl || '1f');
+  sheet(`<h2>${x ? 'DP 수정' : 'DP 등록'}</h2>
+   <label class="f">위치 (VMD 구역)</label><select id="dpZ" class="inp">${zs.map(z => `<option value="${z.id}" ${z.id === o.zone ? 'selected' : ''}>${esc((z.n != null ? z.n + '. ' : '') + z.name)}</option>`).join('')}</select>
+   ${pickHtml(o)}
+   <div class="row" style="gap:8px"><div style="width:110px"><label class="f">수량</label><input type="number" inputmode="numeric" id="dpQ" min="1" value="${esc(String(o.qty || 1))}"></div><div class="grow"><label class="f">표시 (선택)</label><input type="text" id="dpT" maxlength="20" value="${esc(o.tag || '')}" placeholder="예: 맨 위 토르소"></div></div>
+   <div class="row" style="margin-top:14px;flex-wrap:wrap;gap:8px">${x ? '<button class="btn dan" id="dpX">삭제</button><button class="btn" id="dpO">DP 제외 →</button>' : ''}<button class="btn grow" id="dpC">취소</button><button class="btn pri grow" id="dpS">${x ? '수정' : '등록'}</button></div>`);
+  pickBind(o);
+  $('dpC').onclick = closeSheet;
+  $('dpS').onclick = () => {
+    const v = pickVal(), qty = Math.max(1, Math.round(+$('dpQ').value || 1)); if (!v.name) { toast('제품을 골라 주세요', true); return; }
+    const doc = {fl:o.fl || '1f', zone:$('dpZ').value, ...v, qty, tag:$('dpT').value.trim()};
+    D.dp = dpList(); if (x) Object.assign(D.dp.find(y => y.id === x.id), doc); else D.dp.push({id:'d' + Date.now().toString(36), ...doc});
+    closeSheet(); markDirty('DP 저장됨 · 아래 저장을 눌러 주세요 (VMD에도 반영돼요)');
+  };
+  if (x) {
+    $('dpX').onclick = async () => { if (await ask(`${x.name} ${dpSpec(x)} DP를 삭제할까요?\n(제외·반품 목록으로 보내려면 'DP 제외'를 눌러 주세요)`, '삭제', true)) { D.dp = dpList().filter(y => y.id !== x.id); markDirty('DP 삭제됨 · 아래 저장을 눌러 주세요'); } };
+    $('dpO').onclick = () => dpOutSheet(x);
+  }
+}
+function dpOutSheet(x) {
+  sheet(`<h2>DP 제외</h2><div class="mut" style="margin-bottom:6px">${esc(x.name)} · ${esc(dpSpec(x) || '컬러·사이즈 미입력')} · ${esc(zoneName(x.fl, x.zone))}</div>
+   <label class="f">제외 수량 (지금 ${x.qty}개)</label><input type="number" inputmode="numeric" id="doQ" min="1" max="${x.qty}" value="${x.qty}" style="width:110px">
+   <label class="f">상태</label><div class="row" style="gap:6px;flex-wrap:wrap">${Object.entries(DP_ST).map(([k, [l]]) => `<label class="pill" style="display:inline-flex;gap:5px;align-items:center"><input type="radio" name="doS" value="${k}" ${k === 'wait' ? 'checked' : ''}>${l}</label>`).join('')}</div>
+   <div class="row" style="margin-top:14px"><button class="btn grow" id="doC">취소</button><button class="btn pri grow" id="doS">제외하기</button></div>`);
+  $('doC').onclick = closeSheet;
+  $('doS').onclick = () => {
+    const q = Math.min(x.qty, Math.max(1, Math.round(+$('doQ').value || 1))), st = document.querySelector('input[name=doS]:checked').value;
+    D.dpOut = dpOutList(); D.dpOut.push({id:'o' + Date.now().toString(36), date:T.date, pid:x.pid || '', name:x.name, color:x.color || '', size:x.size || '', qty:q, status:st, from:zoneName(x.fl, x.zone)});
+    const r = dpList().find(y => y.id === x.id); if (q >= r.qty) D.dp = dpList().filter(y => y.id !== x.id); else r.qty -= q;
+    closeSheet(); markDirty(`DP 제외 → ${DP_ST[st][0]} · 아래 저장을 눌러 주세요`);
+  };
+}
+function dpStSheet(o) {
+  sheet(`<h2>제외 상품</h2><div class="mut" style="margin-bottom:6px">${esc(o.date)} · ${esc(o.name)} · ${esc(dpSpec(o))} · ${o.qty}개${o.from ? ` · ${esc(o.from)}에서` : ''}</div>
+   <label class="f">상태</label><div class="row" style="gap:6px;flex-wrap:wrap">${Object.entries(DP_ST).map(([k, [l]]) => `<label class="pill" style="display:inline-flex;gap:5px;align-items:center"><input type="radio" name="osS" value="${k}" ${k === o.status ? 'checked' : ''}>${l}</label>`).join('')}</div>
+   <div class="row" style="margin-top:14px"><button class="btn dan" id="osX">삭제</button><button class="btn grow" id="osC">취소</button><button class="btn pri grow" id="osS">저장</button></div>`);
+  $('osC').onclick = closeSheet;
+  $('osS').onclick = () => { const st = document.querySelector('input[name=osS]:checked').value; const r = dpOutList().find(y => y.id === o.id); r.status = st; if (st === 'done' && !r.doneDate) r.doneDate = T.date; closeSheet(); markDirty('상태 변경됨 · 아래 저장을 눌러 주세요'); };
+  $('osX').onclick = async () => { if (await ask('이 제외 기록을 삭제할까요?', '삭제', true)) { D.dpOut = dpOutList().filter(y => y.id !== o.id); markDirty('삭제됨 · 아래 저장을 눌러 주세요'); } };
+}
+/* 도난 · 불량 신고 (전 직원) */
+function lossSheet(pre) {
+  if (needName()) return;
+  if (!ckUrl()) { toast('서버 연결 후 사용할 수 있어요', true); return; }
+  const o = {date:T.date, type:'불량', src:'판매', pid:'', name:'', color:'', size:'', qty:1, memo:'', ...(pre || {})};
+  const rad = (nm, list, cur) => `<div class="row" style="gap:6px;flex-wrap:wrap">${list.map(([v, l]) => `<label class="pill" style="display:inline-flex;gap:5px;align-items:center"><input type="radio" name="${nm}" value="${v}" ${v === cur ? 'checked' : ''}>${l}</label>`).join('')}</div>`;
+  sheet(`<h2>도난 · 불량 신고</h2>
+   <div class="row" style="gap:8px"><div class="grow"><label class="f">날짜</label><input type="date" id="lsD" value="${esc(o.date)}" class="inp"></div><div style="width:100px"><label class="f">수량</label><input type="number" inputmode="numeric" id="lsQ" min="1" value="${o.qty}"></div></div>
+   <label class="f">유형</label>${rad('lsT', [['도난', '도난'], ['불량', '불량']], o.type)}
+   <label class="f">구분</label>${rad('lsR', [['DP', 'DP 상품'], ['판매', '판매 상품']], o.src)}
+   ${pickHtml(o)}
+   <label class="f">메모 (어떤 불량인지 등)</label><textarea id="lsM" maxlength="300" style="min-height:70px" placeholder="예: 후크 불량, 오염, 실밥 풀림">${esc(o.memo)}</textarea>
+   <div class="row" style="margin-top:14px"><button class="btn grow" id="lsC">취소</button><button class="btn pri grow" id="lsS">신고하기</button></div>`);
+  pickBind(o);
+  $('lsC').onclick = closeSheet;
+  $('lsS').onclick = async () => {
+    const v = pickVal(); if (!v.name) { toast('제품을 골라 주세요', true); return; }
+    const body = {act:'add', date:$('lsD').value || T.date, type:document.querySelector('input[name=lsT]:checked').value, src:document.querySelector('input[name=lsR]:checked').value, ...v, qty:Math.max(1, Math.round(+$('lsQ').value || 1)), memo:$('lsM').value.trim()};
+    $('lsS').disabled = true;
+    try { await lsPost(body); closeSheet(); DP.tab = 'loss'; toast('신고했어요 · 관리자 확인을 기다려요'); render(); }
+    catch (e) { $('lsS').disabled = false; toast('저장하지 못했어요 (서버 코드 새 버전 배포가 필요할 수 있어요)', true); }
+  };
+}
+async function lsOk(id, on) {
+  const x = LS.list.find(y => y.id === id); if (!x) return;
+  try {
+    await lsPost({act:on ? 'ok' : 'unok', id}); toast(on ? '최종 확인했어요' : '확인을 취소했어요'); render();
+    if (on && x.src === 'DP') {
+      const m = dpList().find(d => (x.pid ? d.pid === x.pid : d.name === x.name) && (d.color || '') === (x.color || '') && (!x.size || (d.size || '') === x.size));
+      if (m && await ask(`DP 재고에서도 빼둘까요?\n${m.name} ${dpSpec(m)} (${zoneName(m.fl, m.zone)}) ${m.qty}개 → ${Math.max(0, m.qty - x.qty)}개`, '빼기')) {
+        if (m.qty <= x.qty) D.dp = dpList().filter(d => d.id !== m.id); else m.qty -= x.qty; markDirty('DP 재고 수정됨 · 아래 저장을 눌러 주세요');
+      }
+    }
+  } catch (e) { toast('저장하지 못했어요', true); }
+}
+function csvDown(name, head, rows) {
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const csv = '﻿' + [head, ...rows].map(r => r.map(q).join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'})); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function dpReport() {
+  const ym = T.date.slice(0, 7);
+  sheet(`<h2>본사 보고 · 도난·불량</h2><div class="row" style="gap:8px"><div class="grow"><label class="f">시작</label><input type="date" id="rpA" class="inp" value="${ym}-01"></div><div class="grow"><label class="f">끝</label><input type="date" id="rpB" class="inp" value="${T.date}"></div></div>
+   <label class="row" style="margin:10px 0;gap:8px;font-size:13px"><input type="checkbox" id="rpO" checked style="width:20px;height:20px"> 관리자 확인 완료된 것만</label>
+   <div class="row" style="gap:8px;margin-top:10px"><button class="btn grow" id="rpC">닫기</button><button class="btn grow" id="rpX">⬇️ 엑셀</button><button class="btn pri grow" id="rpT">📋 텍스트 복사</button></div>`);
+  const pick = () => { const a = $('rpA').value, b = $('rpB').value, ok = $('rpO').checked; return LS.list.filter(x => x.date >= a && x.date <= b && (!ok || x.okBy)).sort((p, q) => p.date.localeCompare(q.date)); };
+  $('rpC').onclick = closeSheet;
+  $('rpX').onclick = () => { const l = pick(); csvDown(`가로수길점_도난불량_${$('rpA').value}_${$('rpB').value}.csv`, ['날짜', '유형', '구분', '제품', '컬러', '사이즈', '수량', '메모', '신고자', '최종 확인'], l.map(x => [x.date, x.type, x.src === 'DP' ? 'DP 상품' : '판매 상품', x.name, x.color, x.size, x.qty, x.memo, x.by, x.okBy])); };
+  $('rpT').onclick = async () => {
+    const l = pick(), sum = (f) => l.filter(f).reduce((a, x) => a + (+x.qty || 0), 0);
+    const line = t => `- ${t}: ${sum(x => x.type === t)}개 (DP ${sum(x => x.type === t && x.src === 'DP')} / 판매 ${sum(x => x.type === t && x.src !== 'DP')})`;
+    const txt = `[도로시와 가로수길점 도난·불량 보고] ${$('rpA').value} ~ ${$('rpB').value}\n${line('도난')}\n${line('불량')}\n\n` + l.map(x => `${x.date.slice(5)} ${x.type} · ${x.src === 'DP' ? 'DP' : '판매'} · ${x.name} ${dpSpec(x)} ${x.qty}개${x.memo ? ` (${x.memo})` : ''}`).join('\n');
+    try { await navigator.clipboard.writeText(txt); toast('복사했어요 · 카톡·메일에 붙여넣기 하세요'); } catch (e) { toast('복사하지 못했어요', true); }
+  };
+}
+function dpRow(x, inner, act, v) { return `<button class="row" style="width:100%;text-align:left;padding:10px 0;border-top:1px solid var(--edge);gap:8px" data-act="${act}" data-v="${esc(v)}">${inner}</button>`; }
+function vDp() {
+  const adm = admin(); if (!PR.data && !PR.loading) prLoad(); lsLoad();
+  let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">DP · 로스 관리</b></div>`;
+  const wq = dpOutList().filter(x => x.status === 'wait').length, lw = lsWait();
+  h += `<div class="seg">${[['stock', 'DP 재고'], ['out', `DP 제외 · 반품${wq ? ` ${wq}` : ''}`], ['loss', `도난 · 불량${lw ? ` <span style="color:var(--dan)">${lw}</span>` : ''}`]].map(([k, l]) => `<button data-act="dpTab" data-v="${k}" class="${DP.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  if (DP.tab === 'stock') {
+    h += `<div class="row" style="gap:6px;margin-bottom:8px">${vmFloors().map(f => `<button class="pill ${DP.floor === f.id ? 'on' : ''}" data-act="dpFl" data-v="${f.id}">${esc(f.name)}</button>`).join('')}<span class="grow"></span>${adm && DP.floor === '1f' ? '<button class="pill on" data-act="dpNew">+ DP 등록</button>' : ''}</div>`;
+    const zs = vmZones(DP.floor), all = dpList().filter(x => x.fl === DP.floor);
+    if (DP.floor !== '1f' || !zs.length) return h + `<div class="card empty">${esc((vmFloors().find(f => f.id === DP.floor) || {}).name || '')} DP는 준비 중이에요.<br><span style="font-size:12px">VMD 지도가 올라가면 같이 채울게요</span></div>`;
+    const tot = all.reduce((a, x) => a + (+x.qty || 0), 0), noSize = all.filter(x => !x.size).length;
+    h += `<div class="mut" style="font-size:12.5px;margin:0 2px 8px">전체 <b style="color:var(--ink)">${tot}개</b> · ${all.length}줄${noSize ? ` · <span style="color:#b86e00">사이즈 미입력 ${noSize}줄</span>` : ''} · ${adm ? '줄을 누르면 수정 · DP 제외' : '줄을 누르면 도난·불량 신고'}</div>`;
+    for (const z of [...zs].sort((a, b) => (a.n ?? 99) - (b.n ?? 99))) {
+      const l = all.filter(x => x.zone === z.id); if (!l.length && !adm) continue;
+      h += `<div class="card" style="padding:10px 14px 4px"><div class="row" style="gap:8px"><b class="grow" style="font-size:14.5px">${esc(zoneName(DP.floor, z.id))}</b><span class="mut" style="font-size:12px">${l.reduce((a, x) => a + (+x.qty || 0), 0)}개</span>${adm ? `<button class="link" data-act="dpNew" data-v="${esc(z.id)}">+ 추가</button>` : ''}</div>`
+        + (l.map(x => dpRow(x, `<span class="grow"><span style="font-size:13.5px;font-weight:650">${x.tag ? `<span style="color:var(--dan);font-size:11px">${esc(x.tag)}</span> ` : ''}${esc(x.name)}</span><br><span class="mut" style="font-size:12px">${esc(x.color || '컬러 미입력')} · ${x.size ? esc(x.size) : '<span style="color:#b86e00">사이즈 미입력</span>'}</span></span><b style="font-size:15px">${x.qty}</b><span class="mut">›</span>`, 'dpEdit', x.id)).join('') || '<div class="mut" style="font-size:12px;padding:8px 0">등록된 DP 없음</div>') + '</div>';
+    }
+    return h;
+  }
+  if (DP.tab === 'out') {
+    const all = dpOutList(), cnt = k => all.filter(x => x.status === k).reduce((a, x) => a + (+x.qty || 0), 0);
+    h += `<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px">${[['all', `전체`], ...Object.entries(DP_ST).map(([k, [l]]) => [k, `${l} ${cnt(k)}`])].map(([k, l]) => `<button class="pill ${DP.out === k ? 'on' : ''}" data-act="dpOutF" data-v="${k}">${l}</button>`).join('')}</div>`;
+    h += `<div class="row" style="gap:6px;margin-bottom:8px"><button class="btn grow" data-act="dpOutCopy">📋 반품 대기 목록 복사</button><button class="btn grow" data-act="dpOutXls">⬇️ 엑셀</button></div>`;
+    const l = all.filter(x => DP.out === 'all' || x.status === DP.out).sort((a, b) => b.date.localeCompare(a.date));
+    if (!l.length) return h + `<div class="card empty">${all.length ? '이 상태의 상품이 없어요.' : 'DP에서 제외한 상품이 없어요.<br><span style="font-size:12px">DP 재고에서 줄을 누르고 \'DP 제외\'를 하면 여기로 와요</span>'}</div>`;
+    return h + `<div class="card" style="padding:2px 14px">${l.map(x => { const [sl, hu] = DP_ST[x.status] || DP_ST.wait; return `<${adm ? `button data-act="dpOutEdit" data-v="${esc(x.id)}"` : 'div'} class="row" style="width:100%;text-align:left;padding:10px 0;border-top:1px solid var(--edge);gap:8px"><span class="grow"><span class="mut" style="font-size:11.5px">${esc(x.date)}${x.from ? ` · ${esc(x.from)}` : ''}</span><br><span style="font-size:13.5px;font-weight:650">${esc(x.name)}</span><br><span class="mut" style="font-size:12px">${esc(dpSpec(x) || '-')} · ${x.qty}개</span></span><span class="chip" style="--h:${hu};--s:55%">${sl}</span></${adm ? 'button' : 'div'}>`; }).join('')}</div>`;
+  }
+  // 도난 · 불량
+  h += `<button class="btn pri" style="width:100%;margin-bottom:8px" data-act="lsNew">+ 도난 · 불량 신고</button>`;
+  h += `<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:6px">${[['all', '전체'], ['도난', '도난'], ['불량', '불량']].map(([k, l]) => `<button class="pill ${DP.lt === k ? 'on' : ''}" data-act="lsT" data-v="${k}">${l}</button>`).join('')}<span style="width:8px"></span>${[['all', '전체'], ['wait', '확인 대기'], ['ok', '확인 완료']].map(([k, l]) => `<button class="pill ${DP.lok === k ? 'on' : ''}" data-act="lsO" data-v="${k}">${l}</button>`).join('')}</div>`;
+  if (adm) h += `<button class="btn" style="width:100%;margin-bottom:8px" data-act="dpRep">📤 본사 보고 (기간 요약 · 엑셀)</button>`;
+  if (!ckUrl()) return h + '<div class="card empty">서버 연결 후 사용할 수 있어요.</div>';
+  if (!LS.loaded) return h + '<div class="card empty">불러오는 중…</div>';
+  const l = LS.list.filter(x => (DP.lt === 'all' || x.type === DP.lt) && (DP.lok === 'all' || (DP.lok === 'ok' ? x.okBy : !x.okBy))).sort((a, b) => (+!!a.okBy) - (+!!b.okBy) || b.date.localeCompare(a.date) || b.at.localeCompare(a.at));
+  if (!l.length) return h + '<div class="card empty">기록이 없어요.</div>';
+  const tmf = iso => iso ? new Date(iso).toLocaleString('ko-KR', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false}) : '';
+  return h + l.map(x => `<div class="card" style="padding:11px 14px"><div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:4px"><span class="mut" style="font-size:12px;font-weight:650">${esc(dLabel(x.date))}</span><span class="chip" style="--h:${x.type === '도난' ? 0 : 30};--s:65%">${esc(x.type)}</span><span class="chip" style="--h:${x.src === 'DP' ? 275 : 200};--s:45%">${x.src === 'DP' ? 'DP 상품' : '판매 상품'}</span></div>
+    <div style="font-weight:700;font-size:14.5px">${esc(x.name)}</div><div class="mut" style="font-size:12.5px">${esc(dpSpec(x) || '-')} · ${x.qty}개 · 신고 ${esc(x.by)}</div>${x.memo ? `<div style="font-size:13px;margin-top:4px;white-space:pre-wrap">${esc(x.memo)}</div>` : ''}
+    <div class="row" style="gap:8px;margin-top:8px">${x.okBy ? `<span class="grow" style="color:var(--ok);font-weight:700;font-size:12.5px">✓ 최종 확인 · ${esc(x.okBy)} ${tmf(x.okAt)}</span>` : '<span class="grow" style="color:#b86e00;font-weight:700;font-size:12.5px">관리자 확인 대기</span>'}${adm ? `${x.okBy ? `<button class="btn sm" data-act="lsUnok" data-v="${esc(x.id)}">확인 취소</button>` : `<button class="btn sm pri" data-act="lsOk" data-v="${esc(x.id)}">최종 확인</button>`}<button class="btn sm dan" data-act="lsDel" data-v="${esc(x.id)}">삭제</button>` : ''}</div></div>`).join('');
 }
 /* ───────── 영수증으로 재고 차감 (사진 → 서버 OCR → 바코드·수량 확인 → 한 번에 차감) ───────── */
 const RC = {items:[], receipt:'', busy:'', msg:'', done:null, raw:'', err:''};
@@ -1582,7 +1772,7 @@ function render() {
   $('bars').innerHTML = bars;
   if (!S.ready && !D.config) { $('view').innerHTML = `<div class="card empty">${S.offline ? '로그인이 필요해요.' : '불러오는 중…'}</div>`; return; }
   const tbl = $('mtbl') || $('dtbl'), keep = tbl ? [tbl.id, tbl.scrollLeft, tbl.scrollTop] : null;
-  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog, product:vProduct, todo:vTodo, stock:vStock, qtlog:vQtLog, consult:vConsult, rcpt:vRcpt, pdetail:vPDetail, vmd:vVmd})[S.tab]();
+  $('view').innerHTML = ({today:vToday, month:vMonth, daily:vDaily, notice:vNotice, set:vSet, manual:vManual, check:vCheck, ckhist:vCkHist, log:vLog, product:vProduct, todo:vTodo, stock:vStock, qtlog:vQtLog, consult:vConsult, rcpt:vRcpt, pdetail:vPDetail, vmd:vVmd, dp:vDp})[S.tab]();
   $('foot').innerHTML = (D.updated ? '마지막 업데이트 ' + esc(D.updated) : '');
   $('saveBar').style.display = adm && S.dirty ? 'flex' : 'none';
   $('saveBar').innerHTML = `<span class="grow">저장 안 된 변경 ${S.dirty}건</span><button class="btn sm" data-act="discardAll" style="background:transparent;color:inherit;border-color:#fff6">되돌리기</button><button class="btn sm" data-act="saveAll" style="background:var(--rev);color:var(--acc);border:0" ${S.saving ? 'disabled' : ''}>${S.saving ? '저장 중…' : '저장'}</button>`;
@@ -1632,6 +1822,22 @@ document.addEventListener('click', async e => {
     case 'skAdd': stockSheet(null, v); return;
     case 'skMove': stockMoveSheet(); return;
     case 'prLoc': SK.q = ''; SK.mode = 'prod'; SK.open = v; S.tab = 'stock'; scrollTo(0, 0); break;
+    case 'dpTab': DP.tab = v; if (v === 'loss') lsLoad(true); break;
+    case 'dpFl': DP.floor = v; break;
+    case 'dpNew': if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } dpSheet(null, v || ''); return;
+    case 'dpEdit': { const x = dpList().find(y => y.id === v); if (!x) return; if (admin()) { if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } dpSheet(x); } else lossSheet({src:'DP', pid:x.pid, name:x.name, color:x.color, size:x.size}); return; }
+    case 'dpOutF': DP.out = v; break;
+    case 'dpOutEdit': { const x = dpOutList().find(y => y.id === v); if (x) dpStSheet(x); return; }
+    case 'dpOutCopy': { const l = dpOutList().filter(x => x.status === 'wait'); if (!l.length) { toast('반품 대기 상품이 없어요', true); return; } const txt = `[도로시와 가로수길점 DP 반품 목록] ${T.date}\n` + l.map(x => `- ${x.name} ${dpSpec(x)} ${x.qty}개`).join('\n') + `\n총 ${l.reduce((a, x) => a + (+x.qty || 0), 0)}개`; navigator.clipboard.writeText(txt).then(() => toast('복사했어요'), () => toast('복사하지 못했어요', true)); return; }
+    case 'dpOutXls': csvDown(`가로수길점_DP제외_${T.date}.csv`, ['제외일', '제품', '컬러', '사이즈', '수량', '상태', '빠진 위치', '반품 완료일'], dpOutList().filter(x => DP.out === 'all' || x.status === DP.out).map(x => [x.date, x.name, x.color, x.size, x.qty, (DP_ST[x.status] || DP_ST.wait)[0], x.from || '', x.doneDate || ''])); return;
+    case 'lsNew': if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } lossSheet(); return;
+    case 'lsT': DP.lt = v; break;
+    case 'lsO': DP.lok = v; break;
+    case 'lsOk': lsOk(v, true); return;
+    case 'lsUnok': lsOk(v, false); return;
+    case 'lsDel': (async () => { if (await ask('이 기록을 삭제할까요?', '삭제', true)) { try { await lsPost({act:'del', id:v}); render(); toast('삭제했어요'); } catch (e) { toast('삭제하지 못했어요', true); } } })(); return;
+    case 'dpRep': dpReport(); return;
+    case 'vmRep': { const z = zoneOf(VM.floor, v); if (!PR.data) return; lossSheet({src:'DP'}); return; }
     case 'vmF': VM.floor = v; VM.z = ''; break;
     case 'vmZ': VM.z = VM.z === v ? '' : v; render(); if (VM.z) { const c = $('vmCard'); if (c) c.scrollIntoView({behavior:'smooth', block:'nearest'}); } return;
     case 'vmP': PR.open = v; PR.from = 'vmd'; S.tab = 'pdetail'; scrollTo(0, 0); break;
