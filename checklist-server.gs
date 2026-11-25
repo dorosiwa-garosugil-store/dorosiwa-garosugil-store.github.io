@@ -124,10 +124,22 @@ function saveQtyBatch_(b) {
   const rc = s_(b.receipt, 40).trim(), items = (b.items || []).slice(0, 60);
   if (!items.length) throw Error('상품 없음');
   const rs = sheet_('영수증 차감', ['영수증 번호', '시각', '직원', '상품 수'], 'A:B');
-  if (rc) { const used = rs.getDataRange().getValues().slice(1).some(function (r) { return String(r[0]) === rc; }); if (used) throw Error('USED_RECEIPT'); }
-  items.forEach(function (it) { saveQty_({barcode: it.barcode, qty: it.qty, prev: it.prev, by: b.by, name: it.name, spec: it.spec, memo: b.memo}, true); });
-  qtyCleanup_(sheet_('재고 수정 기록', QL_HEAD, 'A:B'));
-  rs.appendRow([rc || '(번호 없음)', Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss'), s_(b.by, 20), items.length]);
+  if (rc) { const n = rs.getLastRow(); if (n > 1 && rs.getRange(2, 1, n - 1, 1).getValues().some(function (r) { return String(r[0]) === rc; })) throw Error('USED_RECEIPT'); }
+  const sh = sheet_('재고 수량', Q_HEAD, 'A:D'), v = sh.getDataRange().getValues(), idx = {};
+  v.forEach(function (r, k) { if (k > 0) idx[String(r[0])] = k; });
+  const now = new Date(), iso = now.toISOString(), ts = Utilities.formatDate(now, 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss'), add = [], logs = [];
+  items.forEach(function (it) {
+    const bc = String(it.barcode || ''), qty = Number(it.qty);
+    if (!/^[0-9A-Za-z-]{4,30}$/.test(bc) || !isFinite(qty) || Math.abs(qty) > 99999 || Math.floor(qty) !== qty) return;
+    const row = [bc, qty, s_(b.by, 20), iso, s_(it.name, 80), s_(it.spec, 40)];
+    if (idx[bc] != null) sh.getRange(idx[bc] + 1, 1, 1, 6).setValues([row]); else add.push(row);
+    logs.push([ts, iso, s_(b.by, 20), bc, s_(it.name, 80), s_(it.spec, 40), it.prev === '' || it.prev == null ? '' : Number(it.prev), qty, s_(b.memo, 60)]);
+  });
+  if (add.length) sh.getRange(sh.getLastRow() + 1, 1, add.length, 6).setValues(add);
+  const lg = sheet_('재고 수정 기록', QL_HEAD, 'A:B');
+  if (logs.length) lg.getRange(lg.getLastRow() + 1, 1, logs.length, 9).setValues(logs);
+  qtyCleanup_(lg);
+  rs.appendRow([rc || '(번호 없음)', ts, s_(b.by, 20), items.length]);
   return qtyAll_();
 }
 function saveQty_(b, inBatch) {
@@ -140,13 +152,15 @@ function saveQty_(b, inBatch) {
   const i = v.findIndex(function (r, k) { return k > 0 && String(r[0]) === bc; });
   if (i > 0) sh.getRange(i + 1, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
   const lg = sheet_('재고 수정 기록', QL_HEAD, 'A:B');
-  if (lg.getLastColumn() < 9) lg.getRange(1, 9).setValue('메모').setFontWeight('bold').setBackground('#f1f1ef');
   lg.appendRow([Utilities.formatDate(now, 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss'), now.toISOString(), s_(b.by, 20), bc, s_(b.name, 80), s_(b.spec, 40), b.prev === '' || b.prev == null ? '' : Number(b.prev), qty, s_(b.memo, 60)]);
   if (inBatch) return;
   qtyCleanup_(lg);
   return qtyAll_();
 }
 function qtyCleanup_(lg) {
+  const today = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd');
+  if (P.getProperty('QTY_CLEAN') === today) return;
+  P.setProperty('QTY_CLEAN', today);
   const limit = new Date(Date.now() - 90 * 864e5).toISOString(), n = lg.getLastRow();
   if (n < 2) return;
   const iso = lg.getRange(2, 2, n - 1, 1).getValues();
@@ -159,14 +173,16 @@ function qtyLog_() {
 }
 
 /* ── 매장 기록 (구글 시트) ── */
+let BOOK_ = null;
 function book_() {
+  if (BOOK_) return BOOK_;
   const id = P.getProperty('LOG_SHEET');
-  if (id) { try { return SpreadsheetApp.openById(id); } catch (e) {} }
+  if (id) { try { return (BOOK_ = SpreadsheetApp.openById(id)); } catch (e) {} }
   const ss = SpreadsheetApp.create('도로시와 가로수길점 매장 기록');
   const t = ss.getSheets()[0]; t.setName('유동인구'); setup_(t, T_HEAD, 'A:B');
   setup_(ss.insertSheet('외국인 고객'), F_HEAD, 'A:K');
   P.setProperty('LOG_SHEET', ss.getId());
-  return ss;
+  return (BOOK_ = ss);
 }
 const C_HEAD = ['날짜', '시각', '구분', '항목', '체크/해제', '직원'];
 function logCheck_(date, b) {
@@ -304,7 +320,7 @@ function saveDp_(b) {
   } else if (b.act === 'out') {
     const f = dpFind_(sa, b.id); if (!f) throw Error('없는 DP예요 · 새로고침해 주세요');
     const o = dpObj_(DP_KEYS, f.r), q = Math.min(o.qty, Math.max(1, Math.round(Number(b.qty) || 1)));
-    const rec = {id: 'o' + Date.now().toString(36), date: date_(b.date), pid: o.pid, name: o.name, color: o.color, size: o.size, qty: q, status: s_(b.status || 'wait', 10), from: s_(b.from, 40), doneDate: ''};
+    const rec = {id: s_(b.oid, 30) || 'o' + Date.now().toString(36), date: date_(b.date), pid: o.pid, name: o.name, color: o.color, size: o.size, qty: q, status: s_(b.status || 'wait', 10), from: s_(b.from, 40), doneDate: ''};
     so.appendRow(dpRow_(DO_KEYS, rec, by));
     if (q >= o.qty) sa.deleteRow(f.i); else sa.getRange(f.i, 8, 1, 4).setValues([[o.qty - q, o.tag, s_(by, 20), new Date().toISOString()]]);
     dpLog_(by, 'DP 제외', dpDesc_(rec) + ' · ' + rec.status);
@@ -316,5 +332,5 @@ function saveDp_(b) {
     const f = dpFind_(so, b.id); if (!f) throw Error('없는 기록이에요');
     dpLog_(by, '제외 기록 삭제', dpDesc_(dpObj_(DO_KEYS, f.r))); so.deleteRow(f.i);
   } else throw Error('알 수 없는 요청');
-  return dpAll_();
+  return b.lite ? {ok: true} : dpAll_();
 }

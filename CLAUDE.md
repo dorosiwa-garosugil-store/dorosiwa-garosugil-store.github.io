@@ -32,6 +32,9 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - notices = [{ id, title, body, pinned, date: "YYYY-MM-DD", images?: ["manual/01.jpg", ...] }] (images = 자료 보기 뷰어로 보여줄 사진, 저장소에 파일로 올림)
 - 공지 읽음 표시는 각 기기 localStorage(dsh_readNotices)에 공지 id(수정된 공지는 id@ed)로 저장 → 새 공지는 새 id로 만들어야 빨간 점이 뜸. 공지·할 일을 수정하면 ed(수정 표시, 아무 새 값)를 바꿔야 다시 빨간 점 + '수정됨' (사이트 수정은 자동, Claude가 내용 고칠 때도 ed를 새 값으로)
 
+## 속도 (11/25)
+- 서버 저장은 화면 먼저 반영(낙관적 업데이트) 후 뒤에서 전송: DP(dpPost local, 서버 lite 응답), 재고 수량 수정, 영수증 차감(qtybatch는 서버에서 한 번 읽고 한 번 쓰기), 도난·불량 신고. 실패하면 되돌리고 알림. 재고 수정 기록 90일 정리는 하루 1번(QTY_CLEAN). 영수증 사진은 1500px 흑백으로 줄여서 OCR
+
 ## 화면 업데이트
 - index.html을 고치면 index.html의 APP_VER와 data.json의 appVersion을 같은 새 값으로 올린다 → 직원 폰이 옛 화면(캐시)을 쓰고 있으면 자동으로 새로 불러옴.
 
