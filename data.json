@@ -1990,6 +1990,70 @@
     ]
    },
    "updated": "2026-11-24T07:10:05.747Z"
+  },
+  "2026-12-02": {
+   "published": false,
+   "assign": {
+    "안희진": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     "컨설팅"
+    ]
+   }
+  },
+  "2026-12-03": {
+   "published": false,
+   "assign": {
+    "안희진": [
+     null,
+     null,
+     null,
+     null,
+     "컨설팅",
+     null,
+     null,
+     null,
+     null
+    ]
+   }
+  },
+  "2026-12-12": {
+   "published": false,
+   "assign": {
+    "안희진": [
+     null,
+     null,
+     null,
+     null,
+     "컨설팅",
+     "컨설팅",
+     null,
+     null,
+     null
+    ]
+   }
+  },
+  "2026-12-26": {
+   "published": false,
+   "assign": {
+    "안희진": [
+     null,
+     null,
+     null,
+     null,
+     "컨설팅",
+     null,
+     null,
+     null,
+     null
+    ]
+   }
   }
  },
  "notices": [
