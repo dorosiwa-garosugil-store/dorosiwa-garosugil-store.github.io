@@ -296,7 +296,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.26-4';
+const APP_VER = '2026.11.26-5';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; D.dp = j.dp || []; D.dpOut = j.dpOut || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1606,11 +1606,11 @@ function dpReport() {
    <div class="row" style="gap:8px;margin-top:10px"><button class="btn grow" id="rpC">닫기</button><button class="btn grow" id="rpX">⬇️ 엑셀</button><button class="btn pri grow" id="rpT">📋 텍스트 복사</button></div>`);
   const pick = () => { const a = $('rpA').value, b = $('rpB').value, ok = $('rpO').checked; return LS.list.filter(x => x.date >= a && x.date <= b && (!ok || x.okBy)).sort((p, q) => p.date.localeCompare(q.date)); };
   $('rpC').onclick = closeSheet;
-  $('rpX').onclick = () => { const l = pick(); csvDown(`가로수길점_도난불량_${$('rpA').value}_${$('rpB').value}.csv`, ['날짜', '유형', '구분', '제품', '컬러', '사이즈', '수량', '메모', '신고자', '최종 확인'], l.map(x => [x.date, x.type, x.src === 'DP' ? 'DP 상품' : '판매 상품', x.name, x.color, x.size, x.qty, x.memo, x.by, x.okBy])); };
+  $('rpX').onclick = () => { const l = pick(); csvDown(`가로수길점_도난불량_${$('rpA').value}_${$('rpB').value}.csv`, ['날짜', '유형', '구분', '제품', '컬러', '사이즈', '수량', '메모', '신고자', '최종 확인', '처리 메모'], l.map(x => [x.date, x.type, x.src === 'DP' ? 'DP 상품' : '판매 상품', x.name, x.color, x.size, x.qty, x.memo, x.by, x.okBy, x.fix || ''])); };
   $('rpT').onclick = async () => {
     const l = pick(), sum = (f) => l.filter(f).reduce((a, x) => a + (+x.qty || 0), 0);
     const line = t => `- ${t}: ${sum(x => x.type === t)}개 (DP ${sum(x => x.type === t && x.src === 'DP')} / 판매 ${sum(x => x.type === t && x.src !== 'DP')})`;
-    const txt = `[도로시와 가로수길점 도난·불량 보고] ${$('rpA').value} ~ ${$('rpB').value}\n${line('도난')}\n${line('불량')}\n\n` + l.map(x => `${x.date.slice(5)} ${x.type} · ${x.src === 'DP' ? 'DP' : '판매'} · ${x.name} ${dpSpec(x)} ${x.qty}개${x.memo ? ` (${x.memo})` : ''}`).join('\n');
+    const txt = `[도로시와 가로수길점 도난·불량 보고] ${$('rpA').value} ~ ${$('rpB').value}\n${line('도난')}\n${line('불량')}\n\n` + l.map(x => `${x.date.slice(5)} ${x.type} · ${x.src === 'DP' ? 'DP' : '판매'} · ${x.name} ${dpSpec(x)} ${x.qty}개${x.memo ? ` (${x.memo})` : ''}${x.fix ? ` → ${x.fix}` : ''}`).join('\n');
     try { await navigator.clipboard.writeText(txt); toast('복사했어요 · 카톡·메일에 붙여넣기 하세요'); } catch (e) { toast('복사하지 못했어요', true); }
   };
 }
@@ -1664,8 +1664,8 @@ function vDp() {
   if (!l.length) return h + '<div class="card empty">기록이 없어요.</div>';
   const tmf = iso => iso ? new Date(iso).toLocaleString('ko-KR', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false}) : '';
   return h + l.map(x => `<div class="card" style="padding:11px 14px"><div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:4px"><span class="mut" style="font-size:12px;font-weight:650">${esc(dLabel(x.date))}</span><span class="chip" style="--h:${x.type === '도난' ? 0 : 30};--s:65%">${esc(x.type)}</span><span class="chip" style="--h:${x.src === 'DP' ? 275 : 200};--s:45%">${x.src === 'DP' ? 'DP 상품' : '판매 상품'}</span></div>
-    <div style="font-weight:700;font-size:14.5px">${esc(x.name)}</div><div class="mut" style="font-size:12.5px">${esc(dpSpec(x) || '-')} · ${x.qty}개 · 신고 ${esc(x.by)}</div>${x.memo ? `<div style="font-size:13px;margin-top:4px;white-space:pre-wrap">${esc(x.memo)}</div>` : ''}
-    <div class="row" style="gap:8px;margin-top:8px">${x.okBy ? `<span class="grow" style="color:var(--ok);font-weight:700;font-size:12.5px">✓ 최종 확인 · ${esc(x.okBy)} ${tmf(x.okAt)}</span>` : '<span class="grow" style="color:#b86e00;font-weight:700;font-size:12.5px">관리자 확인 대기</span>'}${adm ? `${x.okBy ? `<button class="btn sm" data-act="lsUnok" data-v="${esc(x.id)}">확인 취소</button>` : `<button class="btn sm pri" data-act="lsOk" data-v="${esc(x.id)}">최종 확인</button>`}<button class="btn sm dan" data-act="lsDel" data-v="${esc(x.id)}">삭제</button>` : ''}</div></div>`).join('');
+    <div style="font-weight:700;font-size:14.5px">${esc(x.name)}</div><div class="mut" style="font-size:12.5px">${esc(dpSpec(x) || '-')} · ${x.qty}개 · 신고 ${esc(x.by)}</div>${x.memo ? `<div style="font-size:13px;margin-top:4px;white-space:pre-wrap">${esc(x.memo)}</div>` : ''}${x.fix ? `<div style="font-size:13px;margin-top:6px;padding:7px 10px;border-radius:9px;background:var(--soft);white-space:pre-wrap">📝 <b>처리</b> ${esc(x.fix)}</div>` : ''}
+    <div class="row" style="gap:8px;margin-top:8px">${x.okBy ? `<span class="grow" style="color:var(--ok);font-weight:700;font-size:12.5px">✓ 최종 확인 · ${esc(x.okBy)} ${tmf(x.okAt)}</span>` : '<span class="grow" style="color:#b86e00;font-weight:700;font-size:12.5px">관리자 확인 대기</span>'}${adm ? `${x.okBy ? `<button class="btn sm" data-act="lsUnok" data-v="${esc(x.id)}">확인 취소</button>` : `<button class="btn sm pri" data-act="lsOk" data-v="${esc(x.id)}">최종 확인</button>`}<button class="btn sm" data-act="lsFix" data-v="${esc(x.id)}">처리 메모</button><button class="btn sm dan" data-act="lsDel" data-v="${esc(x.id)}">삭제</button>` : ''}</div></div>`).join('');
 }
 /* ───────── 영수증으로 재고 차감 (사진 → 서버 OCR → 바코드·수량 확인 → 한 번에 차감) ───────── */
 const RC = {items:[], receipt:'', busy:'', msg:'', done:null, raw:'', err:''};
@@ -1937,6 +1937,11 @@ document.addEventListener('click', async e => {
     case 'lsO': DP.lok = v; break;
     case 'lsOk': lsOk(v, true); return;
     case 'lsUnok': lsOk(v, false); return;
+    case 'lsFix': { const x = LS.list.find(y => y.id === v); if (!x) return;
+      sheet(`<h2>처리 메모</h2><div class="mut" style="margin-bottom:6px">${esc(x.name)} · ${esc(dpSpec(x))} · ${esc(x.type)}</div><textarea id="fxT" maxlength="300" style="min-height:90px" placeholder="예: 재고 차감 없음 · 2층 DP와 교체">${esc(x.fix || '')}</textarea><div class="row" style="margin-top:14px"><button class="btn grow" id="fxC">취소</button><button class="btn pri grow" id="fxS">저장</button></div>`);
+      $('fxC').onclick = closeSheet;
+      $('fxS').onclick = () => { const fix = $('fxT').value.trim(), old = x.fix; x.fix = fix; closeSheet(); render(); lsPost({act:'note', id:x.id, fix}).then(() => { toast('저장했어요'); render(); }).catch(() => { x.fix = old; toast('저장하지 못했어요 (서버 코드 새 버전 배포가 필요해요)', true); render(); }); };
+      return; }
     case 'lsDel': (async () => { if (await ask('이 기록을 삭제할까요?', '삭제', true)) { try { await lsPost({act:'del', id:v}); render(); toast('삭제했어요'); } catch (e) { toast('삭제하지 못했어요', true); } } })(); return;
     case 'dpRep': dpReport(); return;
     case 'vmRep': { const z = zoneOf(VM.floor, v); if (!PR.data) return; lossSheet({src:'DP'}); return; }

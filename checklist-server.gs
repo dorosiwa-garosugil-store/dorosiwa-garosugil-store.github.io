@@ -250,9 +250,9 @@ function authorize() {
 }
 
 /* ── 도난 · 불량 (시트 '도난·불량' 탭, 계속 보관) ── */
-const L_HEAD = ['ID', '날짜', '유형', '구분', '제품', '컬러', '사이즈', '수량', '메모', '신고자', '신고 시각', '최종 확인', '확인 시각', 'pid'];
-function lossSheet_() { return sheet_('도난·불량', L_HEAD, 'A:N'); }
-function lossObj_(r) { return {id: String(r[0]), date: d_(r[1]), type: String(r[2]), src: String(r[3]), name: String(r[4]), color: String(r[5]), size: String(r[6]), qty: Number(r[7]) || 1, memo: String(r[8] || ''), by: String(r[9] || ''), at: r[10] instanceof Date ? r[10].toISOString() : String(r[10] || ''), okBy: String(r[11] || ''), okAt: r[12] instanceof Date ? r[12].toISOString() : String(r[12] || ''), pid: String(r[13] || '')}; }
+const L_HEAD = ['ID', '날짜', '유형', '구분', '제품', '컬러', '사이즈', '수량', '메모', '신고자', '신고 시각', '최종 확인', '확인 시각', 'pid', '처리 메모'];
+function lossSheet_() { const sh = sheet_('도난·불량', L_HEAD, 'A:O'); if (sh.getLastColumn() < 15) sh.getRange(1, 15).setValue('처리 메모').setFontWeight('bold').setBackground('#f1f1ef'); return sh; }
+function lossObj_(r) { return {id: String(r[0]), date: d_(r[1]), type: String(r[2]), src: String(r[3]), name: String(r[4]), color: String(r[5]), size: String(r[6]), qty: Number(r[7]) || 1, memo: String(r[8] || ''), by: String(r[9] || ''), at: r[10] instanceof Date ? r[10].toISOString() : String(r[10] || ''), okBy: String(r[11] || ''), okAt: r[12] instanceof Date ? r[12].toISOString() : String(r[12] || ''), pid: String(r[13] || ''), fix: String(r[14] || '')}; }
 function lossAll_() {
   const v = lossSheet_().getDataRange().getValues().slice(1).filter(function (r) { return r[0] !== ''; });
   return {ok: true, loss: v.map(lossObj_)};
@@ -267,6 +267,9 @@ function saveLoss_(b) {
   } else if (b.act === 'ok' || b.act === 'unok') {
     const i = find(b.id); if (i < 1) throw Error('없는 기록');
     sh.getRange(i + 1, 12, 1, 2).setValues([b.act === 'ok' ? [s_(b.by, 20), new Date().toISOString()] : ['', '']]);
+  } else if (b.act === 'note') {
+    const i = find(b.id); if (i < 1) throw Error('없는 기록');
+    sh.getRange(i + 1, 15).setValue(s_(b.fix, 300));
   } else if (b.act === 'del') {
     const i = find(b.id); if (i < 1) throw Error('없는 기록');
     sh.deleteRow(i + 1);
