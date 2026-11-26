@@ -7,6 +7,7 @@
    - 재고 수량: 직원이 고친 수량을 시트 '재고 수량' 탭에, 수정 기록(누가·언제·이전→변경)을 '재고 수정 기록' 탭에 저장 (기록은 90일 보관)
    - 도난·불량: 직원 신고(날짜·유형·DP/판매·제품·컬러·사이즈·수량·메모)와 관리자 최종 확인을 시트 '도난·불량' 탭에 저장 (계속 보관)
    - DP 재고·DP 제외: 전 직원이 등록·수정·삭제·제외 (시트 'DP 재고'·'DP 제외' 탭, 수정 기록은 'DP 수정 기록' 탭, 계속 보관)
+   - 체험단 방문 명단: 본사 공유 시트(링크)를 읽어 방문 예약에 자동 표시 (전화번호·건강 정보는 보내지 않음, 5분 캐시)
    - 매장 기록: 유동인구·외국인 고객 기록을 구글 시트 "도로시와 가로수길점 매장 기록"에 저장 (계속 보관)
      시트는 처음 기록할 때 내 구글 드라이브에 자동으로 만들어집니다.
 */
@@ -26,6 +27,7 @@ function doGet(e) {
     if (q.qtylog) return out_(qtyLog_());
     if (q.loss) return out_(lossAll_());
     if (q.dp) return out_(dpAll_());
+    if (q.visits) return out_(visits_(String(q.visits)));
     if (q.logs) return out_(rangeLog_(date_(q.from), date_(q.to)));
     return out_(read_(q.date));
   }
@@ -333,4 +335,34 @@ function saveDp_(b) {
     dpLog_(by, '제외 기록 삭제', dpDesc_(dpObj_(DO_KEYS, f.r))); so.deleteRow(f.i);
   } else throw Error('알 수 없는 요청');
   return b.lite ? {ok: true} : dpAll_();
+}
+
+/* ── 체험단 방문 명단 (본사 공유 시트 읽기 전용) ── */
+function visits_(sid) {
+  if (!/^[A-Za-z0-9_-]{20,80}$/.test(sid)) throw Error('시트 주소 오류');
+  const cache = CacheService.getScriptCache(), ck = 'VIS_' + sid, hit = cache.get(ck);
+  if (hit) return JSON.parse(hit);
+  const v = SpreadsheetApp.openById(sid).getSheets()[0].getDataRange().getValues();
+  let hr = -1; for (let i = 0; i < Math.min(v.length, 6); i++) if (v[i].some(function (c) { return String(c).replace(/\s/g, '') === '방문일자'; })) { hr = i; break; }
+  if (hr < 0) throw Error('명단 형식을 못 찾았어요');
+  const H = v[hr].map(function (c) { return String(c).replace(/\s/g, ''); });
+  const col = function (name) { return H.indexOf(name); };
+  const C = {date: col('방문일자'), time: col('방문시간'), name: col('이름'), plat: col('플랫폼'), ch: col('채널'), mode: col('진행방식'), handle: col('활동명'), gift: col('지급품목'), opt: col('옵션'), n: col('수량'), size: col('기존사이즈'), ko: col('한국어가능여부'), note: col('비고')};
+  const g = function (r, k) { return C[k] < 0 ? '' : r[C[k]]; };
+  const now = new Date(), y = now.getFullYear(), m0 = now.getMonth() + 1, out = [];
+  v.slice(hr + 1).forEach(function (r) {
+    let d = g(r, 'date'), t = g(r, 'time'), ds = '';
+    if (d instanceof Date) ds = Utilities.formatDate(d, 'Asia/Seoul', 'yyyy-MM-dd');
+    else { const mm = String(d).match(/(\d{1,2})\s*[\/.월-]\s*(\d{1,2})/); if (mm) { const mo = +mm[1], yy = mo < m0 - 3 ? y + 1 : y; ds = yy + '-' + ('0' + mo).slice(-2) + '-' + ('0' + mm[2]).slice(-2); } }
+    if (!ds) return;
+    let ts = t instanceof Date ? Utilities.formatDate(t, 'Asia/Seoul', 'HH:mm') : String(t || '').trim();
+    const tm = ts.match(/^(\d{1,2}):(\d{2})/); if (tm) ts = ('0' + tm[1]).slice(-2) + ':' + tm[2];
+    const str = function (k) { return String(g(r, k) == null ? '' : g(r, k)).trim(); };
+    out.push({date: ds, time: ts, name: str('name'), handle: str('handle'), plat: str('plat'), ch: str('ch'), mode: str('mode'),
+      gift: [str('gift'), str('opt'), str('n') && str('n') !== '-' ? str('n') + '개' : ''].filter(function (x) { return x && x !== '-'; }).join(' '),
+      size: str('size') === '-' ? '' : str('size'), ko: str('ko'), note: str('note')});
+  });
+  const res = {ok: true, visits: out, at: new Date().toISOString()};
+  cache.put(ck, JSON.stringify(res), 300);
+  return res;
 }

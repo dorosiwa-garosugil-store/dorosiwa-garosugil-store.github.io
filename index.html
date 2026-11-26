@@ -268,7 +268,14 @@ function monthDays(key) {
   });
 }
 const dayInfo = date => monthDays(date.slice(0, 7)).find(x => x.date === date);
-const pubDaily = date => { const d = D.daily[date]; return d && d.published ? d : null; };
+const pubDaily = date => { const d = D.daily[date]; return d && d.published ? csOverlay(date, d) : null; };
+function csOverlay(date, dl) {
+  if (!dl || !dl.assign) return dl; const who = C().consultBy || '안희진', a = dl.assign[who]; if (!a) return dl;
+  const hs = (typeof csList === 'function' ? csList() : []).filter(c => c.date === date && c.kind === 'consult').map(c => parseInt(c.time, 10)).filter(x => x >= C().hours.open && x < C().hours.close);
+  if (!hs.length) return dl; const b = [...a]; let ch = false;
+  hs.forEach(x => { const i = x - C().hours.open; if (b[i] && !['컨설팅', '미팅'].includes(b[i])) { b[i] = '컨설팅'; ch = true; } else if (!b[i]) { b[i] = '컨설팅'; ch = true; } });
+  return ch ? {...dl, assign:{...dl.assign, [who]:b}} : dl;
+}
 const posAt = (dl, name, hour) => dl ? ((dl.assign || {})[name] || [])[hour - C().hours.open] || null : null;
 const works = (st, hr) => st.sh && st.sh.s < hr + 1 && st.sh.e > hr;
 const curHour = () => { const hs = HOURS(); return T.hour < hs[0] ? hs[0] : T.hour > hs[hs.length - 1] ? hs[hs.length - 1] : T.hour; };
@@ -289,7 +296,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.26-2';
+const APP_VER = '2026.11.26-3';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; D.dp = j.dp || []; D.dpOut = j.dpOut || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -481,6 +488,7 @@ const ICON = {
 const ico = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
 const todoSub = () => { const n = idleItems().length, d = idleItems().filter(i => CK.checks[i.id] && CK.date === T.date).length, u = tdUnreadCount(), k = (D.todos || []).length; return u ? `새 소식 ${u}건 · 한가할 때 ${d}/${n}` : `한가할 때 ${d}/${n}${k ? ` · 할 일 ${k}건` : ''}`; };
 function vToday() {
+  vsLoad();
   if (admin()) lsLoad();
   if (ckUrl() && !TD.loading && (!TD.loaded || Date.now() - TD.at > 60000)) tdLoad();
   const d = dayInfo(T.date), dl = pubDaily(T.date);
@@ -621,7 +629,7 @@ async function saveStaff(list, key) {
 function vDaily() {
   const key = S.dDate.slice(0, 7), days = monthDays(key), d = days.find(x => x.date === S.dDate), adm = admin();
   const editing = adm && S.edit && S.edit.date === S.dDate;
-  const raw = D.daily[S.dDate], dl = editing ? {assign:S.edit.assign} : adm ? raw : pubDaily(S.dDate);
+  const raw = D.daily[S.dDate], dl = editing ? {assign:S.edit.assign} : adm ? csOverlay(S.dDate, raw) : pubDaily(S.dDate); vsLoad();
   const ks = monthKeys(), ki = ks.indexOf(key), [dy, dm] = key.split('-');
   let h = `<div class="row" style="margin:6px 0"><button class="ib" data-act="dMove" data-v="-1" ${ki <= 0 ? 'disabled style="opacity:.3"' : ''}>‹</button><div class="grow" style="text-align:center"><div class="big" style="font-size:19px">${dy}. ${dm}</div></div><button class="ib" data-act="dMove" data-v="1" ${ki < 0 || ki >= ks.length - 1 ? 'disabled style="opacity:.3"' : ''}>›</button></div>`;
   h += strip(days, S.dDate, 'dDate');
@@ -669,7 +677,7 @@ function warnHtml(d) {
   return w.length ? `<details ${w.length <= 3 ? 'open' : ''}><summary class="warn" style="cursor:pointer;list-style:none">⚠ 확인 필요 ${w.length}건</summary>${w.map(x => `<div class="warn">${esc(x)}</div>`).join('')}</details>` : '<div class="okm">배치 경고 없음</div>';
 }
 function edStart() {
-  const d = dayInfo(S.dDate), raw = D.daily[S.dDate], hs = HOURS(), P = C().positions.map(p => p.name), assign = {};
+  const d = dayInfo(S.dDate), raw = csOverlay(S.dDate, D.daily[S.dDate]), hs = HOURS(), P = C().positions.map(p => p.name), assign = {};
   d.on.forEach(x => { const old = (raw && raw.assign && raw.assign[x.name]) || []; assign[x.name] = hs.map((hr, hi) => works(x, hr) ? (P.includes(old[hi]) ? old[hi] : '미배정') : null); });
   S.edit = {date:S.dDate, assign}; S.dView = 'table'; render();
 }
@@ -1351,7 +1359,23 @@ const CS = {past:false};
 const CS_KIND = {consult:['컨설팅', 275], visit:['체험단 · 매장 방문형', 200], infc:['체험단 · 컨설팅형', 330], interview:['면접', 50], etc:['기타 방문', 0]};
 const csKind = c => CS_KIND[c.kind] || CS_KIND.consult;
 const csIsInf = c => c.kind === 'visit' || c.kind === 'infc';
-const csList = () => [...(D.consults || [])].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+const VS = {list:[], loaded:false, loading:false, at:0, err:''};
+const vsSid = () => ((C().visitSheet || '').match(/\/d\/([A-Za-z0-9_-]{20,})/) || [])[1] || '';
+async function vsLoad(force) {
+  if (!ckUrl() || !vsSid() || VS.loading) return; if (!force && VS.loaded && Date.now() - VS.at < 120000) return;
+  VS.loading = true;
+  try { const r = await fetch(ckUrl() + '?visits=' + vsSid() + '&t=' + Date.now()); const j = await r.json(); if (!j.ok) throw Error(j.error); VS.list = j.visits || []; VS.err = ''; }
+  catch (e) { VS.err = '체험단 명단을 불러오지 못했어요'; } finally { VS.loaded = true; VS.at = Date.now(); VS.loading = false; if (['consult', 'today', 'daily'].includes(S.tab) && !typing()) render(); }
+}
+function vsItems() {
+  const man = D.consults || [], key = c => c.date + ' ' + c.time;
+  return VS.list.filter(v => v.date && !man.some(c => key(c) === key(v))).map((v, i) => {
+    const cons = /컨설팅/.test(v.mode);
+    const memo = [[v.ch, v.mode].filter(Boolean).join(' · '), cons ? '안희진 매니저 컨설팅 진행' : '', v.size ? `기존 사이즈 ${v.size}` : '', v.ko ? `한국어 ${/^o$/i.test(v.ko) ? '가능' : /^x$/i.test(v.ko) ? '불가 (번역 앱 준비)' : v.ko}` : '', v.note, cons ? '\n[준비 사항]\n- 컨설팅 패드 충전\n- 컨설팅 룸 비우기' : ''].filter(Boolean).join('\n');
+    return {id:'s-' + v.date + '-' + i, date:v.date, time:v.time || '미정', who:[v.handle, v.name ? v.name + ' 님' : ''].filter(Boolean).join(' · ') || '체험단', people:'', memo, kind:cons ? 'consult' : 'visit', plat:v.plat, gift:v.gift, fromSheet:true};
+  });
+}
+const csList = () => [...(D.consults || []), ...vsItems()].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 const csUpcoming = () => csList().filter(c => c.date >= T.date);
 const csToday = () => csList().filter(c => c.date === T.date);
 function csSub() { const t = csToday(), u = csUpcoming().filter(c => c.date > T.date); return t.length ? `오늘 ${t.length}건 · ${t.map(c => c.time).join(', ')}` : u.length ? `다음 ${+u[0].date.slice(5, 7)}/${+u[0].date.slice(8)} ${u[0].time}` : '예약 없음'; }
@@ -1360,13 +1384,15 @@ function csCard(c) {
   return `<div class="card" style="padding:12px 14px;${today ? 'border:2px solid var(--ink)' : ''}${c.date < T.date ? ';opacity:.55' : ''}"><div class="row" style="align-items:flex-start;gap:12px">
     <div style="flex:0 0 58px;text-align:center;border-right:1px solid var(--edge);padding-right:10px"><div style="font-size:20px;font-weight:800;line-height:1.1">${esc(c.time || '--:--')}</div>${today ? '<div style="font-size:11px;font-weight:750;color:var(--dan);margin-top:3px">오늘</div>' : ''}</div>
     <div class="grow"><div class="row" style="gap:5px;flex-wrap:wrap;margin-bottom:4px"><span style="font-size:11.5px;font-weight:750;border-radius:999px;padding:2px 9px;background:hsl(${csKind(c)[1]} 55% var(--cl));color:hsl(${csKind(c)[1]} 45% var(--cd))">${csKind(c)[0]}</span>${c.plat ? `<span style="font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid var(--edge)">${esc(c.plat)}</span>` : ''}</div><div style="font-weight:750;font-size:15px">${esc(c.who || '예약 고객')}${c.people ? ` <span class="mut" style="font-weight:500;font-size:13px">${esc(c.people)}명</span>` : ''}</div>${c.memo ? `<div style="font-size:13px;line-height:1.55;white-space:pre-wrap;margin-top:3px">${esc(c.memo)}</div>` : ''}${c.gift ? `<div style="font-size:12.5px;margin-top:5px">🎁 <b>증정품</b> ${esc(c.gift)}</div>` : ''}${csIsInf(c) ? `<button class="link" style="margin-top:6px;font-size:12.5px" data-act="manOpen" data-v="influencer">체험단 응대 가이드 보기 ›</button>` : ''}</div>
-    ${adm ? `<button class="link" data-act="csEdit" data-v="${esc(c.id)}">수정</button>` : ''}</div></div>`;
+    ${c.fromSheet ? '<span class="mut" style="font-size:11px">명단 시트</span>' : adm ? `<button class="link" data-act="csEdit" data-v="${esc(c.id)}">수정</button>` : ''}</div></div>`;
 }
 function vConsult() {
+  vsLoad();
   const adm = admin(), up = csUpcoming(), past = csList().filter(c => c.date < T.date).reverse();
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">방문 예약</b></div>`;
   const vs = C().visitSheet;
   h += `<div class="row" style="gap:6px;margin-bottom:8px">${vs ? `<a class="btn grow" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit" href="${esc(vs)}" target="_blank" rel="noopener">📋 체험단 방문 명단</a>` : ''}<button class="btn grow" data-act="manOpen" data-v="influencer">📖 체험단 응대 가이드</button></div>`;
+  h += `<div class="mut" style="font-size:11.5px;margin:0 2px 8px">체험단 명단 시트 일정은 자동으로 들어와요${VS.err ? ` · <span style="color:var(--dan)">${esc(VS.err)}</span>` : VS.loading && !VS.loaded ? ' · 불러오는 중…' : ''}</div>`;
   if (adm) h += `<button class="btn pri" style="width:100%;margin-bottom:8px" data-act="csNew">+ 예약 추가</button>`;
   if (!up.length) h += '<div class="card empty">예정된 방문 예약이 없어요.</div>';
   const g = {}; up.forEach(c => (g[c.date] = g[c.date] || []).push(c));

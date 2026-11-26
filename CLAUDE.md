@@ -28,6 +28,7 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - dpOut = [{id, date, pid?, name, color, size, qty, status wait 반품 대기|hold 보류·창고 보관|done 반품 완료, from 빠진 위치, doneDate?}] : DP 제외·반품 탭 (서버 시트 'DP 제외', 전 직원 상태 변경). DP 재고 줄 → 'DP 제외' 로 이동. 반품 대기 목록 텍스트 복사·엑셀
 - 도난·불량 : 서버 시트 '도난·불량' 탭(checklist-server.gs kind:'loss' add/ok/unok/del, GET ?loss=1). 전 직원 신고(날짜·도난/불량·DP/판매·제품·컬러·사이즈·수량·메모), 관리자 최종 확인(확인 시 DP 상품이면 DP 재고에서 빼기 제안), 본사 보고(기간 요약 텍스트·엑셀). 홈 타일 빨간 숫자 = 확인 대기(관리자만)
 - consults = [{id, date, time, who, people?, memo, kind(consult 컨설팅|visit 체험단 매장 방문형|infc 체험단 컨설팅형|interview 면접(사장님 요청으로 이름 전체)|etc), plat(포포몬|브랜더진|샤오홍슈), gift 증정품}] : 홈 '방문 예약' (관리자만 작성, 직원은 보기만. 위에 체험단 명단 시트(config.visitSheet)·응대 가이드 버튼, 체험단 카드엔 가이드 링크). 오늘 예약은 홈 요약 카드와 타일 빨간 숫자로 표시, 지난 예약은 접어 둠. 고객은 '성 + 님' 정도만 (공개 저장소)
+- 체험단 명단 자동 연동(11/26): 서버 GET ?visits=<시트ID>(config.visitSheet에서 ID 추출)로 본사 공유 시트 첫 탭을 읽음('방문 일자' 헤더 줄 기준, 전화번호·가슴성형 여부·링크는 서버가 안 보냄, 5분 캐시). 방문 예약 목록 = data.json consults + 시트 일정(같은 날짜·시간이면 data.json 쪽만 표시, 시트 일정엔 '명단 시트' 표시·수정 불가). 진행 방식에 '컨설팅'이 있으면 kind consult. 데일리 표시 때 csOverlay: 컨설팅 예약 시작 시간 칸에 config.consultBy(기본 안희진) '컨설팅' 자동 표시(이미 컨설팅·미팅이면 그대로, 관리자가 편집 시작하면 그 값으로 저장됨)
 - months["YYYY-MM"][직원이름][날짜] = "11~20" | "11~20!"(끝에 ! = 필수 출근, 진한 색 칩, shiftPresets에 있음) | "휴" | "요청휴무" | "연차" ...
 - daily["YYYY-MM-DD"] = { published: true, assign: { 직원이름: [open시부터 1시간 단위 포지션, 근무 외는 null] } }
 - notices = [{ id, title, body, pinned, date: "YYYY-MM-DD", images?: ["manual/01.jpg", ...] }] (images = 자료 보기 뷰어로 보여줄 사진, 저장소에 파일로 올림)
