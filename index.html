@@ -296,7 +296,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.26-5';
+const APP_VER = '2026.11.26-6';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; D.dp = j.dp || []; D.dpOut = j.dpOut || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1155,6 +1155,15 @@ async function qtLoad(force) {
 const qtItems = () => (QT.base && QT.base.items) || [];
 const qtAsOf = () => QT.base ? new Date(QT.base.asof).getTime() : 0;
 function qtOf(it) { const o = QT.over[it.b]; return o && new Date(o.at).getTime() > qtAsOf() ? {qty:o.qty, by:o.by, at:o.at} : {qty:it.q}; }
+async function dpQtyPend(p) {   // Claude 준비 묶음의 판매 재고 수량 더하기·빼기 (영수증 번호 'C-bid'로 한 번만)
+  while (QT.loading) await new Promise(r => setTimeout(r, 200));
+  await qtLoad(true); if (!qtItems().length) throw Error('재고 수량을 불러오지 못했어요');
+  const items = p.qty.map(x => { const it = qtItems().find(i => i.b === x.b); if (!it) return null; const cur = qtOf(it).qty; return {barcode:x.b, qty:cur + (+x.d), prev:cur, name:x.name || '', spec:x.spec || ''}; }).filter(Boolean);
+  if (!items.length) return;
+  const j = await (await fetch(ckUrl(), {method:'POST', body:JSON.stringify({kind:'qtybatch', receipt:'C-' + p.bid, items, by:S.me, memo:p.qtyMemo || 'Claude 준비 변경'})})).json();
+  if (!j.ok) { if (/USED_RECEIPT/.test(j.error)) return; throw Error(j.error); }
+  QT.over = j.q || QT.over; QT.at = Date.now();
+}
 async function qtExport() {
   toast('최신 수량 불러오는 중…'); await qtLoad(true);
   if (!qtItems().length) { toast('재고 데이터를 불러오지 못했어요', true); return; }
@@ -1518,7 +1527,7 @@ function dpSheet(x, zone) {
     $('dpL').onclick = () => lossSheet({src:'DP', pid:x.pid, name:x.name, color:x.color, size:x.size});
   }
 }
-const KEEP_GROUPS = ['대표님 보관', '증정용', '가챠 증정'];
+const KEEP_GROUPS = ['DP 중복 보관', 'DP 보관'];
 function keepSheet(x, grp) {
   const o = x || {fl:'keep', zone:grp || KEEP_GROUPS[0], pid:'', name:'', color:'', size:'', qty:1, tag:''};
   sheet(`<h2>${x ? '따로 보관 수정' : '따로 보관 추가'}</h2>
@@ -1552,7 +1561,7 @@ function dpOutSheet(x) {
   };
 }
 function dpStSheet(o) {
-  sheet(`<h2>제외 상품</h2><div class="mut" style="margin-bottom:6px">${esc(o.date)} · ${esc(o.name)} · ${esc(dpSpec(o))} · ${o.qty}개${o.from ? ` · ${esc(o.from)}에서` : ''}</div>
+  sheet(`<h2>제외 상품</h2><div class="mut" style="margin-bottom:6px">${esc(o.date)} · ${esc(o.name)} · ${esc(dpSpec(o))} · ${o.qty}개${o.from ? ` · ${esc(o.from)}` : ''}</div>
    <label class="f">상태</label><div class="row" style="gap:6px;flex-wrap:wrap">${Object.entries(DP_ST).map(([k, [l]]) => `<label class="pill" style="display:inline-flex;gap:5px;align-items:center"><input type="radio" name="osS" value="${k}" ${k === o.status ? 'checked' : ''}>${l}</label>`).join('')}</div>
    <div class="row" style="margin-top:14px"><button class="btn dan" id="osX">삭제</button><button class="btn grow" id="osC">취소</button><button class="btn pri grow" id="osS">저장</button></div>`);
   $('osC').onclick = closeSheet;
@@ -1925,13 +1934,13 @@ document.addEventListener('click', async e => {
     case 'dpFl': DP.floor = v; break;
     case 'keepNew': if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } keepSheet(null, v || ''); return;
     case 'keepEdit': { const x = dpList().find(y => y.id === v); if (!x) return; if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } keepSheet(x); return; }
-    case 'dpBatch': (async () => { const pl = dpPend(), n = pl.reduce((s, x) => s + x.ops.length, 0); if (!n || !(await ask(`Claude가 준비한 DP 변경 ${n}건을 반영할까요?\n${pl.map(x => x.note || '').join('\n')}`, '반영'))) return; try { for (const p of pl) await dpPost({act:'batch', bid:p.bid, ops:p.ops}); toast('반영했어요'); } catch (e) { dpErr(e); } })(); return;
+    case 'dpBatch': (async () => { const pl = dpPend(), n = pl.reduce((s, x) => s + x.ops.length, 0); if (!n || !(await ask(`Claude가 준비한 DP 변경 ${n}건을 반영할까요?\n${pl.map(x => x.note || '').join('\n')}`, '반영'))) return; try { for (const p of pl) { if ((p.qty || []).length) await dpQtyPend(p); await dpPost({act:'batch', bid:p.bid, ops:p.ops}); } toast('반영했어요'); } catch (e) { dpErr(e); } })(); return;
     case 'dpNew': if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } dpSheet(null, v || ''); return;
     case 'dpEdit': { const x = dpList().find(y => y.id === v); if (!x) return; if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } dpSheet(x); return; }
     case 'dpOutF': DP.out = v; break;
     case 'dpOutEdit': { const x = dpOutList().find(y => y.id === v); if (x) dpStSheet(x); return; }
     case 'dpOutCopy': { const l = dpOutList().filter(x => x.status === 'wait'); if (!l.length) { toast('반품 대기 상품이 없어요', true); return; } const txt = `[도로시와 가로수길점 DP 반품 목록] ${T.date}\n` + l.map(x => `- ${x.name} ${dpSpec(x)} ${x.qty}개`).join('\n') + `\n총 ${l.reduce((a, x) => a + (+x.qty || 0), 0)}개`; navigator.clipboard.writeText(txt).then(() => toast('복사했어요'), () => toast('복사하지 못했어요', true)); return; }
-    case 'dpOutXls': csvDown(`가로수길점_DP제외_${T.date}.csv`, ['제외일', '제품', '컬러', '사이즈', '수량', '상태', '빠진 위치', '반품 완료일'], dpOutList().filter(x => DP.out === 'all' || x.status === DP.out).map(x => [x.date, x.name, x.color, x.size, x.qty, (DP_ST[x.status] || DP_ST.wait)[0], x.from || '', x.doneDate || ''])); return;
+    case 'dpOutXls': csvDown(`가로수길점_DP제외_${T.date}.csv`, ['제외일', '제품', '컬러', '사이즈', '수량', '상태', '구분·메모', '반품 완료일'], dpOutList().filter(x => DP.out === 'all' || x.status === DP.out).map(x => [x.date, x.name, x.color, x.size, x.qty, (DP_ST[x.status] || DP_ST.wait)[0], x.from || '', x.doneDate || ''])); return;
     case 'lsNew': if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } lossSheet(); return;
     case 'lsT': DP.lt = v; break;
     case 'lsO': DP.lok = v; break;

@@ -109,6 +109,837 @@
      }
     }
    ]
+  },
+  {
+   "bid": "sort-1126",
+   "note": "따로 보관 비우기(헤리티지 L 브라운·그레이 각 4 → 판매 재고) / 반품 대기 11건(불량 5 · DP 반품 6) / DP 중복 보관·DP 보관 등록",
+   "qty": [
+    {
+     "b": "8800361721734",
+     "d": 4,
+     "name": "Minimal Garments Heritage Check Pajama Set",
+     "spec": "소프트브라운 / L"
+    },
+    {
+     "b": "8800361721710",
+     "d": 4,
+     "name": "Minimal Garments Heritage Check Pajama Set",
+     "spec": "소프트그레이 / L"
+    }
+   ],
+   "qtyMemo": "대표님 보관분 판매 재고로",
+   "ops": [
+    {
+     "act": "del",
+     "id": "k-1126-hb"
+    },
+    {
+     "act": "del",
+     "id": "k-1126-hg"
+    },
+    {
+     "act": "del",
+     "id": "k-1126-bw"
+    },
+    {
+     "act": "del",
+     "id": "k-1126-g1"
+    },
+    {
+     "act": "del",
+     "id": "k-1126-g2"
+    },
+    {
+     "act": "del",
+     "id": "k-1126-g3"
+    },
+    {
+     "act": "del",
+     "id": "k-1126-g4"
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "x1126-01",
+      "fl": "1f",
+      "zone": "",
+      "pid": "p51",
+      "name": "베니벨 리버시블 샤워 나이트 가운",
+      "color": "화이트",
+      "size": "FREE",
+      "qty": 1,
+      "tag": ""
+     },
+     "where": "반품 등록"
+    },
+    {
+     "act": "out",
+     "id": "x1126-01",
+     "oid": "ox1126-01",
+     "qty": 1,
+     "status": "wait",
+     "from": "불량 · 허리끈 미포함",
+     "date": "2026-11-26"
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "x1126-02",
+      "fl": "1f",
+      "zone": "",
+      "pid": "p19",
+      "name": "베니벨 2P SET",
+      "color": "화이트",
+      "size": "FREE",
+      "qty": 1,
+      "tag": ""
+     },
+     "where": "반품 등록"
+    },
+    {
+     "act": "out",
+     "id": "x1126-02",
+     "oid": "ox1126-02",
+     "qty": 1,
+     "status": "wait",
+     "from": "불량 · 엉덩이 부분 올나감",
+     "date": "2026-11-26"
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "x1126-03",
+      "fl": "1f",
+      "zone": "",
+      "pid": "t06",
+      "name": "[필러브라] 몰랑드 세트",
+      "color": "화이트",
+      "size": "75B / FREE(90-95)",
+      "qty": 1,
+      "tag": ""
+     },
+     "where": "반품 등록"
+    },
+    {
+     "act": "out",
+     "id": "x1126-03",
+     "oid": "ox1126-03",
+     "qty": 1,
+     "status": "wait",
+     "from": "불량 · 팬티 오염",
+     "date": "2026-11-26"
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "x1126-04",
+      "fl": "1f",
+      "zone": "",
+      "pid": "t06",
+      "name": "[필러브라] 몰랑드 세트",
+      "color": "화이트",
+      "size": "75B / FREE(90-95)",
+      "qty": 1,
+      "tag": ""
+     },
+     "where": "반품 등록"
+    },
+    {
+     "act": "out",
+     "id": "x1126-04",
+     "oid": "ox1126-04",
+     "qty": 1,
+     "status": "wait",
+     "from": "불량 · 팬티 누락",
+     "date": "2026-11-26"
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "x1126-05",
+      "fl": "1f",
+      "zone": "",
+      "pid": "p25",
+      "name": "Minimal Garments Heritage Check Pajama Set",
+      "color": "소프트그레이",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     },
+     "where": "반품 등록"
+    },
+    {
+     "act": "out",
+     "id": "x1126-05",
+     "oid": "ox1126-05",
+     "qty": 1,
+     "status": "wait",
+     "from": "불량 · 하의 주머니 봉제 불량",
+     "date": "2026-11-26"
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "x1126-06",
+      "fl": "1f",
+      "zone": "",
+      "pid": "t24",
+      "name": "풀샷 베이직 홀가먼트 네모팬티",
+      "color": "탠베이지",
+      "size": "S-M",
+      "qty": 1,
+      "tag": ""
+     },
+     "where": "반품 등록"
+    },
+    {
+     "act": "out",
+     "id": "x1126-06",
+     "oid": "ox1126-06",
+     "qty": 1,
+     "status": "wait",
+     "from": "DP 반품 · 판매 재고 소진",
+     "date": "2026-11-26"
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "x1126-07",
+      "fl": "1f",
+      "zone": "",
+      "pid": "t19",
+      "name": "소프트 리브드 배색 브라렛",
+      "color": "민트",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     },
+     "where": "반품 등록"
+    },
+    {
+     "act": "out",
+     "id": "x1126-07",
+     "oid": "ox1126-07",
+     "qty": 1,
+     "status": "wait",
+     "from": "DP 반품 · 판매 재고 소진",
+     "date": "2026-11-26"
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "x1126-08",
+      "fl": "1f",
+      "zone": "",
+      "pid": "t15",
+      "name": "풀샷브라 베이직 홀가먼트",
+      "color": "화이트",
+      "size": "L-XL",
+      "qty": 1,
+      "tag": ""
+     },
+     "where": "반품 등록"
+    },
+    {
+     "act": "out",
+     "id": "x1126-08",
+     "oid": "ox1126-08",
+     "qty": 1,
+     "status": "wait",
+     "from": "DP 반품 · 판매 재고 소진",
+     "date": "2026-11-26"
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "x1126-09",
+      "fl": "1f",
+      "zone": "",
+      "pid": "t15",
+      "name": "풀샷브라 베이직 홀가먼트",
+      "color": "블랙",
+      "size": "M-L",
+      "qty": 1,
+      "tag": ""
+     },
+     "where": "반품 등록"
+    },
+    {
+     "act": "out",
+     "id": "x1126-09",
+     "oid": "ox1126-09",
+     "qty": 1,
+     "status": "wait",
+     "from": "DP 반품 · 판매 재고 소진",
+     "date": "2026-11-26"
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "x1126-10",
+      "fl": "1f",
+      "zone": "",
+      "pid": "t20",
+      "name": "풀샷브라 에어 홀가먼트",
+      "color": "옐로우",
+      "size": "FREE",
+      "qty": 2,
+      "tag": ""
+     },
+     "where": "반품 등록"
+    },
+    {
+     "act": "out",
+     "id": "x1126-10",
+     "oid": "ox1126-10",
+     "qty": 2,
+     "status": "wait",
+     "from": "DP 반품 · 판매 재고 소진",
+     "date": "2026-11-26"
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "x1126-11",
+      "fl": "1f",
+      "zone": "",
+      "pid": "",
+      "name": "셔링 볼륨 튜브탑 백리스 브라",
+      "color": "베이지",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     },
+     "where": "반품 등록"
+    },
+    {
+     "act": "out",
+     "id": "x1126-11",
+     "oid": "ox1126-11",
+     "qty": 1,
+     "status": "wait",
+     "from": "DP 반품 · 판매 재고 소진",
+     "date": "2026-11-26"
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-01",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p03",
+      "name": "쿨샷브라 심리스 서포트",
+      "color": "블랙",
+      "size": "L(80)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-02",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p34",
+      "name": "프레리 플라워 링클 쇼츠",
+      "color": "화이트",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-03",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p35",
+      "name": "골반 볼륨업 심리스 팬티",
+      "color": "블랙",
+      "size": "S-M(90-95)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-04",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p33",
+      "name": "소프트터치 레이스 치키 팬티",
+      "color": "블랙",
+      "size": "S/M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-05",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p31",
+      "name": "소프트터치 레이스 쇼티 팬티",
+      "color": "블랙",
+      "size": "S/M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-06",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p44",
+      "name": "에어리 소프트 더블 레이어 브라",
+      "color": "그레이쉬 베이지",
+      "size": "S",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-07",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p44",
+      "name": "에어리 소프트 더블 레이어 브라",
+      "color": "그레이쉬 베이지",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-08",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p44",
+      "name": "에어리 소프트 더블 레이어 브라",
+      "color": "블랙",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-09",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p44",
+      "name": "에어리 소프트 더블 레이어 브라",
+      "color": "베이비 핑크",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-10",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p44",
+      "name": "에어리 소프트 더블 레이어 브라",
+      "color": "크림 아이보리",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-11",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p44",
+      "name": "에어리 소프트 더블 레이어 브라",
+      "color": "페일 민트",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-12",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p44",
+      "name": "에어리 소프트 더블 레이어 브라",
+      "color": "화이트",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-13",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p07",
+      "name": "쿨샷브라 밴딩 튜브탑",
+      "color": "블랙",
+      "size": "M(75)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-14",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p30",
+      "name": "Minimal Garments Banded Cotton panties",
+      "color": "블랙",
+      "size": "L(100)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-15",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p04",
+      "name": "쿨샷브라 심리스 스쿱라인",
+      "color": "블랙",
+      "size": "S(70)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-16",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p04",
+      "name": "쿨샷브라 심리스 스쿱라인",
+      "color": "블랙",
+      "size": "M(75)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-17",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p04",
+      "name": "쿨샷브라 심리스 스쿱라인",
+      "color": "블랙",
+      "size": "L(80)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-18",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p29",
+      "name": "쿨샷 심리스 삼각팬티",
+      "color": "블랙",
+      "size": "M(95)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-19",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p29",
+      "name": "쿨샷 심리스 삼각팬티",
+      "color": "화이트",
+      "size": "S(90)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-20",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p29",
+      "name": "쿨샷 심리스 삼각팬티",
+      "color": "화이트",
+      "size": "M(95)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-21",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p28",
+      "name": "[심리스] 볼륨메이커 퓨징 삼각 팬티",
+      "color": "블랙",
+      "size": "M(90-95)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-22",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p28",
+      "name": "[심리스] 볼륨메이커 퓨징 삼각 팬티",
+      "color": "크림아이보리",
+      "size": "M(90-95)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-23",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p27",
+      "name": "쫀쫀 심리스 삼각팬티",
+      "color": "블랙",
+      "size": "M(95)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-24",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p27",
+      "name": "쫀쫀 심리스 삼각팬티",
+      "color": "브라운",
+      "size": "M(95)",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-25",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p01",
+      "name": "미니멀 스트랩 심리스 브라",
+      "color": "아이보리",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-26",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p01",
+      "name": "미니멀 스트랩 심리스 브라",
+      "color": "블랙",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-27",
+      "fl": "keep",
+      "zone": "DP 중복 보관",
+      "pid": "p01",
+      "name": "미니멀 스트랩 심리스 브라",
+      "color": "베이지",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-28",
+      "fl": "keep",
+      "zone": "DP 보관",
+      "pid": "p15",
+      "name": "써모터치 심리스 스퀘어넥 브라탑",
+      "color": "베이지",
+      "size": "S",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-29",
+      "fl": "keep",
+      "zone": "DP 보관",
+      "pid": "p16",
+      "name": "써모터치 심리스 이너 슬립",
+      "color": "베이지",
+      "size": "S",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-30",
+      "fl": "keep",
+      "zone": "DP 보관",
+      "pid": "p45",
+      "name": "에어리 소프트 롱라인 브라",
+      "color": "베이비 핑크",
+      "size": "S",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-31",
+      "fl": "keep",
+      "zone": "DP 보관",
+      "pid": "p45",
+      "name": "에어리 소프트 롱라인 브라",
+      "color": "베이비 핑크",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-32",
+      "fl": "keep",
+      "zone": "DP 보관",
+      "pid": "p45",
+      "name": "에어리 소프트 롱라인 브라",
+      "color": "베이비 핑크",
+      "size": "L",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-33",
+      "fl": "keep",
+      "zone": "DP 보관",
+      "pid": "p45",
+      "name": "에어리 소프트 롱라인 브라",
+      "color": "베이비 핑크",
+      "size": "XL",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-34",
+      "fl": "keep",
+      "zone": "DP 보관",
+      "pid": "t07",
+      "name": "아일린 브라렛 세트",
+      "color": "블랙",
+      "size": "75C",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-35",
+      "fl": "keep",
+      "zone": "DP 보관",
+      "pid": "t08",
+      "name": "루나 레이스 브라렛 세트",
+      "color": "머스타드",
+      "size": "M",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-36",
+      "fl": "keep",
+      "zone": "DP 보관",
+      "pid": "t12",
+      "name": "차르르 실크새틴 캐미솔 세트",
+      "color": "베이지",
+      "size": "XL",
+      "qty": 1,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "k1126-37",
+      "fl": "keep",
+      "zone": "DP 보관",
+      "pid": "p42",
+      "name": "Minimal Garments Cotton Cut Line Bralette (Wireless)",
+      "color": "화이트",
+      "size": "M(75)",
+      "qty": 1,
+      "tag": ""
+     }
+    }
+   ]
   }
  ]
 }
