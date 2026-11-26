@@ -289,7 +289,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.25-12';
+const APP_VER = '2026.11.26-1';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; D.dp = j.dp || []; D.dpOut = j.dpOut || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1443,7 +1443,7 @@ async function lsPost(body) {
   if (!j.ok) throw Error(j.error); LS.list = j.loss || []; LS.at = Date.now();
 }
 const lsWait = () => LS.list.filter(x => !x.okBy).length;
-function dpSub() { const n = dpList().reduce((a, x) => a + (+x.qty || 0), 0), w = dpOutList().filter(x => x.status === 'wait').reduce((a, x) => a + (+x.qty || 0), 0); return `DP ${n}개${w ? ` · 반품 대기 ${w}` : ''}`; }
+function dpSub() { const n = dpList().filter(x => x.fl !== 'keep').reduce((a, x) => a + (+x.qty || 0), 0), w = dpOutList().filter(x => x.status === 'wait').reduce((a, x) => a + (+x.qty || 0), 0); return `DP ${n}개${w ? ` · 반품 대기 ${w}` : ''}`; }
 /* 제품 고르기 (판매 제품 목록 + 직접 입력) */
 function pickHtml(o) {
   const items = PR.data ? PR.data.items : [], cats = PR.data ? PR.data.categories : [];
@@ -1489,6 +1489,26 @@ function dpSheet(x, zone) {
     $('dpO').onclick = () => dpOutSheet(x);
     $('dpL').onclick = () => lossSheet({src:'DP', pid:x.pid, name:x.name, color:x.color, size:x.size});
   }
+}
+const KEEP_GROUPS = ['대표님 보관', '증정용'];
+function keepSheet(x, grp) {
+  const o = x || {fl:'keep', zone:grp || KEEP_GROUPS[0], pid:'', name:'', color:'', size:'', qty:1, tag:''};
+  sheet(`<h2>${x ? '따로 보관 수정' : '따로 보관 추가'}</h2>
+   <label class="f">구분</label><input type="text" id="kpG" maxlength="20" list="kpGl" value="${esc(o.zone)}"><datalist id="kpGl">${KEEP_GROUPS.map(g => `<option value="${esc(g)}">`).join('')}</datalist>
+   ${pickHtml(o)}
+   <label class="f">수량</label><div class="row" style="gap:8px"><button class="btn" id="kpM" style="width:56px;height:48px;font-size:20px">−</button><input type="number" inputmode="numeric" id="kpQ" min="0" value="${o.qty}" style="text-align:center;font-size:18px;font-weight:700"><button class="btn" id="kpP" style="width:56px;height:48px;font-size:20px">+</button></div>
+   <label class="f">메모 (선택)</label><input type="text" id="kpT" maxlength="40" value="${esc(o.tag || '')}" placeholder="예: 12월 행사용">
+   <div class="row" style="margin-top:16px;gap:8px"><button class="btn grow" id="kpC" style="height:52px;font-size:16px">취소</button><button class="btn pri grow" id="kpS" style="height:52px;font-size:16px;flex:2">${x ? '수정 저장' : '추가'}</button></div>
+   ${x ? '<button class="btn dan" id="kpX" style="width:100%;height:46px;margin-top:8px">삭제</button>' : ''}`);
+  pickBind(o);
+  const q = $('kpQ'); $('kpM').onclick = () => q.value = Math.max(0, (+q.value || 0) - 1); $('kpP').onclick = () => q.value = (+q.value || 0) + 1;
+  $('kpC').onclick = closeSheet;
+  $('kpS').onclick = async () => {
+    const v = pickVal(), g = $('kpG').value.trim() || KEEP_GROUPS[0]; if (!v.name) { toast('제품을 골라 주세요', true); return; }
+    const item = {id:x ? x.id : 'k' + Date.now().toString(36), fl:'keep', zone:g, ...v, qty:Math.max(0, Math.round(+q.value || 0)), tag:$('kpT').value.trim()};
+    try { await dpPost({act:x ? 'edit' : 'add', item, where:'따로 보관 · ' + g}, x ? '수정했어요' : '추가했어요', () => { D.dp = dpList(); const i = D.dp.findIndex(y => y.id === item.id); if (i >= 0) D.dp[i] = item; else D.dp.push(item); }); } catch (e) { dpErr(e); }
+  };
+  if (x) $('kpX').onclick = async () => { if (await ask(`${x.name} ${dpSpec(x)} 을(를) 목록에서 삭제할까요?`, '삭제', true)) { try { await dpPost({act:'del', id:x.id}, '삭제했어요', () => { D.dp = dpList().filter(y => y.id !== x.id); }); } catch (e) { dpErr(e); } } };
 }
 function dpOutSheet(x) {
   sheet(`<h2>DP 제외</h2><div class="mut" style="margin-bottom:6px">${esc(x.name)} · ${esc(dpSpec(x) || '컬러·사이즈 미입력')} · ${esc(zoneName(x.fl, x.zone))}</div>
@@ -1539,7 +1559,7 @@ async function lsOk(id, on) {
   try {
     await lsPost({act:on ? 'ok' : 'unok', id}); toast(on ? '최종 확인했어요' : '확인을 취소했어요'); render();
     if (on && x.src === 'DP') {
-      const m = dpList().find(d => (x.pid ? d.pid === x.pid : d.name === x.name) && (d.color || '') === (x.color || '') && (!x.size || (d.size || '') === x.size));
+      const m = dpList().find(d => d.fl !== 'keep' && (x.pid ? d.pid === x.pid : d.name === x.name) && (d.color || '') === (x.color || '') && (!x.size || (d.size || '') === x.size));
       if (m && await ask(`DP 재고에서도 빼둘까요?\n${m.name} ${dpSpec(m)} (${zoneName(m.fl, m.zone)}) ${m.qty}개 → ${Math.max(0, m.qty - x.qty)}개`, '빼기')) {
         try { if (m.qty <= x.qty) await dpPost({act:'del', id:m.id}, 'DP 재고에서 뺐어요', () => { D.dp = dpList().filter(d => d.id !== m.id); }); else { const item = {...m, qty:m.qty - x.qty}; await dpPost({act:'edit', item}, 'DP 재고에서 뺐어요', () => { m.qty = item.qty; }); } } catch (e) { dpErr(e); }
       }
@@ -1571,10 +1591,10 @@ function vDp() {
   const adm = admin(); if (!PR.data && !PR.loading) prLoad(); lsLoad(); dpLoad();
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px" class="grow">DP · 로스 관리</b></div>`;
   const wq = dpOutList().filter(x => x.status === 'wait').length, lw = lsWait();
-  h += `<div class="seg">${[['stock', 'DP 재고'], ['out', `DP 제외 · 반품${wq ? ` ${wq}` : ''}`], ['loss', `도난 · 불량${lw ? ` <span style="color:var(--dan)">${lw}</span>` : ''}`]].map(([k, l]) => `<button data-act="dpTab" data-v="${k}" class="${DP.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  h += `<div class="seg">${[['stock', 'DP 재고'], ['keep', '따로 보관'], ['out', `제외 · 반품${wq ? ` ${wq}` : ''}`], ['loss', `도난 · 불량${lw ? ` <span style="color:var(--dan)">${lw}</span>` : ''}`]].map(([k, l]) => `<button data-act="dpTab" data-v="${k}" class="${DP.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  if (DPS.pend && !DPS.batches.includes(DPS.pend.bid)) h += `<div class="card" style="border:2px solid var(--ink);padding:12px 14px"><b>🤖 Claude가 준비한 DP 변경 ${DPS.pend.ops.length}건</b><div class="mut" style="font-size:12.5px;margin:3px 0 8px">${esc(DPS.pend.note || '')}</div><button class="btn pri" style="width:100%" data-act="dpBatch">반영하기</button></div>`;
   if (DP.tab === 'stock') {
     h += `<div class="row" style="gap:6px;margin-bottom:8px">${vmFloors().map(f => `<button class="pill ${DP.floor === f.id ? 'on' : ''}" data-act="dpFl" data-v="${f.id}">${esc(f.name)}</button>`).join('')}<span class="grow"></span>${dpZones(DP.floor).length ? '<button class="pill on" data-act="dpNew">+ DP 등록</button>' : ''}</div>`;
-    if (DPS.pend && !DPS.batches.includes(DPS.pend.bid)) h += `<div class="card" style="border:2px solid var(--ink);padding:12px 14px"><b>🤖 Claude가 준비한 DP 변경 ${DPS.pend.ops.length}건</b><div class="mut" style="font-size:12.5px;margin:3px 0 8px">${esc(DPS.pend.note || '')}</div><button class="btn pri" style="width:100%" data-act="dpBatch">반영하기</button></div>`;
     if (DPS.err) h += `<div class="note">${esc(DPS.err)}</div>`; else if (!DPS.loaded) h += '<div class="mut" style="font-size:12px;margin:0 2px 6px">최신 DP 불러오는 중…</div>';
     const zs = dpZones(DP.floor), all = dpList().filter(x => x.fl === DP.floor);
     if (!zs.length) return h + `<div class="card empty">${esc((vmFloors().find(f => f.id === DP.floor) || {}).name || '')} DP는 준비 중이에요.<br><span style="font-size:12px">VMD 지도가 올라가면 같이 채울게요</span></div>`;
@@ -1584,6 +1604,17 @@ function vDp() {
       const l = all.filter(x => x.zone === z.id); 
       h += `<div class="card" style="padding:10px 14px 4px"><div class="row" style="gap:8px"><b class="grow" style="font-size:14.5px">${esc(zoneName(DP.floor, z.id))}</b><span class="mut" style="font-size:12px">${l.reduce((a, x) => a + (+x.qty || 0), 0)}개</span><button class="link" data-act="dpNew" data-v="${esc(z.id)}">+ 추가</button></div>`
         + (l.map(x => dpRow(x, `<span class="grow"><span style="font-size:13.5px;font-weight:650">${x.tag ? `<span style="color:var(--dan);font-size:11px">${esc(x.tag)}</span> ` : ''}${esc(x.name)}</span><br><span class="mut" style="font-size:12px">${esc(x.color || '컬러 미입력')} · ${x.size ? esc(x.size) : '<span style="color:#b86e00">사이즈 미입력</span>'}</span></span><b style="font-size:15px">${x.qty}</b><span class="mut">›</span>`, 'dpEdit', x.id)).join('') || '<div class="mut" style="font-size:12px;padding:8px 0">등록된 DP 없음</div>') + '</div>';
+    }
+    return h;
+  }
+  if (DP.tab === 'keep') {
+    const all = dpList().filter(x => x.fl === 'keep'), groups = [...new Set([...KEEP_GROUPS, ...all.map(x => x.zone)])];
+    h += `<div class="row" style="gap:6px;margin-bottom:8px"><span class="mut grow" style="font-size:12.5px">판매 재고와 따로 관리 · 줄을 누르면 수량 수정</span><button class="pill on" data-act="keepNew">+ 추가</button></div>`;
+    if (DPS.err) h += `<div class="note">${esc(DPS.err)}</div>`;
+    for (const g of groups) {
+      const l = all.filter(x => x.zone === g); if (!l.length && !KEEP_GROUPS.includes(g)) continue;
+      h += `<div class="card" style="padding:10px 14px 4px"><div class="row" style="gap:8px"><b class="grow" style="font-size:14.5px">${esc(g)}</b><span class="mut" style="font-size:12px">${l.reduce((a, x) => a + (+x.qty || 0), 0)}개</span><button class="link" data-act="keepNew" data-v="${esc(g)}">+ 추가</button></div>`
+        + (l.map(x => dpRow(x, `<span class="grow"><span style="font-size:13.5px;font-weight:650">${esc(x.name)}</span><br><span class="mut" style="font-size:12px">${esc(dpSpec(x) || '-')}${x.tag ? ` · ${esc(x.tag)}` : ''}</span></span><b style="font-size:15px">${x.qty}</b><span class="mut">›</span>`, 'keepEdit', x.id)).join('') || '<div class="mut" style="font-size:12px;padding:8px 0">없음</div>') + '</div>';
     }
     return h;
   }
@@ -1864,6 +1895,8 @@ document.addEventListener('click', async e => {
     case 'prLoc': SK.q = ''; SK.mode = 'prod'; SK.open = v; S.tab = 'stock'; scrollTo(0, 0); break;
     case 'dpTab': DP.tab = v; if (v === 'loss') lsLoad(true); else dpLoad(true); break;
     case 'dpFl': DP.floor = v; break;
+    case 'keepNew': if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } keepSheet(null, v || ''); return;
+    case 'keepEdit': { const x = dpList().find(y => y.id === v); if (!x) return; if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } keepSheet(x); return; }
     case 'dpBatch': (async () => { const p = DPS.pend; if (!p || !(await ask(`Claude가 준비한 DP 변경 ${p.ops.length}건을 반영할까요?\n${p.note || ''}`, '반영'))) return; try { await dpPost({act:'batch', bid:p.bid, ops:p.ops}, '반영했어요'); } catch (e) { dpErr(e); } })(); return;
     case 'dpNew': if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } dpSheet(null, v || ''); return;
     case 'dpEdit': { const x = dpList().find(y => y.id === v); if (!x) return; if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } dpSheet(x); return; }

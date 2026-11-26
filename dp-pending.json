@@ -1,5 +1,48 @@
 {
- "bid": "",
- "note": "",
- "ops": []
+ "bid": "keep-1126",
+ "note": "따로 보관: 대표님 보관 헤리티지 파자마 L 브라운·그레이 각 4 / 증정용 베니벨 3P 팬츠 화이트 37",
+ "ops": [
+  {
+   "act": "add",
+   "item": {
+    "id": "k-1126-hb",
+    "fl": "keep",
+    "zone": "대표님 보관",
+    "pid": "p25",
+    "name": "Minimal Garments Heritage Check Pajama Set",
+    "color": "소프트브라운",
+    "size": "L",
+    "qty": 4,
+    "tag": ""
+   }
+  },
+  {
+   "act": "add",
+   "item": {
+    "id": "k-1126-hg",
+    "fl": "keep",
+    "zone": "대표님 보관",
+    "pid": "p25",
+    "name": "Minimal Garments Heritage Check Pajama Set",
+    "color": "소프트그레이",
+    "size": "L",
+    "qty": 4,
+    "tag": ""
+   }
+  },
+  {
+   "act": "add",
+   "item": {
+    "id": "k-1126-bw",
+    "fl": "keep",
+    "zone": "증정용",
+    "pid": "p21",
+    "name": "베니벨 3P SET(팬츠)",
+    "color": "화이트",
+    "size": "FREE",
+    "qty": 37,
+    "tag": ""
+   }
+  }
+ ]
 }
