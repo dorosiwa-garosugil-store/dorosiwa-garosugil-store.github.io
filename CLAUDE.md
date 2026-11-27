@@ -49,5 +49,6 @@ GitHub Pages로 서비스되는 정적 사이트. 주소: https://dorosiwa-garos
 - 관리자는 안희진 매니저(사장님). 설정 탭 → 관리자 로그인(관리자 비밀번호). 로그아웃 누르기 전까지 그 기기에서 유지(만료 없음). 관리자 로그아웃은 앱(매장 공용 비밀번호) 로그인에 영향 없음.
 - 원리: 처음 설정 때 GitHub fine-grained 토큰(이 저장소 Contents: Read and write)을 관리자 비밀번호로 AES-GCM 암호화(PBKDF2 600k)해 admin.json에 저장. 로그인 = admin.json 복호화 → 토큰을 그 기기 localStorage에 보관.
 - 관리자 모드에서 표 칸 수정 → 하단 '저장' 누르면 GitHub API로 data.json 커밋("사이트에서 수정 (날짜)"). 직원 화면은 Pages 반영 후 1~2분.
+- 사이트 저장은 3방향 합치기(11/27, m3): 불러온 때(S.base) 이후 관리자가 바꾼 부분만 최신 data.json에 얹음 → 그 사이 Claude가 넣은 할 일·예약 등이 지워지지 않음 (id 있는 목록은 id별, 객체는 키별, 같은 곳을 둘 다 바꾸면 관리자 쪽 우선)
 - admin.json은 지우거나 손대지 말 것. 토큰이 만료되면 사이트의 "처음 설정 다시 하기"로 재등록.
 - Claude가 data.json을 고치기 전에는 항상 git pull로 최신을 받을 것 (사장님이 사이트에서 저장했을 수 있음).
