@@ -296,7 +296,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.27-1';
+const APP_VER = '2026.11.27-2';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; D.dp = j.dp || []; D.dpOut = j.dpOut || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -517,7 +517,7 @@ function vToday() {
     ['vmd', 'VMD', '매장 지도 · 진열 위치', 'go:vmd'],
     ['dp', 'DP · 로스 관리', dpSub(), 'go:dp']
   ];
-  h += `<div class="hub">${tiles.map(([k, t, sub, act]) => { const [a, v] = act.split(':'); return `<button class="tile ${act ? '' : 'off'}" ${act ? `data-act="${a}" ${v ? `data-v="${v}"` : ''}` : 'disabled'}>${k === 'notice' && unreadCount() ? `<span class="tdot">${unreadCount()}</span>` : ''}${k === 'todo' && tdUnreadCount() ? `<span class="tdot">${tdUnreadCount()}</span>` : ''}${k === 'dp' && admin() && lsWait() ? `<span class="tdot">${lsWait()}</span>` : ''}${k === 'consult' && csToday().length ? `<span class="tdot">${csToday().length}</span>` : ''}${ico(k)}<b>${t}</b><small>${sub}</small></button>`; }).join('')}</div>`;
+  h += `<div class="hub">${tiles.map(([k, t, sub, act]) => { const [a, v] = act.split(':'); return `<button class="tile ${act ? '' : 'off'}" ${act ? `data-act="${a}" ${v ? `data-v="${v}"` : ''}` : 'disabled'}>${k === 'notice' && unreadCount() ? `<span class="tdot">${unreadCount()}</span>` : ''}${k === 'guide' && manUnread() ? `<span class="tdot">${manUnread()}</span>` : ''}${k === 'todo' && tdUnreadCount() ? `<span class="tdot">${tdUnreadCount()}</span>` : ''}${k === 'dp' && admin() && lsWait() ? `<span class="tdot">${lsWait()}</span>` : ''}${k === 'consult' && csToday().length ? `<span class="tdot">${csToday().length}</span>` : ''}${ico(k)}<b>${t}</b><small>${sub}</small></button>`; }).join('')}</div>`;
   const pin = sortedNotices()[0];
   if (pin) h += `<button class="card row" style="width:100%;text-align:left" data-act="go" data-v="notice"><span class="grow"><span class="mut">공지</span><br><b>${pin.pinned ? '📌 ' : ''}${esc(pin.title)}</b></span><span class="mut">›</span></button>`;
   return h;
@@ -701,6 +701,11 @@ const nKey = n => n.id + (n.ed ? '@' + n.ed : '');
 const unreadCount = () => { const r = readSet(); return D.notices.filter(n => !r.has(nKey(n))).length; };
 function markRead(id) { const n = D.notices.find(x => x.id === id), k = n ? nKey(n) : id, r = readSet(); if (!r.has(k)) { r.add(k); ls.set('readNotices', [...r]); } }
 const dot = '<span class="udot"></span>';
+/* 업무 매뉴얼 읽음 표시: 이 휴대폰에서 연 매뉴얼 id@ed 기억 (처음 한 번은 ed 없는 기존 매뉴얼을 읽음 처리) */
+const mKey = m => m.id + (m.ed ? '@' + m.ed : '');
+function manReadSet() { let r = ls.get('readManuals', null); if (!r) { r = (C().manuals || []).filter(m => !m.ed).map(m => m.id); ls.set('readManuals', r); } return new Set(r); }
+const manUnread = () => { const r = manReadSet(); return (C().manuals || []).filter(m => manReady(m) && !r.has(mKey(m))).length; };
+function manMark(m) { const r = manReadSet(), k = mKey(m); if (!r.has(k)) { r.add(k); ls.set('readManuals', [...r]); } }
 function vNotice() {
   let h = admin() ? `<button class="btn pri" style="width:100%;margin:6px 0" data-act="nNew">+ 공지 작성</button>` : '';
   const list = sortedNotices(), r = readSet(), un = unreadCount();
@@ -1773,8 +1778,9 @@ async function rcGo() {
 function vManual() {
   const list = C().manuals || [];
   let h = `<div class="row" style="margin:6px 0 10px"><button class="pill" data-act="go" data-v="today">‹ 홈</button><b style="font-size:18px;margin-left:6px">업무 매뉴얼</b></div>`;
-  h += list.map(m => { const ok = manReady(m), n = (m.images || []).length;
-    return `<button class="card row" style="width:100%;text-align:left;${ok ? '' : 'opacity:.45'}" ${ok ? `data-act="manOpen" data-v="${esc(m.id)}"` : 'disabled'}><div class="grow"><div class="tt" style="font-size:15px;font-weight:700">${esc(m.title)}</div><div class="mut" style="margin-top:3px">${ok ? esc(m.desc || '') + (n ? ` · ${n}장` : '') : '준비 중'}</div></div><span class="mut" style="font-size:18px">${ok ? '›' : ''}</span></button>`; }).join('') || '<div class="card empty">등록된 매뉴얼이 없어요.</div>';
+  const rd = manReadSet();
+  h += list.map(m => { const ok = manReady(m), n = (m.images || []).length, un = ok && !rd.has(mKey(m));
+    return `<button class="card row" style="width:100%;text-align:left;${ok ? '' : 'opacity:.45'}" ${ok ? `data-act="manOpen" data-v="${esc(m.id)}"` : 'disabled'}><div class="grow"><div class="tt" style="font-size:15px;font-weight:700">${un ? dot : ''}${esc(m.title)}${un && m.ed && rd.has(m.id) ? ' <small style="color:var(--dan);font-weight:700">수정됨</small>' : ''}</div><div class="mut" style="margin-top:3px">${ok ? esc(m.desc || '') + (n ? ` · ${n}장` : '') : '준비 중'}</div></div><span class="mut" style="font-size:18px">${ok ? '›' : ''}</span></button>`; }).join('') || '<div class="card empty">등록된 매뉴얼이 없어요.</div>';
   return h;
 }
 function manualSheet() {
@@ -1974,7 +1980,7 @@ document.addEventListener('click', async e => {
     case 'repQ': [LG.rep.from, LG.rep.to] = repRange(v); repLoad(); return;
     case 'repGo': LG.rep.from = $('rFrom').value || LG.rep.from; LG.rep.to = $('rTo').value || LG.rep.to; repLoad(); return;
     case 'repCopy': repCopy(); return;
-    case 'manOpen': { const m = (C().manuals || []).find(x => x.id === v); if (m) viewer(m); return; }
+    case 'manOpen': { const m = (C().manuals || []).find(x => x.id === v); if (m) { manMark(m); viewer(m); if (S.tab === 'manual') render(); } return; }
     case 'go': if (v === 'ckhist') CKH.data = null; if (v === 'todo') tdLoad(); if (v === 'log') { LG.date = T.date; LG.day = null; LG.err = ''; LG.draft = null; } S.tab = v; scrollTo(0, 0); break;
     case 'myMonth': S.tab = 'month'; S.mView = 'mine'; scrollTo(0, 0); break;
     case 'mMove': { const ks = monthKeys(); S.month = ks[ks.indexOf(S.month) + +v] || S.month; break; }
