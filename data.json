@@ -923,7 +923,7 @@
       },
       {
        "id": "f2-mq",
-       "n": 8,
+       "n": 9,
        "name": "마네킹",
        "short": "마네킹",
        "kind": "deco",
@@ -938,8 +938,8 @@
       },
       {
        "id": "f2-tbl",
-       "n": 9,
-       "name": "테이블 VP",
+       "n": 8,
+       "name": "테이블 VP (TAKE ME HOME)",
        "short": "테이블 VP",
        "kind": "table",
        "x": 194,
@@ -947,8 +947,10 @@
        "w": 68,
        "h": 54,
        "photo": [
-        "vmd/2f-tbl.jpg"
-       ]
+        "vmd/2f-tbl1.jpg",
+        "vmd/2f-tbl2.jpg"
+       ],
+       "sub": "균일가 5,000 · 9,900 · 아래 서랍 재고"
       },
       {
        "id": "f2-w2",
