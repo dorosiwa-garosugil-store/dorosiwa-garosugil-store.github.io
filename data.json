@@ -892,7 +892,33 @@
        "w": 24,
        "h": 56,
        "photo": [
-        "vmd/2f-win.jpg"
+        "vmd/2f-fr.jpg"
+       ],
+       "sub": "헤리티지 체크 파자마 · 그레이 2 / 브라운 2",
+       "pids": [
+        "p25"
+       ],
+       "line": [
+        {
+         "pid": "p25",
+         "name": "Minimal Garments Heritage Check Pajama Set",
+         "color": "소프트그레이"
+        },
+        {
+         "pid": "p25",
+         "name": "Minimal Garments Heritage Check Pajama Set",
+         "color": "소프트그레이"
+        },
+        {
+         "pid": "p25",
+         "name": "Minimal Garments Heritage Check Pajama Set",
+         "color": "소프트브라운"
+        },
+        {
+         "pid": "p25",
+         "name": "Minimal Garments Heritage Check Pajama Set",
+         "color": "소프트브라운"
+        }
        ]
       },
       {
