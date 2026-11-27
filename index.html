@@ -296,7 +296,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.26-6';
+const APP_VER = '2026.11.27-1';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; D.dp = j.dp || []; D.dpOut = j.dpOut || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -1785,7 +1785,7 @@ function manualSheet() {
   $('mClose').onclick = closeSheet;
 }
 /* 매뉴얼 본문 서식: ## 섹션(접기) / ### 소제목 / "멘트 / - 설명 / ✕ 하지 말 것 / ! 강조 / * 팁 / Q. 질문 */
-const rbIn = s => esc(s).replace(/\[([^\]]+)\]\(((?:https?:\/\/|tel:)[^\s)]+)\)/g, (m, t, u) => `<a class="rb-a" href="${u}"${u.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${t}</a>`);
+const rbIn = s => esc(s).replace(/\[([^\]]+)\]\(((?:https?:\/\/|tel:|manual\/)[^\s)]+)\)/g, (m, t, u) => `<a class="rb-a" href="${u}"${u.startsWith('tel:') ? '' : ' target="_blank" rel="noopener"'}>${t}</a>`);
 function richBody(t) {
   let h = '', open = false, first = true;
   for (const raw of t.split('\n')) {
