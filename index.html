@@ -296,7 +296,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.27-6';
+const APP_VER = '2026.11.27-7';
 /* 사이트 저장 때 3방향 합치기: 불러온 때(base) 이후 내가 바꾼 부분만 최신 파일(remote)에 얹음 → Claude·다른 기기가 그 사이에 넣은 내용이 지워지지 않음 */
 const DKEYS = ['config', 'months', 'daily', 'notices', 'todos', 'stock', 'consults', 'dp', 'dpOut'];
 const pickD = o => Object.fromEntries(DKEYS.map(k => [k, o[k] == null ? (k === 'config' ? {} : /months|daily/.test(k) ? {} : []) : o[k]]));
@@ -1336,7 +1336,7 @@ function vmMap(f) {
   <path d="M10 10H330" fill="none" stroke="#6fa8dc" stroke-width="3" stroke-dasharray="7 4"/>
   <text x="170" y="-3" text-anchor="middle" font-size="10.5" font-weight="800" fill="#4a86c5">▲ 창가 · 길가</text>
   <path d="M252 276V308" style="stroke:var(--card)" stroke-width="5"/><text x="248" y="296" text-anchor="end" font-size="10.5" font-weight="800" style="fill:var(--dan)">입구 →</text>
-  <path d="M150 112H252" style="stroke:var(--ink)" stroke-width="3"/><circle cx="120" cy="84" r="7" style="fill:var(--soft);stroke:var(--edge)"/><circle cx="120" cy="102" r="7" style="fill:var(--soft);stroke:var(--edge)"/><text x="120" y="124" text-anchor="middle" font-size="8.5" style="fill:var(--mut)">바구니</text><text x="100" y="160" text-anchor="middle" font-size="10" style="fill:var(--mut)" transform="rotate(-35 100 160)">통로</text>
+  <path d="M150 112H252" style="stroke:var(--ink)" stroke-width="3"/><circle cx="120" cy="84" r="7" style="fill:var(--soft);stroke:var(--edge)"/><circle cx="120" cy="102" r="7" style="fill:var(--soft);stroke:var(--edge)"/><text x="120" y="124" text-anchor="middle" font-size="8.5" style="fill:var(--mut)">바구니</text>
   <ellipse cx="120" cy="258" rx="32" ry="26" style="fill:var(--soft)"/><text x="120" y="261" text-anchor="middle" font-size="9" style="fill:var(--mut)">소파</text>`;
   else s += `<rect x="10" y="10" width="320" height="450" rx="4" style="fill:var(--card)"/>
   <path d="M330 10V460H10" fill="none" style="stroke:var(--ink)" stroke-width="3"/>`;
