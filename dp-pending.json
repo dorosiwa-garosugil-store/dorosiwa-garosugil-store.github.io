@@ -940,6 +940,40 @@
      }
     }
    ]
+  },
+  {
+   "bid": "2f-fr-1127",
+   "note": "2층 7번 행거 DP 등록 (헤리티지 체크 파자마 그레이 2 · 브라운 2, 사이즈는 매장에서 입력)",
+   "ops": [
+    {
+     "act": "add",
+     "item": {
+      "id": "d2f-fr-g",
+      "fl": "2f",
+      "zone": "f2-fr",
+      "pid": "p25",
+      "name": "Minimal Garments Heritage Check Pajama Set",
+      "color": "소프트그레이",
+      "size": "",
+      "qty": 2,
+      "tag": ""
+     }
+    },
+    {
+     "act": "add",
+     "item": {
+      "id": "d2f-fr-b",
+      "fl": "2f",
+      "zone": "f2-fr",
+      "pid": "p25",
+      "name": "Minimal Garments Heritage Check Pajama Set",
+      "color": "소프트브라운",
+      "size": "",
+      "qty": 2,
+      "tag": ""
+     }
+    }
+   ]
   }
  ]
 }

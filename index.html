@@ -296,7 +296,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.27-8';
+const APP_VER = '2026.11.27-9';
 /* 사이트 저장 때 3방향 합치기: 불러온 때(base) 이후 내가 바꾼 부분만 최신 파일(remote)에 얹음 → Claude·다른 기기가 그 사이에 넣은 내용이 지워지지 않음 */
 const DKEYS = ['config', 'months', 'daily', 'notices', 'todos', 'stock', 'consults', 'dp', 'dpOut'];
 const pickD = o => Object.fromEntries(DKEYS.map(k => [k, o[k] == null ? (k === 'config' ? {} : /months|daily/.test(k) ? {} : []) : o[k]]));
@@ -1370,6 +1370,7 @@ function vmZone(z) {
     return `<${p ? `button data-act="vmP" data-v="${esc(p.id)}"` : 'div'} class="row" style="width:100%;text-align:left;padding:8px 0;border-top:1px solid var(--edge);gap:8px"><span class="mut" style="flex:0 0 16px;font-weight:800;font-size:12px">${l.tag ? '' : i + 1 - a.slice(0, i).filter(x => x.tag).length}</span>${p && p.images[0] ? `<img src="${esc(p.images[0])}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:0 0 40px">` : '<span style="width:40px;height:40px;flex:0 0 40px;border-radius:8px;background:var(--soft)"></span>'}<span class="grow">${l.tag ? `<span style="font-size:11px;font-weight:750;color:var(--dan)">${esc(l.tag)}</span><br>` : ''}<span style="font-size:13.5px;font-weight:650">${esc(l.name)}</span>${l.color || l.qty ? `<br><span class="mut" style="font-size:12px">${esc(l.color || '')}${l.qty ? `${l.color ? ' · ' : ''}DP ${l.qty}개` : ''}</span>` : ''}</span>${p ? '<span class="mut">›</span>' : ''}</${p ? 'button' : 'div'}>`; }).join('');
   if (items.length) h += `<div class="mut" style="font-weight:700;font-size:12px;margin:10px 0 2px">이 자리 제품 · 누르면 상세</div>` + items.map(p => `<button class="row" style="width:100%;text-align:left;padding:8px 0;border-top:1px solid var(--edge);gap:8px" data-act="vmP" data-v="${esc(p.id)}">${p.images[0] ? `<img src="${esc(p.images[0])}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:0 0 40px">` : ''}<span class="grow" style="font-size:13.5px;font-weight:650">${esc(p.name)}</span><span class="mut">›</span></button>`).join('');
   if (cats.length) h += `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:10px">${cats.map(c => `<button class="pill" data-act="vmC" data-v="${esc(c.id)}">${esc(c.name)} 제품 보기 ›</button>`).join('')}</div>`;
+  if (dpZones(VM.floor).some(x => x.id === z.id)) h += `<div class="row" style="gap:8px;margin-top:12px"><button class="btn pri grow" data-act="vmAdd" data-v="${esc(z.id)}">+ 제품 추가</button><button class="btn grow" data-act="vmEdit" data-v="${esc(z.id)}">수정 · 순서</button></div><div class="mut" style="font-size:11.5px;margin-top:6px">누구나 추가·수정할 수 있어요 · 등록한 순서대로 '걸린 순서'에 보여요</div>`;
   return h + '</div>';
 }
 function vVmd() {
@@ -1961,6 +1962,8 @@ document.addEventListener('click', async e => {
     case 'keepNew': if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } keepSheet(null, v || ''); return;
     case 'keepEdit': { const x = dpList().find(y => y.id === v); if (!x) return; if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } keepSheet(x); return; }
     case 'dpBatch': (async () => { const pl = dpPend(), n = pl.reduce((s, x) => s + x.ops.length, 0); if (!n || !(await ask(`Claude가 준비한 DP 변경 ${n}건을 반영할까요?\n${pl.map(x => x.note || '').join('\n')}`, '반영'))) return; try { for (const p of pl) { if ((p.qty || []).length) await dpQtyPend(p); await dpPost({act:'batch', bid:p.bid, ops:p.ops}); } toast('반영했어요'); } catch (e) { dpErr(e); } })(); return;
+    case 'vmAdd': if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } DP.floor = VM.floor; dpSheet(null, v); return;
+    case 'vmEdit': DP.tab = 'stock'; DP.floor = VM.floor; S.tab = 'dp'; render(); setTimeout(() => { const el = [...document.querySelectorAll('[data-act="dpNew"]')].find(b => b.dataset.v === v); if (el) el.closest('.card').scrollIntoView({block:'start'}); }, 50); return;
     case 'dpNew': if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } dpSheet(null, v || ''); return;
     case 'dpEdit': { const x = dpList().find(y => y.id === v); if (!x) return; if (!PR.data) { toast('제품 목록을 불러오는 중이에요', true); return; } dpSheet(x); return; }
     case 'dpOutF': DP.out = v; break;
