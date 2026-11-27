@@ -296,7 +296,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.27-2';
+const APP_VER = '2026.11.27-3';
 function applyData(j) { D.appVersion = j.appVersion || ''; D.config = j.config; D.updated = j.updated; D.months = j.months || {}; D.daily = j.daily || {}; D.notices = j.notices || []; D.todos = j.todos || []; D.stock = j.stock || []; D.consults = j.consults || []; D.dp = j.dp || []; D.dpOut = j.dpOut || []; }
 async function loadData(manual) {
   if (manual && S.dirty && !(await ask('저장하지 않은 변경사항이 있어요. 버리고 새로 불러올까요?', '버리고 불러오기', true))) return;
@@ -637,7 +637,7 @@ function vDaily() {
   h += `<div class="card" style="padding:12px 14px"><div class="row"><b class="grow">${+key.slice(5)}/${d.day} (${d.wd}) · 출근 ${d.on.length}명</b>${badge}</div></div>`;
   if (adm) {
     h += `<div class="card"><h3>관리자 · 조닝</h3>`;
-    if (!editing) h += `<button class="btn pri" style="width:100%" data-act="edStart">${raw ? '조닝 수정하기' : '조닝 작성하기'}</button>`;
+    if (!editing) h += `<button class="btn pri" style="width:100%" data-act="edStart">${raw ? '조닝 수정하기' : '조닝 작성하기'}</button>${raw && dl ? `<div style="margin-top:8px">${warnHtml(d, dl.assign || {})}</div>` : ''}`;
     else h += `<div class="row"><button class="btn grow" data-act="edClose">닫기</button><button class="btn grow" data-act="edSave" data-v="0">비공개 보관</button><button class="btn pri grow" data-act="edSave" data-v="1">공개</button></div><div id="warns" style="margin-top:8px">${warnHtml(d)}</div>`;
     h += `</div>`;
   }
@@ -662,18 +662,18 @@ function vDaily() {
   }
   return h + legend() + dailyGuide();
 }
-function warnHtml(d) {
-  if (!S.edit) return '';
+function warnHtml(d, A) {
+  A = A || (S.edit && S.edit.assign); if (!A) return '';
   const w = [], P = C().positions.map(p => p.name);
   HOURS().forEach((hr, hi) => {
-    const v = d.on.filter(x => works(x, hr)).map(x => (S.edit.assign[x.name] || [])[hi] || '미배정');
+    const v = d.on.filter(x => works(x, hr)).map(x => (A[x.name] || [])[hi] || '미배정');
     const f1 = v.filter(x => x.startsWith('1F')).length, f2 = v.filter(x => x.startsWith('2F')).length;
     if (P.some(p => p.startsWith('1F')) && v.length && f1 < 1) w.push(`${hr}시 · 1층 인원 없음`);
     if (P.some(p => p.startsWith('2F')) && v.length && f2 < 1) w.push(`${hr}시 · 2층 인원 없음`);
     if (P.includes('2F 캐셔') && f2 > 0 && !v.includes('2F 캐셔')) w.push(`${hr}시 · 2층 캐셔 없음`);
     const un = v.filter(x => x === '미배정').length; if (un) w.push(`${hr}시 · 미배정 ${un}명`);
   });
-  if (P.includes('휴게')) d.on.forEach(x => { if (x.sh.e - x.sh.s >= 6) { const br = (S.edit.assign[x.name] || []).filter(p => p === '휴게').length; if (br !== 1) w.push(`${x.name} · 휴게 ${br}시간 (기준 1시간)`); } });
+  if (P.includes('휴게')) d.on.forEach(x => { if (x.sh.e - x.sh.s >= 6) { const br = (A[x.name] || []).filter(p => p === '휴게').length; if (br !== 1) w.push(`${x.name} · 휴게 ${br}시간 (기준 1시간)`); } });
   return w.length ? `<details ${w.length <= 3 ? 'open' : ''}><summary class="warn" style="cursor:pointer;list-style:none">⚠ 확인 필요 ${w.length}건</summary>${w.map(x => `<div class="warn">${esc(x)}</div>`).join('')}</details>` : '<div class="okm">배치 경고 없음</div>';
 }
 function edStart() {
