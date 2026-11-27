@@ -296,7 +296,7 @@ async function ghGet() {
   if (!r.ok) throw Error('GitHub 응답 ' + r.status);
   const j = await r.json(); return {sha:j.sha, data:JSON.parse(b64dec(j.content))};
 }
-const APP_VER = '2026.11.27-4';
+const APP_VER = '2026.11.27-5';
 /* 사이트 저장 때 3방향 합치기: 불러온 때(base) 이후 내가 바꾼 부분만 최신 파일(remote)에 얹음 → Claude·다른 기기가 그 사이에 넣은 내용이 지워지지 않음 */
 const DKEYS = ['config', 'months', 'daily', 'notices', 'todos', 'stock', 'consults', 'dp', 'dpOut'];
 const pickD = o => Object.fromEntries(DKEYS.map(k => [k, o[k] == null ? (k === 'config' ? {} : /months|daily/.test(k) ? {} : []) : o[k]]));
@@ -1350,8 +1350,8 @@ function vmMap(f) {
   for (const z of zs) {
     const [h] = VMK[z.kind] || [0], on = VM.z === z.id, cx = z.x + z.w / 2, cy = z.y + z.h / 2;
     s += `<g data-act="vmZ" data-v="${esc(z.id)}" style="cursor:pointer">
-    <rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="7" style="fill:hsl(${h} ${z.kind === 'cash' ? 0 : 45}% var(--cl));stroke:${on ? 'var(--dan)' : 'hsl(' + h + ' 30% 60%)'}" stroke-width="${on ? 3 : 1}"/>
-    ${z.n == null ? `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="11" font-weight="800" style="fill:var(--ink)">${esc(z.short || z.name)}</text>` : z.h > 34 ? `<circle cx="${cx}" cy="${cy - 7}" r="9" style="fill:${on ? 'var(--dan)' : 'var(--ink)'}"/><text x="${cx}" y="${cy - 3.5}" text-anchor="middle" font-size="10" font-weight="800" style="fill:var(--bg)">${z.n}</text><text x="${cx}" y="${cy + 13}" text-anchor="middle" font-size="${z.w < 45 ? 8.5 : 9.5}" font-weight="700" style="fill:var(--ink)">${esc(z.short || z.name.split(' ')[0])}</text>`
+    <rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="${z.round ? Math.min(z.w, z.h) / 2 : 7}" style="fill:hsl(${h} ${z.kind === 'cash' ? 0 : 45}% var(--cl));stroke:${on ? 'var(--dan)' : 'hsl(' + h + ' 30% 60%)'}" stroke-width="${on ? 3 : 1}"/>
+    ${z.round ? `<circle cx="${cx}" cy="${cy}" r="9" style="fill:${on ? 'var(--dan)' : 'var(--ink)'}"/><text x="${cx}" y="${cy + 3.5}" text-anchor="middle" font-size="10" font-weight="800" style="fill:var(--bg)">${z.n ?? ''}</text><text x="${cx}" y="${z.y + z.h + 11}" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--ink)">${esc(z.short || z.name.split(' ')[0])}</text>` : z.n == null ? `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="11" font-weight="800" style="fill:var(--ink)">${esc(z.short || z.name)}</text>` : z.h > 34 ? `<circle cx="${cx}" cy="${cy - 7}" r="9" style="fill:${on ? 'var(--dan)' : 'var(--ink)'}"/><text x="${cx}" y="${cy - 3.5}" text-anchor="middle" font-size="10" font-weight="800" style="fill:var(--bg)">${z.n}</text><text x="${cx}" y="${cy + 13}" text-anchor="middle" font-size="${z.w < 45 ? 8.5 : 9.5}" font-weight="700" style="fill:var(--ink)">${esc(z.short || z.name.split(' ')[0])}</text>`
     : `<circle cx="${z.x + 14}" cy="${cy}" r="9" style="fill:${on ? 'var(--dan)' : 'var(--ink)'}"/><text x="${z.x + 14}" y="${cy + 3.5}" text-anchor="middle" font-size="10" font-weight="800" style="fill:var(--bg)">${z.n}</text><text x="${z.x + 28}" y="${cy + 3.5}" font-size="9.5" font-weight="700" style="fill:var(--ink)">${esc(z.short || z.name.split(' ')[0])}</text>`}</g>`;
   }
   return s + '</svg>';
